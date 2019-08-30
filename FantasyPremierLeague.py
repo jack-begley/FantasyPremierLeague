@@ -90,88 +90,30 @@ from fpl import FPL
 
 playersJSON = requests.get(url=players)
 playersData = playersJSON.json()
+playersDataDumps = json.dumps(playersData)
+# playersDataPrePrep = playersData.read()
+playersDataReadable = json.loads(playersDataDumps)
 datatype = "Player"
 
-with open(exportName_JSON, "w") as outfile:
-    json.dump(playersData, outfile)
+#with open(exportName_JSON, "w") as outfile:
+#    json.dump(playersData, outfile)
 
-# =======================
+# Print everything from the players object 
+for x in playersDataReadable:
+    dumpsX = json.dumps(x)
+    readableX = json.loads(dumpsX)
+    test = playersDataReadable[x]
+    if isinstance(test, int) == False:
+        print(x + ":")
+        for y in playersDataReadable[x]:
+            dumpsY = json.dumps(y)
+            if isinstance(y,dict):
+                formattedY = json.loads(dumpsY)
+                for z in formattedY:
+                    print("%s: %s" % (z, formattedY[z]))
+            else:
+                print("%s: %s" % (y, playersDataReadable[x][y]))
+    else:
+         print("%s: %s" % (x, playersDataReadable[x]))
 
-teamJSON = requests.get(url=userTeam)
-teamData = teamJSON.json()
-datatype = "Team"
-
-with open(exportName_JSON, "w") as outfile:
-    json.dump(teamData, outfile)
-
-# =======================
-
-from colorama import Fore, init
-from prettytable import PrettyTable
-
-async def my_team(user_id):
-    async with aiohttp.ClientSession() as session:
-        fpl = FPL(session)
-        await fpl.login("jack.bgl@googlemail.com", subLog)
-        user = await fpl.get_user(user_id)
-        team = await user.get_team()
-    print(team)
-
-asyncio.run(my_team(myTeam))
-
-
-
-async def main():
-    async with aiohttp.ClientSession() as session:
-        fpl = FPL(session)
-        fdr = await fpl.FDR()
-    fdr_table = PrettyTable()
-    fdr_table.field_names = [
-        "Team", "All (H)", "All (A)", "GK (H)", "GK (A)", "DEF (H)", "DEF (A)",
-        "MID (H)", "MID (A)", "FWD (H)", "FWD (A)"]
-    for team, positions in fdr.items():
-        row = [team]
-        for difficulties in positions.values():
-            for location in ["H", "A"]:
-                if difficulties[location] == 5.0:
-                    row.append(Fore.RED + "5.0" + Fore.RESET)
-                elif difficulties[location] == 1.0:
-                    row.append(Fore.GREEN + "1.0" + Fore.RESET)
-                else:
-                    row.append(f"{difficulties[location]:.2f}")
-        
-            fdr_table.add_row(row)
-    fdr_table.align["Team"] = "l"
-    print(fdr_table)
-    
-if __name__ == '__main__':
-    asyncio.run(main())
-
-# About My Team
-
-
-# Return JSON for players sub
-
-
-# Write the data into a CSV
-# newDoc = csv.writer(open(exportName, "wb+"))
-
-# for item in playersData:
-#     newDoc.writerow([
-#         item["events"],
-#         item["game_settings"],
-#         ])
-
-# PRINT new data
-
-#for key, value in playersData.items():
-#        for events in key[0]:
-#                pprint(events)
-#        for settings in key[1]:
-#                pprint(settings)
-
-# Getting the keys
-
-for key, value in playersData.items():
-        pprint("Key:")
-        pprint(key)
+    print("")
