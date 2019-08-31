@@ -46,6 +46,42 @@ Fantasy Premier League API:
 * /my-team/{user_id}
 * /teams
 * /transfers
+
+Element-stats Labels:
+label: Minutes played
+name: minutes
+label: Goals scored
+name: goals_scored
+label: Assists
+name: assists
+label: Clean sheets
+name: clean_sheets
+label: Goals conceded
+name: goals_conceded
+label: Own goals
+name: own_goals
+label: Penalties saved
+name: penalties_saved
+label: Penalties missed
+name: penalties_missed
+label: Yellow cards
+name: yellow_cards
+label: Red cards
+name: red_cards
+label: Saves
+name: saves
+label: Bonus
+name: bonus
+label: Bonus Points System
+name: bps
+label: Influence
+name: influence
+label: Creativity
+name: creativity
+label: Threat
+name: threat
+label: ICT Index
+name: ict_index
 """
 
 coreApi = 'https://fantasy.premierleague.com/api/'
@@ -88,32 +124,40 @@ exportName_JSON = (f"FPL {datatype} Raw data - {today}.json")
 
 from fpl import FPL
 
-playersJSON = requests.get(url=players)
-playersData = playersJSON.json()
-playersDataDumps = json.dumps(playersData)
-# playersDataPrePrep = playersData.read()
-playersDataReadable = json.loads(playersDataDumps)
-datatype = "Player"
-
 #with open(exportName_JSON, "w") as outfile:
 #    json.dump(playersData, outfile)
 
 # Print everything from the players object 
-for x in playersDataReadable:
-    dumpsX = json.dumps(x)
-    readableX = json.loads(dumpsX)
-    test = playersDataReadable[x]
-    if isinstance(test, int) == False:
-        print(x + ":")
-        for y in playersDataReadable[x]:
-            dumpsY = json.dumps(y)
-            if isinstance(y,dict):
-                formattedY = json.loads(dumpsY)
-                for z in formattedY:
-                    print("%s: %s" % (z, formattedY[z]))
-            else:
-                print("%s: %s" % (y, playersDataReadable[x][y]))
-    else:
-         print("%s: %s" % (x, playersDataReadable[x]))
 
-    print("")
+def printAllData(urlAddOn, fileName):
+
+    url = mergeURL(urlAddOn)
+
+    fileNameJSON = requests.get(url)
+    fileNameData = fileNameJSON.json()
+    fileNameDataDumps = json.dumps(fileNameData)
+    fileNameDataReadable = json.loads(fileNameDataDumps)
+    datatype = "Player"
+
+    for x in fileNameDataReadable:
+        dumpsX = json.dumps(x)
+        readableX = json.loads(dumpsX)
+        test = fileNameDataReadable[x]
+        if isinstance(test, int) == False:
+            print(x + ":")
+            for y in fileNameDataReadable[x]:
+                dumpsY = json.dumps(y)
+                if isinstance(y,dict):
+                    formattedY = json.loads(dumpsY)
+                    for z in formattedY:
+                        print("%s: %s" % (z, formattedY[z]))
+                else:
+                    print("%s: %s" % (y, fileNameDataReadable[x][y]))
+        else:
+             print("%s: %s" % (x, fileNameDataReadable[x]))
+
+        print("")
+
+printAllData(players, "players")
+printAllData(playersSub, "playersSub")
+# printAllData(teams, "team")
