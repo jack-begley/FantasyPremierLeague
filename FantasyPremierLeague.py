@@ -96,6 +96,7 @@ subLog = "Athomeaa"
 playersInfoSub = "allPlayersInfo.json"
 myTeamString = "2923192/1/live"
 myTeam = 2923192
+userInput = ""
 
 players = mergeURL(playersSub)
 playersInfo = mergeURL(playersInfoSub)
@@ -158,6 +159,109 @@ def printAllData(urlAddOn, fileName):
 
         print("")
 
-printAllData(players, "players")
-printAllData(playersSub, "playersSub")
-# printAllData(teams, "team")
+def playerInfoBySurname(playerSurname):
+    
+    
+
+    playersJSON = requests.get(players)
+    playersData = playersJSON.json()
+    playersDataDumps = json.dumps(playersData)
+    playersDataReadable = json.loads(playersDataDumps)
+    datatype = "Player"
+
+    for x in playersDataReadable:
+        dumpsX = json.dumps(x)
+        readableX = json.loads(dumpsX)
+        test = playersDataReadable[x]
+        if x == "elements":
+            if isinstance(test, int) == False:
+                for y in playersDataReadable[x]:
+                    dumpsY = json.dumps(y)
+                    if isinstance(y,dict):
+                        formattedY = json.loads(dumpsY)
+                        if formattedY["second_name"] == playerSurname:
+                            print("first_name: " + formattedY["first_name"])
+                            print("second_name: " + formattedY["second_name"])
+                            print("total_points: " + str(formattedY["total_points"]))
+                            print("transfers_in: " + str(formattedY["transfers_in"]))
+                            print("transfers_out: " + str(formattedY["transfers_out"]))
+                            print("transfers_in_for_gameweek: " + str(formattedY["transfers_in_event"]))
+                            print("transfers_out_for_gameweek: " + str(formattedY["transfers_out_event"]))
+                            print("")
+                        elif playerSurname == "":
+                             print("!! ERROR: Cannot show blank characters, please try again")
+                             print("========================================================")
+                             playerRoutine()
+                        else:
+                            print("!! ERROR: Surname not found - Please check your spelling and try again")
+                            print("=====================================================================")
+                            playerRoutine()
+
+                    else:
+                        print("!! ERROR:Player not found - please check spelling and try again:")
+                        playerRoutine()
+            else:
+                return print("")
+        else:
+             print("")
+
+        print("")
+
+print("==============================")
+print(" ________  _______  _____")
+print("|_   __  ||_   __ \|_   _|")
+print("  | |_ \_|  | |__) | | |")  
+print("  |  _|     |  ___/  | |   _")  
+print(" _| |_     _| |_    _| |__/ |") 
+print("|_____|   |_____|  |________|")
+print("")
+print("==============================")
+print("")
+print("Welcome to the FPL console app for data extraction.")
+print("")
+
+def introRoutine():
+    print("To access the different areas of the data type below what you want to see from:")
+    print("- Players")
+    print("- Teams")
+    print("- Game week summary")
+    print("- My league performance")
+    print("")
+    print("What would you like to see?:")
+    public userInput = str.lower(input())
+
+introRoutine()
+
+if userInput ==  "players":
+    def playerRoutine():
+        print("You've said you want to take a look at the player data - Using the numbers or exact text below. You can look at:")
+        print("1) All players")
+        print("2) A player (by surname)")
+        print("3) A player (by player ID)")
+        print("4) All players ID's printed:")
+        print("")
+        print("What would you like to see?:")
+        playerUserInputInitial = str.lower(input())
+
+        if playerUserInputInitial == "all players" or int(playerUserInputInitial) == 1:
+            printAllData(players, "players")
+        elif playerUserInputInitial == "a player (by surname)" or int(playerUserInputInitial) == 2:
+            print("Let us know who you're looking for:")
+            playerSurname = str.lower(input())
+            playerInfoBySurname(playerSurname)
+
+    playerRoutine()
+
+
+elif userInput == "game week summary":
+    printAllData(playersSub, "playersSub")
+    #TODO: Test all active URLs, Repair "Teams" URL
+    # printAllData(teams, "team")
+
+else:
+    print("Your command hasn't been recognised, try again with one of the options above, or exit the application.")
+    print("")
+    print("======================================================================================================")
+    print("")
+    print()
+    introRoutine()
