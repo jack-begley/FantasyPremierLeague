@@ -87,12 +87,10 @@ name: ict_index
 coreApi = 'https://fantasy.premierleague.com/api/'
 playerSummary = "element-summary/"
 # User summary = summary of the  player where the number on the end is the player ID: https://fantasy.premierleague.com/api/element-summary/301/
-email = "jack.bgl@googlemail.com"
 classicStandings = "leagues-classic-standings/"
 h2hStandings = "leagues-h2h-standings/"
 teams = "entry/"
 playersSub = "bootstrap-static/"
-subLog = "Athomeaa"
 playersInfoSub = "allPlayersInfo.json"
 myTeamString = "2923192/1/live"
 myTeam = 2923192
@@ -131,6 +129,15 @@ from fpl import FPL
 
 # Print everything from the players object 
 
+# Try and parse text as an int. Returns integer or text
+
+def parse(userInput):
+    try:
+        return int(userInput)
+    except ValueError:
+       return str(userInput)
+
+# Try and parse and int. Results in boolean outputs
 def isInt(userInput):
     try: 
         int(userInput)
@@ -138,6 +145,7 @@ def isInt(userInput):
     except ValueError:
         return False
 
+# Quit the program if the user decides they want to leave
 def endRoutine():
     print("// Would you like to run another function?")
     print("Y/N:")
@@ -151,6 +159,7 @@ def endRoutine():
     else:
         quit()
 
+# Print all of the player data in the console
 def printAllData(urlAddOn, fileName):
 
     url = mergeURL(urlAddOn)
@@ -181,6 +190,7 @@ def printAllData(urlAddOn, fileName):
 
     endRoutine()
 
+# Getting the information of a player based on their surname
 def playerInfoBySurname(playerSurname):
 
     url = mergeURL(playersSub)
@@ -191,6 +201,7 @@ def playerInfoBySurname(playerSurname):
 
     for y in playersDataReadable['elements']:
         dumpsY = json.dumps(y)
+        playerInApi = False
         if isinstance(y,dict):
             formattedY = json.loads(dumpsY)
             if str.lower(formattedY["second_name"]) == playerSurname:
@@ -214,61 +225,119 @@ def playerInfoBySurname(playerSurname):
                 print("Transfers out for gameweek: " + str(formattedY["transfers_out_event"]))
                 print("// Net Transfers for gameweek: " + str(int(formattedY["transfers_in_event"] - formattedY["transfers_out_event"])))
                 print("")
+                playerInApi = True
                 break
 
         elif playerSurname == "":
+                print("")
                 print("============================================================================")
-                print("!! ERROR: No input won't work - you need a players surname, please try again:")
+                print("!! ERROR: No input won't work - you need a players surname:")
                 print("============================================================================")
-                playerSurname = str.lower(input(">"))
+                playerSurname = str.lower(input("Try again:"))
                 playerInfoBySurname(playerSurname)
 
-        else:
-            print("===============================================================")
-            print("!! ERROR:Player not found - please check spelling and try again:")
-            print("===============================================================")
-            playerSurname = str.lower(input(">"))
-            playerInfoBySurname(playerSurname)
+    if playerInApi == False:
+        print("")
+        print("===============================================================")
+        print("!! ERROR:Player not found - please check spelling and try again:")
+        print("===============================================================")
+        print("")
+        playerInApi = True
+        playerSurname = str.lower(input("Try again:"))
+        playerInfoBySurname(playerSurname)
 
-    endRoutine()
+# The first stage of the program
+def introRoutine():
+    print("------------------------------------------------------------------------------")
+    print("To access the different areas of the data type below what you want to see from:")
+    print("!! PLEASE SELECT A NUMBER")
+    print("------------------------------------------------------------------------------")
+    print(" [1] Players")
+    print(" [2] Teams")
+    print(" [3] Game week summary")
+    print(" [4] My league performance")
+    print("------------------------------------------------------------------------------")
+    print("")
+    print("What would you like to see?:")
+    userInput = input(">")
+    print("")
+    parse(userInput)
+    if isInt(userInput) == True:
+        userInputInt = int(userInput)
+        if userInputInt ==  1:
+            playerRoutine()
 
-print("==============================")
-print(" ________  _______  _____")
-print("|_   __  ||_   __ \|_   _|")
-print("  | |_ \_|  | |__) | | |")  
-print("  |  _|     |  ___/  | |   _")  
-print(" _| |_     _| |_    _| |__/ |") 
-print("|_____|   |_____|  |________|")
-print("")
-print("==============================")
-print("")
-print("Welcome to the FPL console app for data extraction.")
-print("")
+        else:            
+            print("====================================================================================")
+            print("!! ERROR:Command not recognised - please pick one of the above options and try again:")
+            print("====================================================================================")
+            print("")
+            introRoutine()
 
+    elif userInput == "game week summary":
+        printAllData(playersSub, "playersSub")
+
+        #TODO: Test all active URLs, Repair "Teams" URL
+        # printAllData(teams, "team")
+
+    else:
+        print("====================================================================================")
+        print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
+        print("====================================================================================")
+        print("")
+        print("")
+        introRoutine()
+
+# Player specific section of the program
 def playerRoutine():
+                print("------------------------------------------------------------------------")
                 print("You've said you want to take a look at the player data. You can look at:")
-                print("// PLEASE SELECT A NUMBER")
+                print("!! PLEASE SELECT A NUMBER")
+                print("------------------------------------------------------------------------")
                 print(" [1] All players")
                 print(" [2] A player (by surname)")
-                print(" [3] A player (by player ID)")
-                print(" [4] All players ID's printed:")
+                print(" [3] A comma seperated list of playes (by surname)")
+                print(" [4] A player (by player ID)")
+                print(" [5] All players ID's printed:")
+                print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
-                playerUserInputInitial = int(input(">"))
+                playerUserInputInitial = input(">")
+                print("")
+                parse(playerUserInputInitial)
 
                 if isInt(playerUserInputInitial) == True:
-                    if playerUserInputInitial == 1:
+                    playerUserInputInitialInt = int(playerUserInputInitial)
+                    if playerUserInputInitialInt == 1:
                         print("")
                         printAllData(playersSub, playersFileName)
-                    elif playerUserInputInitial == 2:
-                        print("")
-                        print("------------------------------------------------------")
+
+                    elif playerUserInputInitialInt == 2:
+                        print("----------------------------------")
                         print("Let us know who you're looking for:")
-                        print("// TYPE IN A SURNAME")
-                        print("------------------------------------------------------")
-                        print("")
+                        print("!! TYPE IN A SURNAME")
+                        print("----------------------------------")
                         playerSurname = str.lower(input(">"))
                         playerInfoBySurname(playerSurname)
+                        endRoutine()
+                    
+                    elif playerUserInputInitialInt == 3:
+                        print("-----------------------------------------------------------------------------------------------------")
+                        print("Let us know who you're looking for in the format \"surname,surname,surname\" e.g. salah,sterling,kane:")
+                        print("!! TYPE IN THE SURNAMES")
+                        print("-----------------------------------------------------------------------------------------------------")
+                        playerSurnameList = str.lower(input(">"))
+                        playerListNew = list()
+                        playerList = list()
+                        playerListNew = playerSurnameList.split(",")
+                        for i in playerListNew:
+                            j = i.replace(' ', '')
+                            playerList.append(j)
+                        for playerSurname in playerList:
+                            playerInfoBySurname(playerSurname)
+                        endRoutine()
+
+
                     else:
                         print("====================================================================================")
                         print("!! ERROR:Command not recognised - please pick one of the above options and try again:")
@@ -283,39 +352,22 @@ def playerRoutine():
                     print("")
                     playerRoutine()
 
-def introRoutine():
-    print("To access the different areas of the data type below what you want to see from:")
-    print("// PLEASE SELECT A NUMBER")
-    print(" [1] Players")
-    print(" [2] Teams")
-    print(" [3] Game week summary")
-    print(" [4] My league performance")
-    print("")
-    print("What would you like to see?:")
-    userInput = int(input(">"))
-    if isInt(userInput) == True:
-        if userInput ==  1:
-            playerRoutine()
+# Start the program
 
-        else:
-            print("====================================================================================")
-            print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
-            print("====================================================================================")
-            print("")
-            introRoutine()
-
-    elif userInput == "game week summary":
-        printAllData(playersSub, "playersSub")
-
-        #TODO: Test all active URLs, Repair "Teams" URL
-        # printAllData(teams, "team")
-
-    else:
-        print("==============================================================================================================")
-        print("!! ERROR:Your command hasn't been recognised, try again with one of the options above, or exit the application.")
-        print("==============================================================================================================")
-        print("")
-        print("")
-        introRoutine()
+print("")
+print("==============================")
+print(" ________  _______   _____")
+print("|_   __  ||_   __ \ |_   _|")
+print("  | |_ \_|  | |__) |  | |")  
+print("  |  _|     |  ___/   | |   _")  
+print(" _| |_     _| |_    _ | |__/ |") 
+print("|_____|   |_____|   |________|")
+print("")
+print("V.0.0.002")
+print("")
+print("==============================")
+print("")
+print("Welcome to the FPL console app for data extraction.")
+print("")
 
 introRoutine()
