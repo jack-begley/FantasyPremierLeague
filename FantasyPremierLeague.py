@@ -246,7 +246,7 @@ def playerInfoBySurname(playerSurname):
         playerSurname = str.lower(input("Try again:"))
         playerInfoBySurname(playerSurname)
 
-# The first stage of the program
+# The first stage of the program. Contains the top menu items for the console app
 def introRoutine():
     print("------------------------------------------------------------------------------")
     print("To access the different areas of the data type below what you want to see from:")
@@ -288,7 +288,7 @@ def introRoutine():
         print("")
         introRoutine()
 
-# Player specific section of the program
+# Player specific section of the program. Contains the menu items for the player part of the console app
 def playerRoutine():
                 print("------------------------------------------------------------------------")
                 print("You've said you want to take a look at the player data. You can look at:")
@@ -298,7 +298,7 @@ def playerRoutine():
                 print(" [2] A player (by surname)")
                 print(" [3] A comma seperated list of playes (by surname)")
                 print(" [4] A player (by player ID)")
-                print(" [5] All players ID's printed:")
+                print(" [5] All players ID's printed")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
