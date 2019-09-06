@@ -9,8 +9,11 @@ import zipfile
 import pyodbc
 import aiohttp
 import asyncio
+import unicodecsv
 import urllib.request
 import urllib.parse
+import tkinter
+from tkinter import filedialog
 
 #Setting up url construction
 
@@ -98,8 +101,6 @@ userInput = ""
 
 playersURL = mergeURL(playersSub)
 playersFileName = "players"
-# playersInfo = mergeURL(playersInfoSub)
-# userTeam = mergeURL(teams)+myTeamString
 
 # League Codes:
 
@@ -120,23 +121,128 @@ exportName = (f"FPL Raw {datatype} data - {today}.csv")
 exportName_JSON = (f"FPL {datatype} Raw data - {today}.json")
 
 
+playersJSON = requests.get(mergeURL(playersSub))
+playersData = playersJSON.json()
+playersDataDumps = json.dumps(playersData)
+playersDataReadable = json.loads(playersDataDumps)
+
+
 # Testing fpl import package
 
 from fpl import FPL
 
-#with open(exportName_JSON, "w") as outfile:
-#    json.dump(playersData, outfile)
+# Create player export lists:
+def CreatingArrayMethodForPlayers():
+    playerExportList = dict()
+    headerList = list()
+    for y in playersDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        formattedY = json.loads(dumpsY)
+        currentList = list()
+        firstName = formattedY['first_name']
+        secondName = formattedY['second_name']
+        fullName = f'{firstName} {secondName}'
+        for data in formattedY:
+            currentAddition = formattedY[data]
+            currentList.append(currentAddition)
+            headerList.append(data)
+        playerExportList[fullName] = currentList
 
-# Print everything from the players object 
+        print("hello")
+
+# Create player first & last name list (and associated dictionary)
+def playersListFunction():
+    playersListFull = list()
+    playersListSecond = list()
+    for y in playersDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            firstName = formattedY['first_name']
+            secondName = formattedY['second_name']
+            secondNameNoLead = secondName.lstrip()
+            secondNameClean = secondNameNoLead.replace("'", "")
+            fullName = f'{firstName} {secondName}'
+            playersListFull.append(fullName)
+            playersListSecond.append(secondNameClean)
+
+            
+    print("------------------------------------")
+    print("How would you like to see the output?")
+    print("------------------------------------")
+    print(" [1] Full list")
+    print(" [2] Comma seperated list  of surnames")
+    print("------------------------------------")
+    playerListInput = input(" > ")
+    parse(playerListInput)
+
+    if isInt(playerListInput):
+
+        if int(playerListInput) == 1:
+            for player in playersListFull:
+                print(player)
+                endRoutine()
+
+        elif int(playerListInput) == 2:
+            print(playersListSecond)
+            endRoutine()
+
+        else:
+            print("======================================================================================")
+            print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
+            print("======================================================================================")
+            print("")
+            playersListFunction()
+
+    else:
+        print("====================================================================================")
+        print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
+        print("====================================================================================")
+        print("")
+        playersListFunction()
+
+# Export current data set into excel
+def exportToExcelPlayers():
+    root = tkinter.Tk()
+    savePath =tkinter.filedialog.askdirectory()
+    root.destroy()
+    fileName = input("What do you want to call the file? > ")
+    filePath = f"{savePath}/{fileName}.csv"
+    print("Running...")
+    # TODO: Do an actually progress bar based on the loops
+    playerExportList = dict()
+    headerList = list()
+    for y in playersDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        formattedY = json.loads(dumpsY)
+        currentList = list()
+        firstName = formattedY['first_name']
+        secondName = formattedY['second_name']
+        fullName = f'{firstName} {secondName}'
+        for data in formattedY:
+            currentAddition = formattedY[data]
+            currentList.append(currentAddition)
+            if data not in headerList:
+                headerList.append(data)
+        playerExportList[fullName] = currentList
+
+    with open(filePath, 'w', newline='', encoding='utf-8') as out:
+        csv_out = csv.writer(out)
+        csv_out.writerow(headerList)
+        for player in playerExportList:
+            playerDumps = json.dumps(playerExportList)
+            formattedPlayer = json.loads(playerDumps)
+            csv_out.writerow([player])
+
+    endRoutine()
 
 # Try and parse text as an int. Returns integer or text
-
 def parse(userInput):
     try:
         return int(userInput)
     except ValueError:
        return str(userInput)
-
+                
 # Try and parse and int. Results in boolean outputs
 def isInt(userInput):
     try: 
@@ -204,6 +310,9 @@ def playerInfoBySurname(playerSurname):
         playerInApi = False
         if isinstance(y,dict):
             formattedY = json.loads(dumpsY)
+            secondName = formattedY['second_name']
+
+            #Generate a list for the headers
             if str.lower(formattedY["second_name"]) == playerSurname:
                 
                 # Create format for printing the title
@@ -239,7 +348,7 @@ def playerInfoBySurname(playerSurname):
     if playerInApi == False:
         print("")
         print("===============================================================")
-        print("!! ERROR:Player not found - please check spelling and try again:")
+        print(f"!! ERROR:Player not found - {secondName} - please check spelling and try again:")
         print("===============================================================")
         print("")
         playerInApi = True
@@ -257,6 +366,9 @@ def introRoutine():
     print(" [3] Game week summary")
     print(" [4] My league performance")
     print("------------------------------------------------------------------------------")
+    print(" [98] Test: Creating player lists")
+    print(" [99] Test: Excel Export")
+    print("------------------------------------------------------------------------------")
     print("")
     print("What would you like to see?:")
     userInput = input(">")
@@ -266,6 +378,12 @@ def introRoutine():
         userInputInt = int(userInput)
         if userInputInt ==  1:
             playerRoutine()
+
+        elif userInputInt ==  98:
+            CreatingArrayMethodForPlayers()
+
+        elif userInputInt ==  99:
+            exportToExcelPlayers()
 
         else:            
             print("====================================================================================")
@@ -294,11 +412,14 @@ def playerRoutine():
                 print("You've said you want to take a look at the player data. You can look at:")
                 print("!! PLEASE SELECT A NUMBER")
                 print("------------------------------------------------------------------------")
-                print(" [1] All players")
+                print(" [1] All players printed in console")
                 print(" [2] A player (by surname)")
                 print(" [3] A comma seperated list of playes (by surname)")
                 print(" [4] A player (by player ID)")
                 print(" [5] All players ID's printed")
+                print("------------------------------------------------------------------------")
+                print(" [99] Print all player data to console")
+                print(" [101] Export all player data to excel")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -309,8 +430,7 @@ def playerRoutine():
                 if isInt(playerUserInputInitial) == True:
                     playerUserInputInitialInt = int(playerUserInputInitial)
                     if playerUserInputInitialInt == 1:
-                        print("")
-                        printAllData(playersSub, playersFileName)
+                        playersListFunction()
 
                     elif playerUserInputInitialInt == 2:
                         print("----------------------------------")
@@ -331,12 +451,16 @@ def playerRoutine():
                         playerList = list()
                         playerListNew = playerSurnameList.split(",")
                         for i in playerListNew:
-                            j = i.replace(' ', '')
-                            playerList.append(j)
+                            playerList.append(i)
                         for playerSurname in playerList:
                             playerInfoBySurname(playerSurname)
                         endRoutine()
 
+                    elif playerUserInputInitialInt == 99:
+                        printAllData(playersSub, playersFileName)
+
+                    elif playerUserInputInitialInt == 101:
+                        exportToExcelPlayers()
 
                     else:
                         print("====================================================================================")
@@ -363,7 +487,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.002")
+print("V.0.0.003")
 print("")
 print("==============================")
 print("")
