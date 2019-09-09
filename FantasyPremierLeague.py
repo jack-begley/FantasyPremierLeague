@@ -242,13 +242,14 @@ def exportToExcelPlayers():
             
             runPercentageComplete = str(round((currentIndex/length)*100,1))
             if runPercentageComplete != "100.0":
-                sys.stdout.write('\r'f"Running: {runPercentageComplete}%"),
+                sys.stdout.write('\r'f"Creating .csv file: {runPercentageComplete}%"),
                 sys.stdout.flush()
             else:
-                sys.stdout.write(f"Running: {runPercentageComplete}%"),
+                sys.stdout.write('\r'"")
+                sys.stdout.write(f"Export Successful!: {runPercentageComplete}%")
                 sys.stdout.flush()
-                print("Export Successful!")
-                    
+                print("")
+                print("")
     endRoutine()
 
 # Try and parse text as an int. Returns integer or text
