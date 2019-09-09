@@ -12,6 +12,7 @@ import urllib.request
 import urllib.parse
 import tkinter
 from tkinter import filedialog
+from tkinter import Tk
 import sys, traceback
 
 #Setting up url construction
@@ -125,42 +126,27 @@ playersData = playersJSON.json()
 playersDataDumps = json.dumps(playersData)
 playersDataReadable = json.loads(playersDataDumps)
 
-# Create player export lists:
-def CreatingArrayMethodForPlayers():
-    playerExportList = dict()
-    headerList = list()
-    for y in playersDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        formattedY = json.loads(dumpsY)
-        currentList = list()
-        firstName = formattedY['first_name']
-        secondName = formattedY['second_name']
-        fullName = f'{firstName} {secondName}'
-        for data in formattedY:
-            currentAddition = formattedY[data]
-            currentList.append(currentAddition)
-            headerList.append(data)
-        playerExportList[fullName] = currentList
-
-        print("hello")
-
 # Create player first & last name list (and associated dictionary)
 def playersListFunction():
+
+    # Initialise the arrays outside the loop so that they cannot be overriden
     playersListFull = list()
     playersListSecond = list()
+    
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
     for y in playersDataReadable['elements']:
         dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
         if isinstance(y,dict):
             formattedY = json.loads(dumpsY)
             firstName = formattedY['first_name']
             secondName = formattedY['second_name']
             secondNameNoLead = secondName.lstrip()
-            secondNameClean = secondNameNoLead.replace("'", "")
             fullName = f'{firstName} {secondName}'
             playersListFull.append(fullName)
-            playersListSecond.append(secondNameClean)
+            playersListSecond.append(secondNameNoLead)
 
-            
+    # Print the options to the console   
     print("------------------------------------")
     print("How would you like to see the output?")
     print("------------------------------------")
@@ -168,19 +154,25 @@ def playersListFunction():
     print(" [2] Comma seperated list  of surnames")
     print("------------------------------------")
     playerListInput = input(" > ")
+    # try and put the input in as an integer
     parse(playerListInput)
-
     if isInt(playerListInput):
-
         if int(playerListInput) == 1:
             for player in playersListFull:
                 print(player)
                 endRoutine()
-
         elif int(playerListInput) == 2:
-            print(playersListSecond)
+            playersListCleaned = str(playersListSecond).replace("'","").replace("[","").replace("]","")
+            print(playersListCleaned)
+            copyTo = Tk()
+            copyTo.clipboard_clear()
+            copyTo.clipboard_append(playersListCleaned)
+            copyTo.update()
+            copyTo.destroy()
+            print("")
+            print("// This has been copied to your clipboard.")
+            print("")
             endRoutine()
-
         else:
             print("======================================================================================")
             print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
@@ -195,21 +187,16 @@ def playersListFunction():
         print("")
         playersListFunction()
 
-# Spinning cursor:
-def spinning_cursor():
-    while True:
-        for cursor in '|/-\\':
-            yield cursor
-
-spinner = spinning_cursor()
-
 # Export current data set into excel
 def exportToExcelPlayers():
+    # Open a window allowing the user to specify the file save path using a File Explorer
     root = tkinter.Tk()
     savePath =tkinter.filedialog.askdirectory()
     root.destroy()
+    # Get the file path
     fileName = input("What do you want to call the file? > ")
     filePath = f"{savePath}/{today} - {fileName}.csv"
+    # Create the dictionaries for the data that we are going to print into csv
     playerExportList = dict()
     headerList = list()
     headerList.append('Full_name')
@@ -222,24 +209,31 @@ def exportToExcelPlayers():
         secondName = formattedY['second_name']
         fullName = f'{firstName} {secondName}'
         for data in formattedY:
+            # Add to the current list, which is then added to the dictionary by each player - this is how we overcome garbage collection
             currentAddition = formattedY[data]
             currentList.append(currentAddition)
             if data not in headerList:
                 headerList.append(data)
         playerExportList[fullName] = currentList
 
+    # Open the csv with our file name and path so we can write in the data
     with open(filePath, 'w', newline='', encoding='utf-8') as out:
+        # Create the csv writers with the settings we want (e.g. the different delimiters)
         csv_out_tab_seperator = csv.writer(out, delimiter="\t")
         csv_out_comma_seperator = csv.writer(out, delimiter=",")
         csv_out_comma_seperator.writerow(headerList)
+
+        # For each player in our dictionary, run the command which writes in a row of data
         for player in playerExportList:
             length = len(playerExportList)-1
             playerDumps = json.dumps(playerExportList)
             formattedPlayer = json.loads(playerDumps)
             currentIndex = list(playerExportList).index(player)
             exportablePlayerData = str(playerExportList[player]).replace('[','').replace(']',''.replace("'",''))
+            # write out all of the data with the tab delimiter seperating each item of the list
             csv_out_tab_seperator.writerow([f'{player},{exportablePlayerData}'])
-            
+
+            # Percentage complete measured by the length of the dictionary and where the current index is in relation to the total number
             runPercentageComplete = str(round((currentIndex/length)*100,1))
             if runPercentageComplete != "100.0":
                 sys.stdout.write('\r'f"Creating .csv file: {runPercentageComplete}%"),
@@ -272,7 +266,7 @@ def endRoutine():
     print("// Would you like to run another function?")
     print("Y/N:")
 
-    finalDecision = str.lower(input(">"))
+    finalDecision = str.lower(input("> "))
 
     if finalDecision == "y":
         print("------------------------------------------------------")
@@ -286,6 +280,7 @@ def printAllData(urlAddOn, fileName):
 
     url = mergeURL(urlAddOn)
 
+    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
     fileNameJSON = requests.get(url)
     fileNameData = fileNameJSON.json()
     fileNameDataDumps = json.dumps(fileNameData)
@@ -315,6 +310,7 @@ def printAllData(urlAddOn, fileName):
 # Getting the information of a player based on their surname
 def playerInfoBySurname(playerSurname):
 
+    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
     url = mergeURL(playersSub)
     playersJSON = requests.get(url)
     playersData = playersJSON.json()
@@ -338,6 +334,9 @@ def playerInfoBySurname(playerSurname):
                 underline = "-" * len(playerSummaryTitle)
 
                 # Print the data with the title
+                
+                # TODO: Add in other metrics including ones we want to calculate
+                
                 print("")
                 print(underline)
                 print(playerSummaryTitle)
@@ -382,9 +381,6 @@ def introRoutine():
     print(" [3] Game week summary")
     print(" [4] My league performance")
     print("------------------------------------------------------------------------------")
-    print(" [98] Test: Creating player lists")
-    print(" [99] Test: Excel Export")
-    print("------------------------------------------------------------------------------")
     print("")
     print("What would you like to see?:")
     userInput = input(">")
@@ -394,12 +390,6 @@ def introRoutine():
         userInputInt = int(userInput)
         if userInputInt ==  1:
             playerRoutine()
-
-        elif userInputInt ==  98:
-            CreatingArrayMethodForPlayers()
-
-        elif userInputInt ==  99:
-            exportToExcelPlayers()
 
         else:            
             print("====================================================================================")
@@ -453,7 +443,7 @@ def playerRoutine():
                         print("Let us know who you're looking for:")
                         print("!! TYPE IN A SURNAME")
                         print("----------------------------------")
-                        playerSurname = str.lower(input(">"))
+                        playerSurname = str.lower(input("> "))
                         playerInfoBySurname(playerSurname)
                         endRoutine()
                     
@@ -462,12 +452,12 @@ def playerRoutine():
                         print("Let us know who you're looking for in the format \"surname,surname,surname\" e.g. salah,sterling,kane:")
                         print("!! TYPE IN THE SURNAMES")
                         print("-----------------------------------------------------------------------------------------------------")
-                        playerSurnameList = str.lower(input(">"))
+                        playerSurnameList = str.lower(input("> "))
                         playerListNew = list()
                         playerList = list()
                         playerListNew = playerSurnameList.split(",")
                         for i in playerListNew:
-                            playerList.append(i)
+                            playerList.append(i.strip())
                         for playerSurname in playerList:
                             playerInfoBySurname(playerSurname)
                         endRoutine()
