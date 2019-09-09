@@ -1,5 +1,3 @@
-
-
 from pprint import pprint
 import requests
 import json
@@ -14,6 +12,7 @@ import urllib.request
 import urllib.parse
 import tkinter
 from tkinter import filedialog
+import sys, traceback
 
 #Setting up url construction
 
@@ -126,11 +125,6 @@ playersData = playersJSON.json()
 playersDataDumps = json.dumps(playersData)
 playersDataReadable = json.loads(playersDataDumps)
 
-
-# Testing fpl import package
-
-from fpl import FPL
-
 # Create player export lists:
 def CreatingArrayMethodForPlayers():
     playerExportList = dict()
@@ -201,17 +195,25 @@ def playersListFunction():
         print("")
         playersListFunction()
 
+# Spinning cursor:
+def spinning_cursor():
+    while True:
+        for cursor in '|/-\\':
+            yield cursor
+
+spinner = spinning_cursor()
+
 # Export current data set into excel
 def exportToExcelPlayers():
     root = tkinter.Tk()
     savePath =tkinter.filedialog.askdirectory()
     root.destroy()
     fileName = input("What do you want to call the file? > ")
-    filePath = f"{savePath}/{fileName}.csv"
-    print("Running...")
-    # TODO: Do an actually progress bar based on the loops
+    filePath = f"{savePath}/{today} - {fileName}.csv"
     playerExportList = dict()
     headerList = list()
+    headerList.append('Full_name')
+
     for y in playersDataReadable['elements']:
         dumpsY = json.dumps(y)
         formattedY = json.loads(dumpsY)
@@ -227,13 +229,26 @@ def exportToExcelPlayers():
         playerExportList[fullName] = currentList
 
     with open(filePath, 'w', newline='', encoding='utf-8') as out:
-        csv_out = csv.writer(out)
-        csv_out.writerow(headerList)
+        csv_out_tab_seperator = csv.writer(out, delimiter="\t")
+        csv_out_comma_seperator = csv.writer(out, delimiter=",")
+        csv_out_comma_seperator.writerow(headerList)
         for player in playerExportList:
+            length = len(playerExportList)-1
             playerDumps = json.dumps(playerExportList)
             formattedPlayer = json.loads(playerDumps)
-            csv_out.writerow([player])
-
+            currentIndex = list(playerExportList).index(player)
+            exportablePlayerData = str(playerExportList[player]).replace('[','').replace(']',''.replace("'",''))
+            csv_out_tab_seperator.writerow([f'{player},{exportablePlayerData}'])
+            
+            runPercentageComplete = str(round((currentIndex/length)*100,1))
+            if runPercentageComplete != "100.0":
+                sys.stdout.write('\r'f"Running: {runPercentageComplete}%"),
+                sys.stdout.flush()
+            else:
+                sys.stdout.write(f"Running: {runPercentageComplete}%"),
+                sys.stdout.flush()
+                print("Export Successful!")
+                    
     endRoutine()
 
 # Try and parse text as an int. Returns integer or text
@@ -263,7 +278,7 @@ def endRoutine():
         print("")
         introRoutine()
     else:
-        quit()
+        sys.exit(0)
 
 # Print all of the player data in the console
 def printAllData(urlAddOn, fileName):
