@@ -14,6 +14,8 @@ import tkinter
 from tkinter import filedialog
 from tkinter import Tk
 import sys, traceback
+import re
+import io
 
 #Setting up url construction
 
@@ -210,7 +212,7 @@ def exportToExcelPlayers():
         fullName = f'{firstName} {secondName}'
         for data in formattedY:
             # Add to the current list, which is then added to the dictionary by each player - this is how we overcome garbage collection
-            currentAddition = formattedY[data]
+            currentAddition = str(formattedY[data]).strip()
             currentList.append(currentAddition)
             if data not in headerList:
                 headerList.append(data)
@@ -225,13 +227,15 @@ def exportToExcelPlayers():
 
         # For each player in our dictionary, run the command which writes in a row of data
         for player in playerExportList:
+            playerClean = player.strip().replace("'","`")
             length = len(playerExportList)-1
             playerDumps = json.dumps(playerExportList)
             formattedPlayer = json.loads(playerDumps)
             currentIndex = list(playerExportList).index(player)
-            exportablePlayerData = str(playerExportList[player]).replace('[','').replace(']',''.replace("'",''))
+            playerExportListAsString = str(playerExportList[player]).replace("'","")
+            exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
             # write out all of the data with the tab delimiter seperating each item of the list
-            csv_out_tab_seperator.writerow([f'{player},{exportablePlayerData}'])
+            csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
 
             # Percentage complete measured by the length of the dictionary and where the current index is in relation to the total number
             runPercentageComplete = str(round((currentIndex/length)*100,1))
