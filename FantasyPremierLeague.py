@@ -1,31 +1,5 @@
-from pprint import pprint
-import requests
-import json
-import argparse
-import csv 
-import zipfile
-import pyodbc
-import aiohttp
-import asyncio
-import unicodecsv
-import urllib.request
-import urllib.parse
-import tkinter
-from tkinter import filedialog
-from tkinter import Tk
-import sys, traceback
-import re
-import io
-
-#Setting up url construction
-
-def mergeURL(sub):
-    return 'https://fantasy.premierleague.com/api/' + sub;
-# Syntax e.g. = print(mergeURL(userSummary))
-
-# URL set up and league codes
-from datetime import date
-today = date.today()
+from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers
+from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel
 
 """
 The FPL module.
@@ -95,13 +69,11 @@ playerSummary = "element-summary/"
 classicStandings = "leagues-classic-standings/"
 h2hStandings = "leagues-h2h-standings/"
 teams = "entry/"
-playersSub = "bootstrap-static/"
+gameweekSummarySub = "bootstrap-static/"
 playersInfoSub = "allPlayersInfo.json"
 myTeamString = "2923192/1/live"
 myTeam = 2923192
 userInput = ""
-
-playersURL = mergeURL(playersSub)
 playersFileName = "players"
 
 # League Codes:
@@ -115,140 +87,6 @@ tygwynID = 856255
 brooksID = 699088
 savantaID = 806190
 mrsbainesID = 1164443
-
-# Export Names:
-
-datatype = ""
-exportName = (f"FPL Raw {datatype} data - {today}.csv")
-exportName_JSON = (f"FPL {datatype} Raw data - {today}.json")
-
-
-playersJSON = requests.get(mergeURL(playersSub))
-playersData = playersJSON.json()
-playersDataDumps = json.dumps(playersData)
-playersDataReadable = json.loads(playersDataDumps)
-
-# Create player first & last name list (and associated dictionary)
-def playersListFunction():
-
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playersListFull = list()
-    playersListSecond = list()
-    
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in playersDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            firstName = formattedY['first_name']
-            secondName = formattedY['second_name']
-            secondNameNoLead = secondName.lstrip()
-            fullName = f'{firstName} {secondName}'
-            playersListFull.append(fullName)
-            playersListSecond.append(secondNameNoLead)
-
-    # Print the options to the console   
-    print("------------------------------------")
-    print("How would you like to see the output?")
-    print("------------------------------------")
-    print(" [1] Full list")
-    print(" [2] Comma seperated list  of surnames")
-    print("------------------------------------")
-    playerListInput = input(" > ")
-    # try and put the input in as an integer
-    parse(playerListInput)
-    if isInt(playerListInput):
-        if int(playerListInput) == 1:
-            for player in playersListFull:
-                print(player)
-                endRoutine()
-        elif int(playerListInput) == 2:
-            playersListCleaned = str(playersListSecond).replace("'","").replace("[","").replace("]","")
-            print(playersListCleaned)
-            copyTo = Tk()
-            copyTo.clipboard_clear()
-            copyTo.clipboard_append(playersListCleaned)
-            copyTo.update()
-            copyTo.destroy()
-            print("")
-            print("// This has been copied to your clipboard.")
-            print("")
-            endRoutine()
-        else:
-            print("======================================================================================")
-            print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
-            print("======================================================================================")
-            print("")
-            playersListFunction()
-
-    else:
-        print("====================================================================================")
-        print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
-        print("====================================================================================")
-        print("")
-        playersListFunction()
-
-# Export current data set into excel
-def exportToExcelPlayers():
-    # Open a window allowing the user to specify the file save path using a File Explorer
-    root = tkinter.Tk()
-    savePath =tkinter.filedialog.askdirectory()
-    root.destroy()
-    # Get the file path
-    fileName = input("What do you want to call the file? > ")
-    filePath = f"{savePath}/{today} - {fileName}.csv"
-    # Create the dictionaries for the data that we are going to print into csv
-    playerExportList = dict()
-    headerList = list()
-    headerList.append('Full_name')
-
-    for y in playersDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        formattedY = json.loads(dumpsY)
-        currentList = list()
-        firstName = formattedY['first_name']
-        secondName = formattedY['second_name']
-        fullName = f'{firstName} {secondName}'
-        for data in formattedY:
-            # Add to the current list, which is then added to the dictionary by each player - this is how we overcome garbage collection
-            currentAddition = str(formattedY[data]).strip()
-            currentList.append(currentAddition)
-            if data not in headerList:
-                headerList.append(data)
-        playerExportList[fullName] = currentList
-
-    # Open the csv with our file name and path so we can write in the data
-    with open(filePath, 'w', newline='', encoding='utf-8') as out:
-        # Create the csv writers with the settings we want (e.g. the different delimiters)
-        csv_out_tab_seperator = csv.writer(out, delimiter="\t")
-        csv_out_comma_seperator = csv.writer(out, delimiter=",")
-        csv_out_comma_seperator.writerow(headerList)
-
-        # For each player in our dictionary, run the command which writes in a row of data
-        for player in playerExportList:
-            playerClean = player.strip().replace("'","`")
-            length = len(playerExportList)-1
-            playerDumps = json.dumps(playerExportList)
-            formattedPlayer = json.loads(playerDumps)
-            currentIndex = list(playerExportList).index(player)
-            playerExportListAsString = str(playerExportList[player]).replace("'","")
-            exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
-            # write out all of the data with the tab delimiter seperating each item of the list
-            csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
-
-            # Percentage complete measured by the length of the dictionary and where the current index is in relation to the total number
-            runPercentageComplete = str(round((currentIndex/length)*100,1))
-            if runPercentageComplete != "100.0":
-                sys.stdout.write('\r'f"Creating .csv file: {runPercentageComplete}%"),
-                sys.stdout.flush()
-            else:
-                sys.stdout.write('\r'"")
-                sys.stdout.write(f"Export Successful!: {runPercentageComplete}%")
-                sys.stdout.flush()
-                print("")
-                print("")
-    endRoutine()
 
 # Try and parse text as an int. Returns integer or text
 def parse(userInput):
@@ -279,101 +117,6 @@ def endRoutine():
     else:
         sys.exit(0)
 
-# Print all of the player data in the console
-def printAllData(urlAddOn, fileName):
-
-    url = mergeURL(urlAddOn)
-
-    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
-    fileNameJSON = requests.get(url)
-    fileNameData = fileNameJSON.json()
-    fileNameDataDumps = json.dumps(fileNameData)
-    fileNameDataReadable = json.loads(fileNameDataDumps)
-
-    for x in fileNameDataReadable:
-        dumpsX = json.dumps(x)
-        readableX = json.loads(dumpsX)
-        test = fileNameDataReadable[x]
-        if isinstance(test, int) == False:
-            print(x + ":")
-            for y in fileNameDataReadable[x]:
-                dumpsY = json.dumps(y)
-                if isinstance(y,dict):
-                    formattedY = json.loads(dumpsY)
-                    for z in formattedY:
-                        print("%s: %s" % (z, formattedY[z]))
-                else:
-                    print("%s: %s" % (y, fileNameDataReadable[x][y]))
-        else:
-             print("%s: %s" % (x, fileNameDataReadable[x]))
-
-        print("")
-
-    endRoutine()
-
-# Getting the information of a player based on their surname
-def playerInfoBySurname(playerSurname):
-
-    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
-    url = mergeURL(playersSub)
-    playersJSON = requests.get(url)
-    playersData = playersJSON.json()
-    playersDataDumps = json.dumps(playersData)
-    playersDataReadable = json.loads(playersDataDumps)
-
-    for y in playersDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        playerInApi = False
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            secondName = formattedY['second_name']
-
-            #Generate a list for the headers
-            if str.lower(formattedY["second_name"]) == playerSurname:
-                
-                # Create format for printing the title
-                firstName = formattedY["first_name"]
-                secondName = formattedY["second_name"]
-                playerSummaryTitle = f"// Player summary: {firstName} {secondName}"
-                underline = "-" * len(playerSummaryTitle)
-
-                # Print the data with the title
-                
-                # TODO: Add in other metrics including ones we want to calculate
-                
-                print("")
-                print(underline)
-                print(playerSummaryTitle)
-                print(underline)
-                print("Total points: " + str(formattedY["total_points"]))
-                print("Transfers in: " + str(formattedY["transfers_in"]))
-                print("Transfers out: " + str(formattedY["transfers_out"]))
-                print("// Net Transfers: " + str(int(formattedY["transfers_in"] - formattedY["transfers_out"])))
-                print("Transfers in for gameweek: " + str(formattedY["transfers_in_event"]))
-                print("Transfers out for gameweek: " + str(formattedY["transfers_out_event"]))
-                print("// Net Transfers for gameweek: " + str(int(formattedY["transfers_in_event"] - formattedY["transfers_out_event"])))
-                print("")
-                playerInApi = True
-                break
-
-        elif playerSurname == "":
-                print("")
-                print("============================================================================")
-                print("!! ERROR: No input won't work - you need a players surname:")
-                print("============================================================================")
-                playerSurname = str.lower(input("Try again:"))
-                playerInfoBySurname(playerSurname)
-
-    if playerInApi == False:
-        print("")
-        print("===============================================================")
-        print(f"!! ERROR:Player not found - {secondName} - please check spelling and try again:")
-        print("===============================================================")
-        print("")
-        playerInApi = True
-        playerSurname = str.lower(input("Try again:"))
-        playerInfoBySurname(playerSurname)
-
 # The first stage of the program. Contains the top menu items for the console app
 def introRoutine():
     print("------------------------------------------------------------------------------")
@@ -395,6 +138,9 @@ def introRoutine():
         if userInputInt ==  1:
             playerRoutine()
 
+        if userInputInt ==  3:
+            gameweekRoutine()
+
         else:            
             print("====================================================================================")
             print("!! ERROR:Command not recognised - please pick one of the above options and try again:")
@@ -403,7 +149,7 @@ def introRoutine():
             introRoutine()
 
     elif userInput == "game week summary":
-        printAllData(playersSub, "playersSub")
+        printAllData(gameweekSummarySub, "playersSub")
 
         #TODO: Test all active URLs, Repair "Teams" URL
         # printAllData(teams, "team")
@@ -422,11 +168,68 @@ def playerRoutine():
                 print("You've said you want to take a look at the player data. You can look at:")
                 print("!! PLEASE SELECT A NUMBER")
                 print("------------------------------------------------------------------------")
+                print(" [1] All gameweek data for a player (by surname)")
+                print(" [2] All player data by gameweek (number)")
+                print("------------------------------------------------------------------------")
+                print(" [99] Test: all player ID's and generating the correlcoef")
+                print(" [100] All player data for all gameweeks (to excel)")
+                print("------------------------------------------------------------------------")
+                print("")
+                print("What would you like to see?:")
+                playerUserInputInitial = input(">")
+                print("")
+                parse(playerUserInputInitial)
+
+                if isInt(playerUserInputInitial) == True:
+                    playerUserInputInitialInt = int(playerUserInputInitial)
+                    if playerUserInputInitialInt == 1:
+                        print("----------------------------------")
+                        print("Let us know who you're looking for:")
+                        print("!! TYPE IN A SURNAME")
+                        print("----------------------------------")
+                        playerSurname = str.lower(input("> "))
+                        playerInfoBySurname(playerSurname)
+                        allPlayerDataBySurname(playerSurname)
+                        endRoutine()
+
+                    elif playerUserInputInitialInt == 2:
+                        print("----------------------------------")
+                        print("Let us know what week you're interested in:")
+                        print("!! TYPE IN A GAMEWEEK NUMBER")
+                        print("----------------------------------")
+                        gameweekNumber = str.lower(input("> "))
+                        playerInfoByGameweek(gameweekNumber)
+                        endRoutine()
+
+                    elif playerUserInputInitialInt == 99:
+                        correlcoeffGeneration()
+
+                    elif playerUserInputInitialInt == 101:
+                        llPlayersAllGameweeksToExcel()
+
+                    else:
+                        print("====================================================================================")
+                        print("!! ERROR:Command not recognised - please pick one of the above options and try again:")
+                        print("====================================================================================")
+                        print("")
+                        playerRoutine()
+
+                else:
+                    print("====================================================================================")
+                    print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
+                    print("====================================================================================")
+                    print("")
+                    playerRoutine()
+
+# Player specific section of the program. Contains the menu items for the player part of the console app
+def gameweekRoutine():
+                print("------------------------------------------------------------------------")
+                print("You've said you want to take a look at the gameweek data. You can look at:")
+                print("!! PLEASE SELECT A NUMBER")
+                print("------------------------------------------------------------------------")
                 print(" [1] All players printed in console")
                 print(" [2] A player (by surname)")
                 print(" [3] A comma seperated list of playes (by surname)")
-                print(" [4] A player (by player ID)")
-                print(" [5] All players ID's printed")
                 print("------------------------------------------------------------------------")
                 print(" [99] Print all player data to console")
                 print(" [101] Export all player data to excel")
@@ -467,7 +270,7 @@ def playerRoutine():
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:
-                        printAllData(playersSub, playersFileName)
+                        printAllData(gameweekSummarySub, playersFileName)
 
                     elif playerUserInputInitialInt == 101:
                         exportToExcelPlayers()
