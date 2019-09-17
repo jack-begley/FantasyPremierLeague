@@ -65,25 +65,34 @@ def correlcoeffGeneration():
             currentPlayerID = formattedY['id']
             playerIDs.append(currentPlayerID)
     playerIDs.sort()
-    
     # create url's for the current player and extract data from the "History" file where the game week is the current game week
     startOfTournament = datetime.datetime(2019, 8, 5)
     currentDate = datetime.datetime.now()
     dateDelta = currentDate - startOfTournament
     daysSinceTournamentStarted = dateDelta.days
     currentGameWeek = math.floor(daysSinceTournamentStarted/7)
-
-    historyByWeek = dict()
-    
+    length = len(playerIDs) - 1
+    elementsList = dict()
+    allData = dict()
     for playerID in playerIDs:
+        currentIndex = list(playerIDs).index(playerID)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Gathering data: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Player data gathered: 100%")
+            sys.stdout.flush()
+            print("")
+            print("")
+
         currentPlayerURL = mergeURL('element-summary/')+str(playerID)+'/'
         
         allPlayerJSON = requests.get(currentPlayerURL)
         allPlayerData = allPlayerJSON.json()
         allPlayerDumps = json.dumps(allPlayerData)
         allPlayerDataReadable = json.loads(allPlayerDumps)
-
-        elementsList = dict()
         currentPlayerList = dict()
 
         for data in allPlayerDataReadable['history']:        
@@ -96,21 +105,13 @@ def correlcoeffGeneration():
                 elementName = record
             # Create data list for current player assigning to each key
             for record in formattedData:
-                round = formattedData['round']
+                currentRound = formattedData['round']
                 currentPlayerList[record] = formattedData[record]
             for element in currentPlayerList:
                 if element not in elementsList:
                     elementsList[element] = (currentPlayerList[element])
                 else:
-                    elementsList[element].append(currentPlayerList[element])
+                    elementsList[element] = str(elementsList[element]) + ',' + str(currentPlayerList[element])
             currentPlayerList = dict()
-    historyByWeek.append(currentPlayerList) 
-
-
-#coreApi = 'https://fantasy.premierleague.com/api/'
-#playerSummary = "element-summary/"
-
-#playersJSON = requests.get(mergeURL(playerSummary))
-#playersData = playersJSON.json()
-#playersDataDumps = json.dumps(playersData)
-#playersDataReadable = json.loads(playersDataDumps)
+            # Convert String Dictionary into integer 
+    print("Done")
