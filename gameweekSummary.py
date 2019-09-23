@@ -120,6 +120,14 @@ def exportToExcelPlayers():
     headerList = list()
     headerList.append('Full_name')
 
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryJSON = requests.get(url)
+    gameweekSummaryData = gameweekSummaryJSON.json()
+    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
+    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+
     for y in gameweekSummaryDataReadable['elements']:
         dumpsY = json.dumps(y)
         formattedY = json.loads(dumpsY)
@@ -165,7 +173,6 @@ def exportToExcelPlayers():
                 sys.stdout.flush()
                 print("")
                 print("")
-    endRoutine()
     
 # Print all of the player data in the console
 def printAllData(urlAddOn, fileName):
@@ -201,6 +208,8 @@ def printAllData(urlAddOn, fileName):
 
 # Getting the information of a player based on their surname
 def playerInfoBySurname(playerSurname):
+
+    gameweekSummarySub = "bootstrap-static/"
 
     # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
     url = mergeURL(gameweekSummarySub)

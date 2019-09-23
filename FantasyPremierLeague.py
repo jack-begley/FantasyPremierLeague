@@ -115,6 +115,7 @@ def endRoutine():
         print("")
         introRoutine()
     else:
+
         sys.exit(0)
 
 # The first stage of the program. Contains the top menu items for the console app
@@ -205,7 +206,7 @@ def playerRoutine():
                         correlcoeffGeneration()
 
                     elif playerUserInputInitialInt == 101:
-                        llPlayersAllGameweeksToExcel()
+                        PlayersAllGameweeksToExcel()
 
                     else:
                         print("====================================================================================")
@@ -274,6 +275,7 @@ def gameweekRoutine():
 
                     elif playerUserInputInitialInt == 101:
                         exportToExcelPlayers()
+                        endRoutine()
 
                     else:
                         print("====================================================================================")
