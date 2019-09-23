@@ -1,5 +1,5 @@
 from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers
-from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel
+from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel, gatherHistoricalPlayerData
 
 """
 The FPL module.
@@ -302,7 +302,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.110")
+print("V.0.0.200")
 print("")
 print("==============================")
 print("")

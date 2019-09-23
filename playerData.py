@@ -44,7 +44,7 @@ def allPlayersAllGameweeksToExcel():
     none
 
 # Create player first & last name list (and associated dictionary)
-def correlcoeffGeneration():
+def gatherHistoricalPlayerData():
 
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDs = list()
@@ -82,11 +82,11 @@ def correlcoeffGeneration():
         currentIndex = list(playerIDs).index(playerID)
         runPercentageComplete = str(round((currentIndex/length)*100,1))
         if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"(1/3) Gather data for regression: {runPercentageComplete}%"),
+            sys.stdout.write('\r'f"(1/4) Gather data for regression: {runPercentageComplete}%"),
             sys.stdout.flush()
         else:
             sys.stdout.write('\r'"")
-            sys.stdout.write(f"(1/3) Data for regression gathered: 100%")
+            sys.stdout.write(f"(1/4) Data for regression gathered: 100%")
             sys.stdout.flush()
             print("")
 
@@ -131,6 +131,9 @@ def correlcoeffGeneration():
                 allData[element] = tempList
             else:
                 None
+    correlcoeffGeneration(elementsList)
+
+def correlcoeffGeneration(elementsList):
     # Correlation time
     correlations = dict()
     currentX = dict()
@@ -141,11 +144,11 @@ def correlcoeffGeneration():
         currentIndex = list(elementsList).index(element)
         runPercentageComplete = str(round((currentIndex/length)*100,1))
         if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"(2/3) Running regression: {runPercentageComplete}%"),
+            sys.stdout.write('\r'f"(2/4) Running regression: {runPercentageComplete}%"),
             sys.stdout.flush()
         else:
             sys.stdout.write('\r'"")
-            sys.stdout.write(f"(2/3) Regression complete: 100%")
+            sys.stdout.write(f"(2/4) Regression complete: 100%")
             sys.stdout.flush()
             print("")
         if element != 'kickoff_time':
@@ -156,9 +159,9 @@ def correlcoeffGeneration():
         else:
             None
 
-    exportPlayerDataWithCorrelcoef(allPlayerDataReadable, playerIDs)
+    exportPlayerDataByGameweek(allPlayerDataReadable, playerIDs)
 
-def exportPlayerDataWithCorrelcoef(allPlayerDataReadable, playerIDs):
+def exportPlayerDataByGameweek(allPlayerDataReadable, playerIDs):
     playerName = dict()
     
     gameweekSummarySub = "bootstrap-static/"
@@ -173,11 +176,11 @@ def exportPlayerDataWithCorrelcoef(allPlayerDataReadable, playerIDs):
         length = len(playerIDs) - 1
         runPercentageComplete = str(round((currentIndex/length)*100,1))
         if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"(3/3) Gathering data by player: {runPercentageComplete}%"),
+            sys.stdout.write('\r'f"(3/4) Gathering data by player: {runPercentageComplete}%"),
             sys.stdout.flush()
         else:
             sys.stdout.write('\r'"")
-            sys.stdout.write(f"(3/3) Data by player name gathered: 100%")
+            sys.stdout.write(f"(3/4) Data by player name gathered: 100%")
             sys.stdout.flush()
             print("")
         for element in gameweekSummaryDataReadable['elements']:
@@ -216,73 +219,54 @@ def exportPlayerDataWithCorrelcoef(allPlayerDataReadable, playerIDs):
     playerExportList = dict()
     headerList = list()
     headerList.append('Full_name')
-
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDs = list()
-    
-    gameweekSummarySub = "bootstrap-static/"
-
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryJSON = requests.get(url)
-    gameweekSummaryData = gameweekSummaryJSON.json()
-    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
-    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
-    
-
-    # Get all of the player id's
-    for ids in gameweekSummaryDataReadable['elements']:
-        dumpsIds = json.dumps(ids)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(ids,dict):
-            formattedIds = json.loads(dumpsIds)
-            currentPlayerID = formattedIds['id']
-            playerIDs.append(currentPlayerID)
-    playerIDs.sort()
-
-    for y in allPlayerDataReadable['history']:
-        dumpsY = json.dumps(y)
-        formattedY = json.loads(dumpsY)
-        currentList = list()
-        firstName = formattedY['first_name']
-        secondName = formattedY['second_name']
-        fullName = f'{firstName} {secondName}'
-        for data in formattedY:
-            # Add to the current list, which is then added to the dictionary by each player - this is how we overcome garbage collection
-            currentAddition = str(formattedY[data]).strip()
-            currentList.append(currentAddition)
-            if data not in headerList:
-                headerList.append(data)
-        playerExportList[fullName] = currentList
+    headerList.append('gameweek')
+    printed = 0
 
     # Open the csv with our file name and path so we can write in the data
     with open(filePath, 'w', newline='', encoding='utf-8') as out:
         # Create the csv writers with the settings we want (e.g. the different delimiters)
         csv_out_tab_seperator = csv.writer(out, delimiter="\t")
         csv_out_comma_seperator = csv.writer(out, delimiter=",")
-        csv_out_comma_seperator.writerow(headerList)
 
-        # For each player in our dictionary, run the command which writes in a row of data
-        for player in playerExportList:
-            playerClean = player.strip().replace("'","`")
-            length = len(playerExportList)-1
-            playerDumps = json.dumps(playerExportList)
+        for player in playerName:
+            length = len(playerName)-1
+            playerDumps = json.dumps(playerName)
             formattedPlayer = json.loads(playerDumps)
-            currentIndex = list(playerExportList).index(player)
-            playerExportListAsString = str(playerExportList[player]).replace("'","")
-            exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
-            # write out all of the data with the tab delimiter seperating each item of the list
-            csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
-
-            # Percentage complete measured by the length of the dictionary and where the current index is in relation to the total number
+            currentIndex = list(playerName).index(player)
+            playerClean = player.strip().replace("'","`")
             runPercentageComplete = str(round((currentIndex/length)*100,1))
             if runPercentageComplete != "100.0":
-                sys.stdout.write('\r'f"Creating .csv file: {runPercentageComplete}%"),
+                sys.stdout.write('\r'f"(4/4) Compiling exportable data file: {runPercentageComplete}%"),
                 sys.stdout.flush()
             else:
                 sys.stdout.write('\r'"")
-                sys.stdout.write(f"Export Successful!: {runPercentageComplete}%")
+                sys.stdout.write(f"(4/4) Exportable data file ready for use: {runPercentageComplete}%")
                 sys.stdout.flush()
                 print("")
                 print("")
 
+            for gameweek in playerName[player]:
+                gameweekData = playerName[player][gameweek]
+                gameweekDumps = json.dumps(gameweekData)
+                formattedGameweek = json.loads(gameweekDumps)
+                for data in formattedGameweek:
+                    if data not in headerList:
+                        headerList.append(data)
+                    if printed != 1:
+                        csv_out_comma_seperator.writerow(headerList)
+                        printed = 1
+
+            for gameweek in playerName[player]:
+                gameweekData = playerName[player][gameweek]
+                gameweekDumps = json.dumps(gameweekData)
+                formattedGameweek = json.loads(gameweekDumps)
+                currentList = list()
+                currentList.append(gameweek)
+                for data in formattedGameweek:
+                    currentAddition = str(formattedGameweek[data]).strip()
+                    currentList.append(currentAddition)
+                playerExportList[player] = currentList
+                playerExportListAsString = str(playerExportList[player]).replace("'","")
+                exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
+                csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
     print("Done")
