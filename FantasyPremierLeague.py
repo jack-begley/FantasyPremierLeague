@@ -1,5 +1,5 @@
 from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers
-from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel
+from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel, gatherHistoricalPlayerData
 
 """
 The FPL module.
@@ -115,6 +115,7 @@ def endRoutine():
         print("")
         introRoutine()
     else:
+
         sys.exit(0)
 
 # The first stage of the program. Contains the top menu items for the console app
@@ -205,7 +206,7 @@ def playerRoutine():
                         correlcoeffGeneration()
 
                     elif playerUserInputInitialInt == 101:
-                        llPlayersAllGameweeksToExcel()
+                        PlayersAllGameweeksToExcel()
 
                     else:
                         print("====================================================================================")
@@ -274,6 +275,7 @@ def gameweekRoutine():
 
                     elif playerUserInputInitialInt == 101:
                         exportToExcelPlayers()
+                        endRoutine()
 
                     else:
                         print("====================================================================================")
@@ -300,7 +302,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.100")
+print("V.0.0.200")
 print("")
 print("==============================")
 print("")
