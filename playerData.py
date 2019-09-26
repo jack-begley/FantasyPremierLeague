@@ -20,6 +20,7 @@ import io
 import math
 from scipy.stats.stats import pearsonr 
 from scipy.stats import linregress
+from gameweekSummary import generatePlayerIDs
 
 #Setting up url construction
 
@@ -46,26 +47,8 @@ def allPlayersAllGameweeksToExcel():
 # Create player first & last name list (and associated dictionary)
 def gatherHistoricalPlayerData():
 
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDs = list()
-    
-    gameweekSummarySub = "bootstrap-static/"
+    playerIDs = generatePlayerIDs()
 
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryJSON = requests.get(url)
-    gameweekSummaryData = gameweekSummaryJSON.json()
-    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
-    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
-    
-    # Get all of the player id's
-    for ids in gameweekSummaryDataReadable['elements']:
-        dumpsIds = json.dumps(ids)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(ids,dict):
-            formattedIds = json.loads(dumpsIds)
-            currentPlayerID = formattedIds['id']
-            playerIDs.append(currentPlayerID)
-    playerIDs.sort()
     # create url's for the current player and extract data from the "History" file where the game week is the current game week
     startOfTournament = datetime.datetime(2019, 8, 5)
     currentDate = datetime.datetime.now()
@@ -74,8 +57,6 @@ def gatherHistoricalPlayerData():
     currentGameWeek = math.floor(daysSinceTournamentStarted/7)
     length = len(playerIDs) - 1
     elementsList = dict()
-    allData = dict()
-    currentList = dict()
     tempList = list()
     # Gather the player data
     for playerID in playerIDs:
@@ -115,33 +96,48 @@ def gatherHistoricalPlayerData():
                 else:
                     elementsList[element] = str(elementsList[element]) + ',' + str(currentPlayerList[element])
             currentPlayerList = dict()
-    # Get All data into integers in a comma seperated list
-    for element in elementsList:
+
+    allData = convertStringDictToInt(elementsList, "allData")
+
+    correl = correlcoeffGeneration(allData,'total_points')
+
+    exportPlayerDataByGameweek(playerIDs)
+
+# Converts a dictionary that is string based to an integer list
+def convertStringDictToInt(inputList, outputListName):
+   # Get All data into integers in a comma seperated list
+
+    outputListName = dict()
+    currentList = dict()
+    tempList = list()
+
+    for element in inputList:
         try:
-            allData[element] = list(map(float, elementsList[element].split(',')))
+            outputListName[element] = list(map(float, inputList[element].split(',')))
         except BaseException:
             if element != "kickoff_time":
-                currentList[element] = list(map(str, elementsList[element].split(',')))
+                currentList[element] = list(map(str, inputList[element].split(',')))
                 for n in currentList[element]:
                     if n != 'None':
                         n = int((n).replace('False', '0').replace('True', '1'))
                         tempList.append(n)
                     else:
                         None
-                allData[element] = tempList
+                outputListName[element] = tempList
             else:
                 None
-    correlcoeffGeneration(elementsList)
+    return outputListName
 
-def correlcoeffGeneration(elementsList):
+# Generate coefficients between an array of data and one key in that array
+def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
     # Correlation time
     correlations = dict()
     currentX = dict()
     currentY = dict()
     currentCorrel = list()
-    for element in elementsList:
-        length = len(elementsList) - 1
-        currentIndex = list(elementsList).index(element)
+    for element in nameOfArrayToCorrelate:
+        length = len(nameOfArrayToCorrelate) - 1
+        currentIndex = list(nameOfArrayToCorrelate).index(element)
         runPercentageComplete = str(round((currentIndex/length)*100,1))
         if runPercentageComplete != "100.0":
             sys.stdout.write('\r'f"(2/4) Running regression: {runPercentageComplete}%"),
@@ -152,16 +148,18 @@ def correlcoeffGeneration(elementsList):
             sys.stdout.flush()
             print("")
         if element != 'kickoff_time':
-            currentX = allData[element]
-            currentY = allData['total_points']
+            currentX = nameOfArrayToCorrelate[element]
+            currentY = nameOfArrayToCorrelate[keyToCorrelateAgainstName]
             currentCorrel = linregress(currentX,currentY)
             correlations[element] = currentCorrel
         else:
             None
 
-    exportPlayerDataByGameweek(allPlayerDataReadable, playerIDs)
+# Export the player data by gameweek where the playerID's have been gathered
+def exportPlayerDataByGameweek(playerIDs):
 
-def exportPlayerDataByGameweek(allPlayerDataReadable, playerIDs):
+    playerIDs
+
     playerName = dict()
     
     gameweekSummarySub = "bootstrap-static/"
@@ -172,6 +170,16 @@ def exportPlayerDataByGameweek(allPlayerDataReadable, playerIDs):
     gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
     gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
     for playerID in playerIDs:
+        
+        currentPlayerURL = mergeURL('element-summary/')+str(playerID)+'/'
+        
+        allPlayerJSON = requests.get(currentPlayerURL)
+        allPlayerData = allPlayerJSON.json()
+        allPlayerDumps = json.dumps(allPlayerData)
+        allPlayerDataReadable = json.loads(allPlayerDumps)
+        
+        currentPlayerList = dict()
+        
         currentIndex = list(playerIDs).index(playerID)
         length = len(playerIDs) - 1
         runPercentageComplete = str(round((currentIndex/length)*100,1))
