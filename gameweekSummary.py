@@ -270,3 +270,27 @@ def playerInfoBySurname(playerSurname):
         playerInApi = True
         playerSurname = str.lower(input("Try again:"))
         playerInfoBySurname(playerSurname)
+
+
+def generatePlayerIDs():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDs = list()
+    
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryJSON = requests.get(url)
+    gameweekSummaryData = gameweekSummaryJSON.json()
+    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
+    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+    
+    # Get all of the player id's
+    for ids in gameweekSummaryDataReadable['elements']:
+        dumpsIds = json.dumps(ids)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(ids,dict):
+            formattedIds = json.loads(dumpsIds)
+            currentPlayerID = formattedIds['id']
+            playerIDs.append(currentPlayerID)
+    playerIDs.sort()
+    return playerIDs

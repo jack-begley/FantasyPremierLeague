@@ -1,4 +1,4 @@
-from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers
+from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers, generatePlayerIDs
 from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel, gatherHistoricalPlayerData
 
 """
@@ -203,7 +203,7 @@ def playerRoutine():
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:
-                        correlcoeffGeneration()
+                        gatherHistoricalPlayerData()
 
                     elif playerUserInputInitialInt == 101:
                         PlayersAllGameweeksToExcel()
