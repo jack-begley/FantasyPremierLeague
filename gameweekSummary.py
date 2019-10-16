@@ -16,95 +16,11 @@ from tkinter import Tk
 import sys, traceback
 import re
 import io
-
-
-#Setting up url construction
-
-def mergeURL(sub):
-    return 'https://fantasy.premierleague.com/api/' + sub;
-# Syntax e.g. = print(mergeURL(userSummary))
+from genericMethods import *
 
 # URL set up and league codes
 from datetime import date
 today = date.today()
-
-# Create player first & last name list (and associated dictionary)
-def playersListFunction():
-
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    gameweekSummaryListFull = list()
-    gameweekSummaryListSecond = list()
-
-    
-    gameweekSummarySub = "bootstrap-static/"
-
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryJSON = requests.get(url)
-    gameweekSummaryData = gameweekSummaryJSON.json()
-    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
-    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
-
-    
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            firstName = formattedY['first_name']
-            secondName = formattedY['second_name']
-            secondNameNoLead = secondName.lstrip()
-            fullName = f'{firstName} {secondName}'
-            gameweekSummaryListFull.append(fullName)
-            gameweekSummaryListSecond.append(secondNameNoLead)
-
-            # Print the options to the console   
-            print("------------------------------------")
-            print("How would you like to see the output?")
-            print("------------------------------------")
-            print(" [1] Full list")
-            print(" [2] Comma seperated list  of surnames")
-            print("------------------------------------")
-            playerListInput = input(" > ")
-            # try and put the input in as an integer
-            parse(playerListInput)
-            if isInt(playerListInput):
-                if int(playerListInput) == 1:
-                    for player in gameweekSummaryListFull:
-                        print(player)
-                        endRoutine()
-                elif int(playerListInput) == 2:
-                    gameweekSummaryListCleaned = str(gameweekSummaryListSecond).replace("'","").replace("[","").replace("]","")
-                    print(gameweekSummaryListCleaned)
-                    copyTo = Tk()
-                    copyTo.clipboard_clear()
-                    copyTo.clipboard_append(gameweekSummaryListCleaned)
-                    copyTo.update()
-                    copyTo.destroy()
-                    print("")
-                    print("// This has been copied to your clipboard.")
-                    print("")
-                    endRoutine()
-                else:
-                    print("======================================================================================")
-                    print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
-                    print("======================================================================================")
-                    print("")
-                    gameweekSummaryListFunction()
-
-            else:
-                print("====================================================================================")
-                print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
-                print("====================================================================================")
-                print("")
-                gameweekSummaryListFunction()
-
-        else:
-            print("====================================================================================")
-            print("!! ERROR: // Array not in correct format")
-            print("====================================================================================")
-            print("")
-            endRoutine()
 
 # Export current data set into excel
 def exportToExcelPlayers():
@@ -279,10 +195,7 @@ def generatePlayerIDs():
     gameweekSummarySub = "bootstrap-static/"
 
     url = mergeURL(gameweekSummarySub)
-    gameweekSummaryJSON = requests.get(url)
-    gameweekSummaryData = gameweekSummaryJSON.json()
-    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
-    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
     
     # Get all of the player id's
     for ids in gameweekSummaryDataReadable['elements']:
