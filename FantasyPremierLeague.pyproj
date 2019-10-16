@@ -25,6 +25,9 @@
     <Compile Include="gameweekSummary.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="genericMethods.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="playerData.py">
       <SubType>Code</SubType>
     </Compile>

@@ -1,5 +1,6 @@
-from gameweekSummary import playersListFunction, playerInfoBySurname, printAllData, exportToExcelPlayers, generatePlayerIDs
-from playerData import allPlayerDataBySurname, playerInfoByGameweek, correlcoeffGeneration, allPlayersAllGameweeksToExcel, gatherHistoricalPlayerData
+from gameweekSummary import *
+from playerData import *
+from genericMethods import *
 
 """
 The FPL module.
@@ -88,21 +89,6 @@ brooksID = 699088
 savantaID = 806190
 mrsbainesID = 1164443
 
-# Try and parse text as an int. Returns integer or text
-def parse(userInput):
-    try:
-        return int(userInput)
-    except ValueError:
-       return str(userInput)
-                
-# Try and parse and int. Results in boolean outputs
-def isInt(userInput):
-    try: 
-        int(userInput)
-        return True
-    except ValueError:
-        return False
-
 # Quit the program if the user decides they want to leave
 def endRoutine():
     print("// Would you like to run another function?")
@@ -169,11 +155,16 @@ def playerRoutine():
                 print("You've said you want to take a look at the player data. You can look at:")
                 print("!! PLEASE SELECT A NUMBER")
                 print("------------------------------------------------------------------------")
-                print(" [1] All gameweek data for a player (by surname)")
-                print(" [2] All player data by gameweek (number)")
-                print("------------------------------------------------------------------------")
+                print(" Print to console:")
+                print(" [1] Single player data for current gameweek (by surname)")
+                print(" [2] All gameweek data for a player (by surname)")
+                print(" [3] All player data by gameweek (number)")
+                print("")
+                print(" Data Exports: ")
+                print(" [4] All player data for all gameweeks (to excel)")
+                print("")
+                print(" TEST:")
                 print(" [99] Test: all player ID's and generating the correlcoef")
-                print(" [100] All player data for all gameweeks (to excel)")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -184,29 +175,48 @@ def playerRoutine():
                 if isInt(playerUserInputInitial) == True:
                     playerUserInputInitialInt = int(playerUserInputInitial)
                     if playerUserInputInitialInt == 1:
-                        print("----------------------------------")
+                        print("-----------------------------------")
                         print("Let us know who you're looking for:")
                         print("!! TYPE IN A SURNAME")
-                        print("----------------------------------")
+                        print("-----------------------------------")
                         playerSurname = str.lower(input("> "))
                         playerInfoBySurname(playerSurname)
-                        allPlayerDataBySurname(playerSurname)
                         endRoutine()
 
-                    elif playerUserInputInitialInt == 2:
-                        print("----------------------------------")
+                    if playerUserInputInitialInt == 2:
+                        print("-----------------------------------")
+                        print("Let us know who you're looking for:")
+                        print("!! TYPE IN A SURNAME")
+                        print("-----------------------------------")
+                        playerSurname = str.lower(input("> "))
+                        playerData = allPlayerDataBySurname(playerSurname)
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            printListToExcel(playerData)
+                        else:
+                            endRoutine()
+
+                    elif playerUserInputInitialInt == 3:
+                        print("-------------------------------------------")
                         print("Let us know what week you're interested in:")
                         print("!! TYPE IN A GAMEWEEK NUMBER")
-                        print("----------------------------------")
+                        print("-------------------------------------------")
                         gameweekNumber = str.lower(input("> "))
                         playerInfoByGameweek(gameweekNumber)
                         endRoutine()
 
-                    elif playerUserInputInitialInt == 99:
-                        gatherHistoricalPlayerData()
+                    elif playerUserInputInitialInt == 4:
+                        playerIDs = generatePlayerIDs()
+                        exportPlayerDataByGameweek(playerIDs)
 
-                    elif playerUserInputInitialInt == 101:
-                        PlayersAllGameweeksToExcel()
+                    elif playerUserInputInitialInt == 99:
+                        elementsList = gatherHistoricalPlayerData()
+                        allData = convertStringDictToInt(elementsList, "allData")
+                        correl = correlcoeffGeneration(allData,'total_points')
 
                     else:
                         print("====================================================================================")
@@ -244,7 +254,46 @@ def gameweekRoutine():
                 if isInt(playerUserInputInitial) == True:
                     playerUserInputInitialInt = int(playerUserInputInitial)
                     if playerUserInputInitialInt == 1:
-                        playersListFunction()
+                        generatePlayersFullNameList()
+                        print("------------------------------------")
+                        print("How would you like to see the output?")
+                        print("------------------------------------")
+                        print(" [1] Full list")
+                        print(" [2] Comma seperated list  of surnames")
+                        print("------------------------------------")
+                        playerListInput = input(" > ")
+                        # try and put the input in as an integer
+                        parse(playerListInput)
+                        if isInt(playerListInput):
+                            if int(playerListInput) == 1:
+                                for player in gameweekSummaryListFull:
+                                    print(player)
+                            elif int(playerListInput) == 2:
+                                gameweekSummaryListCleaned = str(gameweekSummaryListSecond).replace("'","").replace("[","").replace("]","")
+                                print(gameweekSummaryListCleaned)
+                                copyTo = Tk()
+                                copyTo.clipboard_clear()
+                                copyTo.clipboard_append(gameweekSummaryListCleaned)
+                                copyTo.update()
+                                copyTo.destroy()
+                                print("")
+                                print("// This has been copied to your clipboard.")
+                                print("")
+                                return
+                            else:
+                                print("======================================================================================")
+                                print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
+                                print("======================================================================================")
+                                print("")
+                                generatePlayersFullNameList()
+
+                        else:
+                            print("====================================================================================")
+                            print("!! ERROR:Input was not a number - please pick one of the above options and try again:")
+                            print("====================================================================================")
+                            print("")
+                            generatePlayersFullNameList()
+
 
                     elif playerUserInputInitialInt == 2:
                         print("----------------------------------")
@@ -302,7 +351,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.200")
+print("V.0.0.210")
 print("")
 print("==============================")
 print("")
