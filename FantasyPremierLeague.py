@@ -190,13 +190,15 @@ def playerRoutine():
                         print("-----------------------------------")
                         playerSurname = str.lower(input("> "))
                         playerData = allPlayerDataBySurname(playerSurname)
+                        print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
                         print("!! TYPE IN Y/N")
                         print("-----------------------------------")
                         userInput = str.lower(input("> "))
                         if userInput == 'y':
-                            printListToExcel(playerData)
+                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
+                            printListToExcel(playerData, gameweekHeaders)
                         else:
                             endRoutine()
 
