@@ -243,6 +243,8 @@ def gameweekRoutine():
                 print(" [1] All players printed in console")
                 print(" [2] A player (by surname)")
                 print(" [3] A comma seperated list of playes (by surname)")
+                print(" [4] Top 10 net transfers in this week")
+                print(" [5] Top 10 net transfers out this week")
                 print("------------------------------------------------------------------------")
                 print(" [99] Print all player data to console")
                 print(" [101] Export all player data to excel")
@@ -319,6 +321,14 @@ def gameweekRoutine():
                             playerList.append(i.strip())
                         for playerSurname in playerList:
                             playerInfoBySurname(playerSurname)
+                        endRoutine()
+                    
+                    elif playerUserInputInitialInt == 4:
+                        mostNetTransfersIn()
+                        endRoutine()
+                    
+                    elif playerUserInputInitialInt == 5:
+                        mostNetTransfersOut()
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:

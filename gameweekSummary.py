@@ -187,7 +187,7 @@ def playerInfoBySurname(playerSurname):
         playerSurname = str.lower(input("Try again:"))
         playerInfoBySurname(playerSurname)
 
-
+# Generates a list of player ID's and the associated player name as the key
 def generatePlayerIDs():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDs = list()
@@ -207,3 +207,69 @@ def generatePlayerIDs():
             playerIDs.append(currentPlayerID)
     playerIDs.sort()
     return playerIDs
+
+# Pulls up the top 10 net transfers in
+def mostNetTransfersIn():
+    netTransfersByPlayer = dict()
+    
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+
+    for data in gameweekSummaryDataReadable['elements']:
+        dumpsIds = json.dumps(data)
+        formattedIds = json.loads(dumpsIds)
+        firstName = formattedIds['first_name']
+        secondName = formattedIds['second_name']
+        fullName = f'{firstName} {secondName}'
+        transfersIn = formattedIds['transfers_in_event']
+        transfersOut = formattedIds['transfers_out_event']
+        netTransfers = transfersIn - transfersOut
+        netTransfersByPlayer[fullName] = netTransfers
+
+    sortedNetTransfers = list(reversed(sorted(netTransfersByPlayer.items(), key = lambda x : x[1])))
+
+    topIndex = 0
+    top10MostTransferedIn = list()
+
+    while topIndex <= 9:
+         top10MostTransferedIn.append(sortedNetTransfers[topIndex])
+         topIndex = topIndex + 1
+
+    return top10MostTransferedIn
+
+
+# Pulls up the top 10 net transfers out
+def mostNetTransfersOut():
+    netTransfersByPlayer = dict()
+    
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+
+    for data in gameweekSummaryDataReadable['elements']:
+        dumpsIds = json.dumps(data)
+        formattedIds = json.loads(dumpsIds)
+        firstName = formattedIds['first_name']
+        secondName = formattedIds['second_name']
+        fullName = f'{firstName} {secondName}'
+        transfersIn = formattedIds['transfers_in_event']
+        transfersOut = formattedIds['transfers_out_event']
+        netTransfers = transfersIn - transfersOut
+        netTransfersByPlayer[fullName] = netTransfers
+
+    sortedNetTransfers = list(sorted(netTransfersByPlayer.items(), key = lambda x : x[1]))
+
+    bottomIndex = 0
+    top10MostTransferedOut = list()
+
+    while bottomIndex <= 9:
+         top10MostTransferedOut.append(sortedNetTransfers[bottomIndex])
+         bottomIndex = bottomIndex + 1
+
+    return top10MostTransferedOut
+
+
+     
