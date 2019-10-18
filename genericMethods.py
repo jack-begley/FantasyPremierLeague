@@ -1,5 +1,7 @@
 import requests
 import json
+import math
+import datetime
 from tkinter import filedialog
 from tkinter import Tk
 import tkinter 
@@ -23,6 +25,18 @@ def generateJSONDumpsReadable(url):
 
         return Readable
 
+# Generates a comma seperated list of the gameweek numbers (currently with 'gameweek' in position 0)
+def generateCommaSeperatedGameweekNumberList():
+    currentGameweek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
+    gameweekList = list()
+    gameweekList.append('gameweek')
+    x = 1
+    while x < currentGameweek:
+        gameweekList.append(x)
+        x = x + 1
+    return gameweekList
+
+
 # Try and parse text as an int. Returns integer or text
 def parse(userInput):
     try:
@@ -44,7 +58,7 @@ def unicodeReplace(string):
     return cleanedString
 
 # prints comma seperated lists to excel, where the keys are the headers: NOTE: Doesn't work for multi-layered lists
-def printListToExcel(listNameToPrintToExcel):
+def printListToExcel(listNameToPrintToExcel,commaSeperatedHeadersList):
     # Open a window allowing the user to specify the file save path using a File Explorer
     root = tkinter.Tk()
     savePath =tkinter.filedialog.askdirectory()
@@ -63,13 +77,15 @@ def printListToExcel(listNameToPrintToExcel):
         csv_out_tab_seperator = csv.writer(out, delimiter="\t")
         csv_out_comma_seperator = csv.writer(out, delimiter=",")
 
-        for dataKey in listNameToPrintToExcel:
-            if dataKey not in headerList:
-                headerList.append(dataKey)
-            else:
-                if printed != 1:
-                    csv_out_comma_seperator.writerow(headerList)
-                    printed = 1
+        commaSeperatedHeadersList = str(commaSeperatedHeadersList).replace("'","")
+        cleanedHeaderList = commaSeperatedHeadersList.replace('[','').replace(']','').replace('"',"")
+        csv_out_tab_seperator.writerow([f'{cleanedHeaderList}'])
 
-            for dataPoint in listNameToPrintToExcel[dataKey]:
-                csv_out_tab_seperator.writerow([dataPoint])
+        for dataPoint in listNameToPrintToExcel:
+            currentList = list()
+            currentAddition = str(listNameToPrintToExcel[dataPoint]).strip()
+            currentList.append(currentAddition)
+            listNameToPrintToExcel[dataPoint] = currentList
+            listNameToPrintToExcelAsString = str(listNameToPrintToExcel[dataPoint]).replace("'","")
+            exportableData = listNameToPrintToExcelAsString.replace('[','').replace(']','').replace('"',"")
+            csv_out_tab_seperator.writerow([f'{dataPoint},{exportableData}'])
