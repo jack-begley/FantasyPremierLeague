@@ -187,7 +187,7 @@ def playerInfoBySurname(playerSurname):
         playerSurname = str.lower(input("Try again:"))
         playerInfoBySurname(playerSurname)
 
-# Create a list of all player ID's 
+# Generates a list of player ID's and the associated player name as the key
 def generatePlayerIDs():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDs = list()
@@ -207,6 +207,7 @@ def generatePlayerIDs():
             playerIDs.append(currentPlayerID)
     playerIDs.sort()
     return playerIDs
+    
 # Pulls up the top 10 net transfers in
 def mostNetTransfersIn(numberToDisplayUpTo):
     netTransfersByPlayer = dict()
