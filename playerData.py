@@ -85,7 +85,8 @@ def generatePlayersFullNameList():
             secondName = formattedY['second_name']
             fullName = f'{firstName} {secondName}'
             gameweekSummaryListFull.append(fullName)
-    return generatePlayersFullNameList
+
+    return gameweekSummaryListFull
 
 # Create player id list
 def generatePlayersIdsList():
@@ -106,7 +107,7 @@ def generatePlayersIdsList():
     
     return playerIDList
 
-# Create player id list (and associated surname)
+# Create player id list (and associated surname as the key)
 def generatePlayerIDToNameMatching():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDMatchList = dict()
@@ -124,6 +125,27 @@ def generatePlayerIDToNameMatching():
             cleanedSecondName = str.lower(unicodeReplace(secondName))
             id = formattedY['id']
             playerIDMatchList[cleanedSecondName] = id
+
+    return playerIDMatchList
+
+# Create player name list (and associated id as key)
+def generatePlayerNameToIDMatching():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            secondName = formattedY['second_name']
+            cleanedSecondName = str.lower(unicodeReplace(secondName))
+            id = formattedY['id']
+            playerIDMatchList[id] = cleanedSecondName
 
     return playerIDMatchList
 
@@ -162,8 +184,6 @@ def gatherHistoricalPlayerData():
             formattedData = json.loads(dumpsData)
             gameweek = formattedData['round']
             id = formattedData['element']
-            for record in formattedData:
-                elementName = record
             # Create data list for current player assigning to each key
             for record in formattedData:
                 currentRound = formattedData['round']
@@ -177,55 +197,95 @@ def gatherHistoricalPlayerData():
 
     return elementsList
 
+# Gather previous gameweeks data
+def gatherPreviousGameweekDataByPlayer():
+    playerNames = generatePlayerIDToNameMatching()
+    currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
+    focusGameWeek = currentGameWeek - 1
+    # DELETE AFTER TESTING: =====================================================================================================================================================
+    focusGameWeek = 8
+    #============================================================================================================================================================================
+    length = len(playerNames) - 1
+    playerDataFinal = dict()
+    # Gather the player data
+    for playerName in playerNames:
+        playerID = playerNames[playerName]
+        currentPlayerData = dict()
+        currentIndex = list(playerNames).index(playerName)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Calculating player index: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Player index calculation completed: 100%")
+            sys.stdout.flush()
+            print("")
+
+        allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+
+        currentPlayerList = dict()
+
+        for data in allPlayerDataReadable['history']:    
+            if data['round'] == focusGameWeek:
+                playerDataFinal[playerName] = data
+
+    return playerDataFinal
+
+# Calculate the Max number of a dictionary array
+def calculateMaxNumberInArray(arrayToCalculateMaxFrom):
+    dictOfMaxNumbersByKey = dict()
+    for key in arrayToCalculateMaxFrom:
+        maxNumbers = max(list(arrayToCalculateMaxFrom[key]))
+        dictOfMaxNumbersByKey[key] = maxNumbers
+    return dictOfMaxNumbersByKey
+
+# Calculate the Max number in a dictionary array
+def calculateMinNumberInArray(arrayToCalculateMinFrom):
+    dictOfMinNumbersByKey = dict()
+    for key in arrayToCalculateMinFrom:
+        minNumbers = min(list(arrayToCalculateMinFrom[key]))
+        dictOfMinNumbersByKey[key] = minNumbers
+    return dictOfMinNumbersByKey
+
+def createPlayerIndexing(playerDataDict, correlListWithMatchingKeys, listOfMaxValues, listOfMinValues):
+    finalPlayerIndex = dict()
+    for player in playerDataDict:
+        currentPlayerList = dict()
+        for key in playerDataDict[player]:
+            if key != 'kickoff_time':
+                currentPlayerData = playerDataDict[player]
+                correlConstant = correlListWithMatchingKeys[key]
+                currentData = float(currentPlayerData[key])
+                currentIndex = correlConstant * currentData
+                currentPlayerList[key] = currentIndex
+        finalPlayerIndex[player] =  currentPlayerList
+
+    return finalPlayerIndex
+        
+
 # Converts a dictionary that is string based to an integer list
+
 def convertStringDictToInt(inputList, outputListName):
    # Get All data into integers in a comma seperated list
     outputListName = dict()
-    currentList = dict()
+    currentDict = dict()
     tempList = list()
     for element in inputList:
         try:
             outputListName[element] = list(map(float, inputList[element].split(',')))
         except BaseException:
             if element != "kickoff_time":
-                currentList[element] = list(map(str, inputList[element].split(',')))
-                for n in currentList[element]:
-                    if n != 'None':
-                        n = int((n).replace('False', '0').replace('True', '1'))
+                currentDict[element] = list(map(str, inputList[element].split(',')))
+                for n in currentDict[element]:
+                        n = int((n).replace('False', '0').replace('True', '1').replace('None', '-1'))
                         tempList.append(n)
-                    else:
-                        None
                 outputListName[element] = tempList
+                currentDict = dict()
+                tempList = list()
             else:
                 None
     return outputListName
-
-# Generate coefficients between an array of data and one key in that array
-def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
-    # Correlation time
-    correlations = dict()
-    currentX = dict()
-    currentY = dict()
-    currentCorrel = list()
-    for element in nameOfArrayToCorrelate:
-        length = len(nameOfArrayToCorrelate) - 1
-        currentIndex = list(nameOfArrayToCorrelate).index(element)
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Running regression: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Regression complete: 100%")
-            sys.stdout.flush()
-            print("")
-        if element != 'kickoff_time':
-            currentX = nameOfArrayToCorrelate[element]
-            currentY = nameOfArrayToCorrelate[keyToCorrelateAgainstName]
-            currentCorrel = linregress(currentX,currentY)
-            correlations[element] = currentCorrel
-        else:
-            None
 
 # Export the player data by gameweek where the playerID's have been gathered
 def exportPlayerDataByGameweek(playerIDs):
@@ -335,3 +395,15 @@ def exportPlayerDataByGameweek(playerIDs):
                 exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
                 csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
     print("Done")
+
+# Creates a list for the r value of each attribute in a correlation list
+def rValuesPerField(correlationDictByAttribute):
+    attributeRValues = dict()
+    for attribute in correlationDictByAttribute:
+        currentRValue = correlationDictByAttribute[attribute][2]
+        attributeRValues[attribute] = currentRValue
+    return attributeRValues
+
+# Generates a score for each player based off their current scores for a give field multiplied by the r value a linear regression
+def playerIndex(rValueListByFields, PlayerDataForEachFieldForCurrentWeek):
+    None

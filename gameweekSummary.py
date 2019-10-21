@@ -187,7 +187,7 @@ def playerInfoBySurname(playerSurname):
         playerSurname = str.lower(input("Try again:"))
         playerInfoBySurname(playerSurname)
 
-
+# Create a list of all player ID's 
 def generatePlayerIDs():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDs = list()
