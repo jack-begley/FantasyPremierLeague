@@ -1,11 +1,14 @@
 import requests
 import json
 import math
+from scipy.stats.stats import pearsonr 
+from scipy.stats import linregress
 import datetime
 from tkinter import filedialog
 from tkinter import Tk
 import tkinter 
 import csv 
+import sys, traceback
 
 # URL set up and league codes
 from datetime import date
@@ -35,7 +38,6 @@ def generateCommaSeperatedGameweekNumberList():
         gameweekList.append(x)
         x = x + 1
     return gameweekList
-
 
 # Try and parse text as an int. Returns integer or text
 def parse(userInput):
@@ -89,3 +91,48 @@ def printListToExcel(listNameToPrintToExcel,commaSeperatedHeadersList):
             listNameToPrintToExcelAsString = str(listNameToPrintToExcel[dataPoint]).replace("'","")
             exportableData = listNameToPrintToExcelAsString.replace('[','').replace(']','').replace('"',"")
             csv_out_tab_seperator.writerow([f'{dataPoint},{exportableData}'])
+
+# Generate coefficients between an array of data and one key in that array
+def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
+    # Correlation time
+    correlations = dict()
+    currentX = dict()
+    currentY = dict()
+    currentCorrel = list()
+    for element in nameOfArrayToCorrelate:
+        length = len(nameOfArrayToCorrelate) - 1
+        currentIndex = list(nameOfArrayToCorrelate).index(element)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Running regression: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Regression complete: 100%")
+            sys.stdout.flush()
+            print("")
+        if element != 'kickoff_time':
+            currentX = nameOfArrayToCorrelate[element]
+            currentY = nameOfArrayToCorrelate[keyToCorrelateAgainstName]
+            currentCorrel = linregress(currentX,currentY)
+            correlations[element] = currentCorrel
+        else:
+            None
+    
+    return correlations
+
+# Index all data in a dictionary with 2 levels to 100 (where max is 100 and min is 0)
+
+def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, listOfCorrespondingMinValues):
+    finalPlayerIndexedData = dict()
+    for player in listOfDataToIndex:
+        indexedValues = dict()
+        for key in listOfDataToIndex[player]:
+            currentPlayerDataToIterate = listOfDataToIndex[player]
+            if key == 'kickoff_time':
+                None
+            else:
+                indexedValue = (float(currentPlayerDataToIterate[key])-listOfCorrespondingMinValues[key])/(listOfCorrespondingMaxValues[key]-listOfCorrespondingMinValues[key])*100
+                indexedValues[key] = indexedValue
+        finalPlayerIndexedData[player] = indexedValues
+    return finalPlayerIndexedData

@@ -219,6 +219,12 @@ def playerRoutine():
                         elementsList = gatherHistoricalPlayerData()
                         allData = convertStringDictToInt(elementsList, "allData")
                         correl = correlcoeffGeneration(allData,'total_points')
+                        currentRList = rValuesPerField(correl)
+                        minList = calculateMinNumberInArray(allData)
+                        maxList = calculateMaxNumberInArray(allData)
+                        dataByPlayerForPreviousWeek = gatherPreviousGameweekDataByPlayer()
+                        indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
+                        finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
 
                     else:
                         print("====================================================================================")
@@ -258,7 +264,7 @@ def gameweekRoutine():
                 if isInt(playerUserInputInitial) == True:
                     playerUserInputInitialInt = int(playerUserInputInitial)
                     if playerUserInputInitialInt == 1:
-                        generatePlayersFullNameList()
+                        gameweekSummaryListFull = generatePlayersFullNameList()
                         print("------------------------------------")
                         print("How would you like to see the output?")
                         print("------------------------------------")
@@ -289,7 +295,6 @@ def gameweekRoutine():
                                 print("!! ERROR:Command wasn't recognised- please pick one of the above options and try again:")
                                 print("======================================================================================")
                                 print("")
-                                generatePlayersFullNameList()
 
                         else:
                             print("====================================================================================")
@@ -297,7 +302,7 @@ def gameweekRoutine():
                             print("====================================================================================")
                             print("")
                             generatePlayersFullNameList()
-
+                        endRoutine()
 
                     elif playerUserInputInitialInt == 2:
                         print("----------------------------------")
@@ -322,13 +327,24 @@ def gameweekRoutine():
                         for playerSurname in playerList:
                             playerInfoBySurname(playerSurname)
                         endRoutine()
-                    
+                        
+
                     elif playerUserInputInitialInt == 4:
-                        mostNetTransfersIn()
+                        print("-------------------------------------------")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:")
+                        print("!! TYPE IN A NUMBER")
+                        print("-------------------------------------------")
+                        numberOfRecordsToShow = str.lower(input("> "))
+                        mostNetTransfersIn(numberOfRecordsToShow)
                         endRoutine()
-                    
+
                     elif playerUserInputInitialInt == 5:
-                        mostNetTransfersOut()
+                        print("-------------------------------------------")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:")
+                        print("!! TYPE IN A NUMBER")
+                        print("-------------------------------------------")
+                        numberOfRecordsToShow = str.lower(input("> "))
+                        mostNetTransfersOut(numberOfRecordsToShow)
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:

@@ -207,11 +207,11 @@ def generatePlayerIDs():
             playerIDs.append(currentPlayerID)
     playerIDs.sort()
     return playerIDs
-
-# Pulls up the top 10 net transfers in
-def mostNetTransfersIn():
-    netTransfersByPlayer = dict()
     
+# Pulls up the top 10 net transfers in
+def mostNetTransfersIn(numberToDisplayUpTo):
+    netTransfersByPlayer = dict()
+
     gameweekSummarySub = "bootstrap-static/"
 
     url = mergeURL(gameweekSummarySub)
@@ -231,9 +231,10 @@ def mostNetTransfersIn():
     sortedNetTransfers = list(reversed(sorted(netTransfersByPlayer.items(), key = lambda x : x[1])))
 
     topIndex = 0
+    x = numberToDisplayUpTo - 1
     top10MostTransferedIn = list()
 
-    while topIndex <= 9:
+    while topIndex <= x:
          top10MostTransferedIn.append(sortedNetTransfers[topIndex])
          topIndex = topIndex + 1
 
@@ -241,9 +242,9 @@ def mostNetTransfersIn():
 
 
 # Pulls up the top 10 net transfers out
-def mostNetTransfersOut():
+def mostNetTransfersOut(numberToDisplayUpTo):
     netTransfersByPlayer = dict()
-    
+
     gameweekSummarySub = "bootstrap-static/"
 
     url = mergeURL(gameweekSummarySub)
@@ -263,13 +264,11 @@ def mostNetTransfersOut():
     sortedNetTransfers = list(sorted(netTransfersByPlayer.items(), key = lambda x : x[1]))
 
     bottomIndex = 0
+    x = numberToDisplayUpTo - 1
     top10MostTransferedOut = list()
 
-    while bottomIndex <= 9:
+    while bottomIndex <= x:
          top10MostTransferedOut.append(sortedNetTransfers[bottomIndex])
          bottomIndex = bottomIndex + 1
 
     return top10MostTransferedOut
-
-
-     
