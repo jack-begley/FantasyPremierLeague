@@ -134,6 +134,5 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
             else:
                 indexedValue = (float(currentPlayerDataToIterate[key])-listOfCorrespondingMinValues[key])/(listOfCorrespondingMaxValues[key]-listOfCorrespondingMinValues[key])*100
                 indexedValues[key] = indexedValue
-    finalPlayerIndexedData[player] = indexedValues
-
+        finalPlayerIndexedData[player] = indexedValues
     return finalPlayerIndexedData

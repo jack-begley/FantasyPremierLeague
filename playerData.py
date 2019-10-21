@@ -248,20 +248,25 @@ def calculateMinNumberInArray(arrayToCalculateMinFrom):
         dictOfMinNumbersByKey[key] = minNumbers
     return dictOfMinNumbersByKey
 
-def createPlayerIndexing(playerDataDict, correlListWithMatchingKeys, listOfMaxValues, listOfMinValues):
+# Multiply one factor by another where there are two dictionaries that have matching keys - Player and Correlation data
+def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
     finalPlayerIndex = dict()
-    for player in playerDataDict:
-        currentPlayerList = dict()
-        for key in playerDataDict[player]:
+    for player in dataToMatchToCorrelList:
+        previousIndex = float()
+        currentPlayerList = list()
+        for key in dataToMatchToCorrelList[player]:
+            currentIndex = float()
             if key != 'kickoff_time':
-                currentPlayerData = playerDataDict[player]
+                currentPlayerData = dataToMatchToCorrelList[player]
                 correlConstant = correlListWithMatchingKeys[key]
                 currentData = float(currentPlayerData[key])
                 currentIndex = correlConstant * currentData
-                currentPlayerList[key] = currentIndex
-        finalPlayerIndex[player] =  currentPlayerList
+                previousIndex = currentIndex + previousIndex
+        finalPlayerIndex[player] =  previousIndex
 
-    return finalPlayerIndex
+    sortedFinalPlayerData = list(reversed(sorted(finalPlayerIndex.items(), key = lambda x : x[1])))
+
+    return sortedFinalPlayerData
         
 
 # Converts a dictionary that is string based to an integer list
@@ -403,7 +408,3 @@ def rValuesPerField(correlationDictByAttribute):
         currentRValue = correlationDictByAttribute[attribute][2]
         attributeRValues[attribute] = currentRValue
     return attributeRValues
-
-# Generates a score for each player based off their current scores for a give field multiplied by the r value a linear regression
-def playerIndex(rValueListByFields, PlayerDataForEachFieldForCurrentWeek):
-    None

@@ -207,3 +207,67 @@ def generatePlayerIDs():
             playerIDs.append(currentPlayerID)
     playerIDs.sort()
     return playerIDs
+# Pulls up the top 10 net transfers in
+def mostNetTransfersIn(numberToDisplayUpTo):
+    netTransfersByPlayer = dict()
+
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+
+    for data in gameweekSummaryDataReadable['elements']:
+        dumpsIds = json.dumps(data)
+        formattedIds = json.loads(dumpsIds)
+        firstName = formattedIds['first_name']
+        secondName = formattedIds['second_name']
+        fullName = f'{firstName} {secondName}'
+        transfersIn = formattedIds['transfers_in_event']
+        transfersOut = formattedIds['transfers_out_event']
+        netTransfers = transfersIn - transfersOut
+        netTransfersByPlayer[fullName] = netTransfers
+
+    sortedNetTransfers = list(reversed(sorted(netTransfersByPlayer.items(), key = lambda x : x[1])))
+
+    topIndex = 0
+    x = numberToDisplayUpTo - 1
+    top10MostTransferedIn = list()
+
+    while topIndex <= x:
+         top10MostTransferedIn.append(sortedNetTransfers[topIndex])
+         topIndex = topIndex + 1
+
+    return top10MostTransferedIn
+
+
+# Pulls up the top 10 net transfers out
+def mostNetTransfersOut(numberToDisplayUpTo):
+    netTransfersByPlayer = dict()
+
+    gameweekSummarySub = "bootstrap-static/"
+
+    url = mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+
+    for data in gameweekSummaryDataReadable['elements']:
+        dumpsIds = json.dumps(data)
+        formattedIds = json.loads(dumpsIds)
+        firstName = formattedIds['first_name']
+        secondName = formattedIds['second_name']
+        fullName = f'{firstName} {secondName}'
+        transfersIn = formattedIds['transfers_in_event']
+        transfersOut = formattedIds['transfers_out_event']
+        netTransfers = transfersIn - transfersOut
+        netTransfersByPlayer[fullName] = netTransfers
+
+    sortedNetTransfers = list(sorted(netTransfersByPlayer.items(), key = lambda x : x[1]))
+
+    bottomIndex = 0
+    x = numberToDisplayUpTo - 1
+    top10MostTransferedOut = list()
+
+    while bottomIndex <= x:
+         top10MostTransferedOut.append(sortedNetTransfers[bottomIndex])
+         bottomIndex = bottomIndex + 1
+
+    return top10MostTransferedOut
