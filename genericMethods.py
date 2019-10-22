@@ -146,10 +146,10 @@ def correlcoeffGenerationForPrediction(nameOfArrayToCorrelate, dictOfDataWeAreLo
             currentX = nameOfArrayToCorrelate[element]
             lenX = len(currentX)
             if lenX > lenY:
-                currentX = dict(currentX.items()[0:lenY])
+                currentX = currentX[:lenY]
                 currentCorrel = linregress(currentX,currentY)   
             elif lenY > lenX:
-                currentY = dict(currentY.items()[0:lenX])
+                currentY = currentY[:lenX]
                 currentCorrel = linregress(currentX,currentY)
                 for values in dictOfDataWeAreLookingToPredictAgainst:
                     currentY = dictOfDataWeAreLookingToPredictAgainst[values]
@@ -173,8 +173,11 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
                 if secondaryKey == 'kickoff_time':
                     None
                 else:
-                    indexedValue = (float(currentPlayerDataToIterate[secondaryKey])-listOfCorrespondingMinValues[secondaryKey])/(listOfCorrespondingMaxValues[secondaryKey]-listOfCorrespondingMinValues[secondaryKey])*100
-                    indexedValues[secondaryKey] = indexedValue
+                    try:
+                        indexedValue = (float(currentPlayerDataToIterate[secondaryKey])-listOfCorrespondingMinValues[secondaryKey])/(listOfCorrespondingMaxValues[secondaryKey]-listOfCorrespondingMinValues[secondaryKey])*100
+                    except:
+                        indexedValue = 0.0
+                indexedValues[secondaryKey] = indexedValue
         except:
                 currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
                 indexedValue = (float(currentPlayerDataToIterate) - listOfCorrespondingMinValues)/(listOfCorrespondingMaxValues -listOfCorrespondingMinValues)*100

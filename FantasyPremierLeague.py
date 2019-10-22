@@ -270,11 +270,11 @@ def playerRoutine():
                         totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForCurrentGameWeek, 'total_points')
                         correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
                         currentRList = rValuesPerField(correl)
-                        minList = calculateMinNumberInArray(allData)
-                        maxList = calculateMaxNumberInArray(allData)
-                        # Data by player by week current and previous indexed
-                        dataByPlayerForPreviousWeek = gatherGameweekDataByPlayer(previousGameWeek)
-                        indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
+                        minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
+                        maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
+                        # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
+                        dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(gameweekNumber)
+                        indexedData = indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
                         finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
                         # Combine correlation scores between previous data and current total points scored
                         maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
