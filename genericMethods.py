@@ -121,18 +121,24 @@ def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
     
     return correlations
 
-# Index all data in a dictionary with 2 levels to 100 (where max is 100 and min is 0)
-
+# Index all data in a dictionary with 1 or 2 levels to 100 (where max is 100 and min is 0)
 def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, listOfCorrespondingMinValues):
     finalPlayerIndexedData = dict()
-    for player in listOfDataToIndex:
+    for primaryKey in listOfDataToIndex:
         indexedValues = dict()
-        for key in listOfDataToIndex[player]:
-            currentPlayerDataToIterate = listOfDataToIndex[player]
-            if key == 'kickoff_time':
-                None
-            else:
-                indexedValue = (float(currentPlayerDataToIterate[key])-listOfCorrespondingMinValues[key])/(listOfCorrespondingMaxValues[key]-listOfCorrespondingMinValues[key])*100
-                indexedValues[key] = indexedValue
-        finalPlayerIndexedData[player] = indexedValues
+        try:
+            for secondaryKey in listOfDataToIndex[primaryKey]:
+                currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
+                if secondaryKey == 'kickoff_time':
+                    None
+                else:
+                    indexedValue = (float(currentPlayerDataToIterate[secondaryKey])-listOfCorrespondingMinValues[secondaryKey])/(listOfCorrespondingMaxValues[secondaryKey]-listOfCorrespondingMinValues[secondaryKey])*100
+                    indexedValues[secondaryKey] = indexedValue
+        except:
+                currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
+                indexedValue = (float(currentPlayerDataToIterate) - listOfCorrespondingMinValues)/(listOfCorrespondingMaxValues -listOfCorrespondingMinValues)*100
+                indexedValues = indexedValue
+
+        finalPlayerIndexedData[primaryKey] = indexedValues
+
     return finalPlayerIndexedData

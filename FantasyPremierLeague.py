@@ -1,6 +1,7 @@
 from gameweekSummary import *
 from playerData import *
 from genericMethods import *
+import operator
 
 """
 The FPL module.
@@ -225,6 +226,21 @@ def playerRoutine():
                         dataByPlayerForPreviousWeek = gatherPreviousGameweekDataByPlayer()
                         indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
                         finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+                        maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+                        minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+                        finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+                        sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()
 
                     else:
                         print("====================================================================================")
@@ -379,7 +395,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.210")
+print("V.0.0.290")
 print("")
 print("==============================")
 print("")

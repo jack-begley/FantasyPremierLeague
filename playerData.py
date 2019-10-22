@@ -121,10 +121,12 @@ def generatePlayerIDToNameMatching():
         # Only run the below part if "y" is in the format of a dictionary (a list of data)
         if isinstance(y,dict):
             formattedY = json.loads(dumpsY)
+            firstName = formattedY['first_name']
             secondName = formattedY['second_name']
-            cleanedSecondName = str.lower(unicodeReplace(secondName))
+            fullName = f'{firstName} {secondName}'
+            cleanedFullName = str.lower(unicodeReplace(fullName))
             id = formattedY['id']
-            playerIDMatchList[cleanedSecondName] = id
+            playerIDMatchList[cleanedFullName] = id
 
     return playerIDMatchList
 
@@ -201,10 +203,7 @@ def gatherHistoricalPlayerData():
 def gatherPreviousGameweekDataByPlayer():
     playerNames = generatePlayerIDToNameMatching()
     currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    focusGameWeek = currentGameWeek - 1
-    # DELETE AFTER TESTING: =====================================================================================================================================================
-    focusGameWeek = 8
-    #============================================================================================================================================================================
+    focusGameWeek = currentGameWeek - 2
     length = len(playerNames) - 1
     playerDataFinal = dict()
     # Gather the player data
@@ -235,18 +234,36 @@ def gatherPreviousGameweekDataByPlayer():
 # Calculate the Max number of a dictionary array
 def calculateMaxNumberInArray(arrayToCalculateMaxFrom):
     dictOfMaxNumbersByKey = dict()
-    for key in arrayToCalculateMaxFrom:
-        maxNumbers = max(list(arrayToCalculateMaxFrom[key]))
-        dictOfMaxNumbersByKey[key] = maxNumbers
-    return dictOfMaxNumbersByKey
+    try:
+        for key in arrayToCalculateMaxFrom:
+                maxNumbers = max(list(arrayToCalculateMaxFrom[key]))
+                dictOfMaxNumbersByKey[key] = maxNumbers
+        return dictOfMaxNumbersByKey
+    
+    except:
+        tempList = list()
+        for secondaryKey in arrayToCalculateMaxFrom:
+            tempList.append(arrayToCalculateMaxFrom[secondaryKey])
+        maxNumber = max(list(tempList))
+
+        return maxNumber
 
 # Calculate the Max number in a dictionary array
 def calculateMinNumberInArray(arrayToCalculateMinFrom):
     dictOfMinNumbersByKey = dict()
-    for key in arrayToCalculateMinFrom:
-        minNumbers = min(list(arrayToCalculateMinFrom[key]))
-        dictOfMinNumbersByKey[key] = minNumbers
-    return dictOfMinNumbersByKey
+    try:
+        for key in arrayToCalculateMinFrom:
+                minNumbers = min(list(arrayToCalculateMinFrom[key]))
+                dictOfMinNumbersByKey[key] = minNumbers
+        return dictOfMinNumbersByKey
+    
+    except:
+        tempList = list()
+        for secondaryKey in arrayToCalculateMinFrom:
+            tempList.append(arrayToCalculateMinFrom[secondaryKey])
+        minNumber = min(list(tempList))
+
+        return minNumber
 
 # Multiply one factor by another where there are two dictionaries that have matching keys - Player and Correlation data
 def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
@@ -264,13 +281,9 @@ def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
                 previousIndex = currentIndex + previousIndex
         finalPlayerIndex[player] =  previousIndex
 
-    sortedFinalPlayerData = list(reversed(sorted(finalPlayerIndex.items(), key = lambda x : x[1])))
-
-    return sortedFinalPlayerData
+    return finalPlayerIndex
         
-
 # Converts a dictionary that is string based to an integer list
-
 def convertStringDictToInt(inputList, outputListName):
    # Get All data into integers in a comma seperated list
     outputListName = dict()
