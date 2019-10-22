@@ -15,9 +15,8 @@ from datetime import date
 today = date.today()
 
 #Setting up url construction
-
 def mergeURL(sub):
-    return 'https://fantasy.premierleague.com/api/' + sub;
+    return 'https://fantasy.premierleague.com/api/' + sub
 
 # Load the data from a URL into a list readable format - strings can be used to determine position in the list (E.g. url['key'] ) 
 def generateJSONDumpsReadable(url):
@@ -121,6 +120,48 @@ def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
     
     return correlations
 
+# Generate coefficients between an array of data and one key in another array to test prediction of data
+def correlcoeffGenerationForPrediction(nameOfArrayToCorrelate, dictOfDataWeAreLookingToPredictAgainst):
+    # Correlation time
+    correlations = dict()
+    currentX = dict()
+    currentY = dict()
+    for values in dictOfDataWeAreLookingToPredictAgainst:
+        currentY = dictOfDataWeAreLookingToPredictAgainst[values]
+    lenY = len(currentY)
+    currentCorrel = list()
+    for element in nameOfArrayToCorrelate:
+        length = len(nameOfArrayToCorrelate) - 1
+        currentIndex = list(nameOfArrayToCorrelate).index(element)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Running regression: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Regression complete: 100%")
+            sys.stdout.flush()
+            print("")
+        if element != 'kickoff_time':
+            currentX = nameOfArrayToCorrelate[element]
+            lenX = len(currentX)
+            if lenX > lenY:
+                currentX = dict(currentX.items()[0:lenY])
+                currentCorrel = linregress(currentX,currentY)   
+            elif lenY > lenX:
+                currentY = dict(currentY.items()[0:lenX])
+                currentCorrel = linregress(currentX,currentY)
+                for values in dictOfDataWeAreLookingToPredictAgainst:
+                    currentY = dictOfDataWeAreLookingToPredictAgainst[values]
+                lenY = len(currentY)
+            else:
+                currentCorrel = linregress(currentX,currentY)
+            correlations[element] = currentCorrel
+        else:
+            None
+    
+    return correlations
+
 # Index all data in a dictionary with 1 or 2 levels to 100 (where max is 100 and min is 0)
 def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, listOfCorrespondingMinValues):
     finalPlayerIndexedData = dict()
@@ -142,3 +183,9 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
         finalPlayerIndexedData[primaryKey] = indexedValues
 
     return finalPlayerIndexedData
+
+# Takes a dictionary and outputs a single metric in 'string key: value' format
+def generateSingleEntryDictFromDict(addDataForCurrentGameweek, fieldToGenerateDataFrom):
+    outputDict = dict()
+    outputDict[fieldToGenerateDataFrom] = addDataForCurrentGameweek[fieldToGenerateDataFrom]
+    return outputDict

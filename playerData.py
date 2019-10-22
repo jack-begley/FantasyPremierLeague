@@ -199,11 +199,13 @@ def gatherHistoricalPlayerData():
 
     return elementsList
 
-# Gather previous gameweeks data
-def gatherPreviousGameweekDataByPlayer():
+# Gather gameweek data specified
+def gatherGameweekDataByPlayer(gameweekOfInterest):
     playerNames = generatePlayerIDToNameMatching()
-    currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    focusGameWeek = currentGameWeek - 2
+    if gameweekOfInterest == None:
+        currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7) - 1
+    else:
+        currentGameWeek = gameweekOfInterest
     length = len(playerNames) - 1
     playerDataFinal = dict()
     # Gather the player data
@@ -226,7 +228,7 @@ def gatherPreviousGameweekDataByPlayer():
         currentPlayerList = dict()
 
         for data in allPlayerDataReadable['history']:    
-            if data['round'] == focusGameWeek:
+            if data['round'] == currentGameWeek:
                 playerDataFinal[playerName] = data
 
     return playerDataFinal
@@ -284,26 +286,26 @@ def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
     return finalPlayerIndex
         
 # Converts a dictionary that is string based to an integer list
-def convertStringDictToInt(inputList, outputListName):
+def convertStringDictToInt(inputList):
    # Get All data into integers in a comma seperated list
-    outputListName = dict()
+    outputList = dict()
     currentDict = dict()
     tempList = list()
     for element in inputList:
         try:
-            outputListName[element] = list(map(float, inputList[element].split(',')))
+            outputList[element] = list(map(float, inputList[element].split(',')))
         except BaseException:
             if element != "kickoff_time":
                 currentDict[element] = list(map(str, inputList[element].split(',')))
                 for n in currentDict[element]:
                         n = int((n).replace('False', '0').replace('True', '1').replace('None', '-1'))
                         tempList.append(n)
-                outputListName[element] = tempList
+                outputList[element] = tempList
                 currentDict = dict()
                 tempList = list()
             else:
                 None
-    return outputListName
+    return outputList
 
 # Export the player data by gameweek where the playerID's have been gathered
 def exportPlayerDataByGameweek(playerIDs):

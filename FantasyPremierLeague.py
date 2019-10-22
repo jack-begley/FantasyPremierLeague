@@ -165,7 +165,8 @@ def playerRoutine():
                 print(" [4] All player data for all gameweeks (to excel)")
                 print("")
                 print(" TEST:")
-                print(" [99] Test: all player ID's and generating the correlcoef")
+                print(" [99] Test: Rank player performance")
+                print(" [100] Test: How previous performance affects future performance")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -217,17 +218,68 @@ def playerRoutine():
                         exportPlayerDataByGameweek(playerIDs)
 
                     elif playerUserInputInitialInt == 99:
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
                         elementsList = gatherHistoricalPlayerData()
-                        allData = convertStringDictToInt(elementsList, "allData")
+                        allData = convertStringDictToInt(elementsList)
+                        # Correl needs to be updated to previous week vs current total points - method for generating that?
                         correl = correlcoeffGeneration(allData,'total_points')
                         currentRList = rValuesPerField(correl)
                         minList = calculateMinNumberInArray(allData)
                         maxList = calculateMaxNumberInArray(allData)
-                        dataByPlayerForPreviousWeek = gatherPreviousGameweekDataByPlayer()
-                        indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
+                        # Data by player by week current and previous indexed
+                        dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
+                        indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
                         finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+                        # Combine correlation scores between previous data and current total points scored
                         maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
                         minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+                        # Index final scores to give an indication of performance
+                        finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+                        sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()
+
+                    elif playerUserInputInitialInt == 100:
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        print("---------------------------------------------------------------")
+                        print("Let us know what week you're interested in:")
+                        print(f"!! TYPE IN A GAMEWEEK NUMBER (CURRENT GAMEWEEK NO. IS: {gameweekNumber})")
+                        print("---------------------------------------------------------------")
+                        gameweekNumber = str.lower(input("> "))
+                        if gameweekNumber == "now":
+                            gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7))
+                            previousGameWeek = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        else:
+                            previousGameWeek = int(gameweekNumber) - 1
+                            gameweekNumber = int(gameweekNumber)
+                        dataForPreviousGameWeek = generateDataForGameWeek(previousGameWeek)
+                        allDataForPreviousGameWeek = convertStringDictToInt(dataForPreviousGameWeek)
+                        dataForCurrentGameWeek = generateDataForGameWeek(gameweekNumber)
+                        allDataForCurrentGameWeek = convertStringDictToInt(dataForCurrentGameWeek)
+                        # Correl needs to be updated to previous week vs current total points - method for generating that?
+                        #CREATE METHOD
+                        totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForCurrentGameWeek, 'total_points')
+                        correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
+                        currentRList = rValuesPerField(correl)
+                        minList = calculateMinNumberInArray(allData)
+                        maxList = calculateMaxNumberInArray(allData)
+                        # Data by player by week current and previous indexed
+                        dataByPlayerForPreviousWeek = gatherGameweekDataByPlayer(previousGameWeek)
+                        indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
+                        finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+                        # Combine correlation scores between previous data and current total points scored
+                        maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+                        minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+                        # Index final scores to give an indication of performance
                         finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
                         sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
                         print("")
