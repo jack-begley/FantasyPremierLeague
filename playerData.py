@@ -423,3 +423,55 @@ def rValuesPerField(correlationDictByAttribute):
         currentRValue = correlationDictByAttribute[attribute][2]
         attributeRValues[attribute] = currentRValue
     return attributeRValues
+
+# Takes a number of seperate methods and creates a prediction on player performance for a specified week
+def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
+    # Generate the Correlation Coefficient list
+    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek)
+    # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
+    minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
+    maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
+    dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(currentGameweek)
+    indexedData = indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+    # Combine correlation scores between previous data and current total points scored
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+    return sortedFinalIndexedData
+
+# Takes the correlations for the factors used to predict good performance and applies them to known top performers
+def playerPerformanceForLastWeek(gameweekNumber):
+    elementsList = gatherHistoricalPlayerData()
+    allData = convertStringDictToInt(elementsList)
+    # Correl needs to be updated to previous week vs current total points - method for generating that?
+    correl = correlcoeffGeneration(allData,'total_points')
+    currentRList = rValuesPerField(correl)
+    minList = calculateMinNumberInArray(allData)
+    maxList = calculateMaxNumberInArray(allData)
+    # Data by player by week current and previous indexed
+    dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
+    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+    # Combine correlation scores between previous data and current total points scored
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+    return sortedFinalIndexedData
+
+# Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek):
+    # Generate data for current and previous gameweek in correct format
+    dataForPreviousGameWeek = generateDataForGameWeek(previousGameweek)
+    allDataForPreviousGameWeek = convertStringDictToInt(dataForPreviousGameWeek)
+    dataForCurrentGameWeek = generateDataForGameWeek(currentGameweek)
+    allDataForCurrentGameWeek = convertStringDictToInt(dataForCurrentGameWeek)
+    # Correl: previous week vs current total points
+    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForCurrentGameWeek, 'total_points')
+    correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
+    currentRList = rValuesPerField(correl)
+    return currentRList

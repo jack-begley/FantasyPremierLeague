@@ -192,3 +192,14 @@ def generateSingleEntryDictFromDict(addDataForCurrentGameweek, fieldToGenerateDa
     outputDict = dict()
     outputDict[fieldToGenerateDataFrom] = addDataForCurrentGameweek[fieldToGenerateDataFrom]
     return outputDict
+
+# Convert a list to a dictionary where the list
+def listToDict(listToConvert):
+    outputDict = dict()
+    i = 0
+    while i < len(listToConvert):
+        variable = listToConvert[i]
+        name, index = variable
+        outputDict[name] = index
+        i+=1
+    return outputDict

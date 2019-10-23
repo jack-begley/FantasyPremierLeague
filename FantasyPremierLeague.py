@@ -167,6 +167,7 @@ def playerRoutine():
                 print(" TEST:")
                 print(" [99] Test: Rank player performance")
                 print(" [100] Test: How previous performance affects future performance")
+                print(" [101] Test: Create an average correlation based off past gameweeks")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -219,23 +220,7 @@ def playerRoutine():
 
                     elif playerUserInputInitialInt == 99:
                         gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        elementsList = gatherHistoricalPlayerData()
-                        allData = convertStringDictToInt(elementsList)
-                        # Correl needs to be updated to previous week vs current total points - method for generating that?
-                        correl = correlcoeffGeneration(allData,'total_points')
-                        currentRList = rValuesPerField(correl)
-                        minList = calculateMinNumberInArray(allData)
-                        maxList = calculateMaxNumberInArray(allData)
-                        # Data by player by week current and previous indexed
-                        dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
-                        indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
-                        finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
-                        # Combine correlation scores between previous data and current total points scored
-                        maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
-                        minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
-                        # Index final scores to give an indication of performance
-                        finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
-                        sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+                        playerPerformance = playerPerformanceForLastWeek(gameweekNumber)
                         print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
@@ -261,27 +246,42 @@ def playerRoutine():
                         else:
                             previousGameWeek = int(gameweekNumber) - 1
                             gameweekNumber = int(gameweekNumber)
-                        dataForPreviousGameWeek = generateDataForGameWeek(previousGameWeek)
-                        allDataForPreviousGameWeek = convertStringDictToInt(dataForPreviousGameWeek)
-                        dataForCurrentGameWeek = generateDataForGameWeek(gameweekNumber)
-                        allDataForCurrentGameWeek = convertStringDictToInt(dataForCurrentGameWeek)
-                        # Correl needs to be updated to previous week vs current total points - method for generating that?
-                        #CREATE METHOD
-                        totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForCurrentGameWeek, 'total_points')
-                        correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
-                        currentRList = rValuesPerField(correl)
-                        minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
-                        maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
-                        # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
-                        dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(gameweekNumber)
-                        indexedData = indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
-                        finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
-                        # Combine correlation scores between previous data and current total points scored
-                        maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
-                        minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
-                        # Index final scores to give an indication of performance
-                        finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
-                        sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+                        playerPerformance = predictPlayerPerformanceByGameweek(gameweekNumber, previousGameWeek)
+                        formattedPlayerPerformance = listToDict(playerPerformance)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            headersOfData = generateHeadersList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()                    
+                            
+                    elif playerUserInputInitialInt == 101:
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        currentGameweek = 2
+                        correlationDictByWeek = dict()
+                        while currentGameweek < gameweekNumber:   
+                            progressStart = currentGameweek - 2
+                            progressEnd = gameweekNumber - 1
+                            print("")
+                            print("----------------------------------------")
+                            print(f"Stage {progressStart} of {progressEnd}:")
+                            previousGameweek = currentGameweek - 1
+                            playerPerformance = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek)
+                            correlationDictByWeek[currentGameweek] = playerPerformance
+                            currentGameweek += 1
+                            print("----------------------------------------")
+                        correlationDict = dict()
+                        for week in correlationDictByWeek:
+                            for data in correlationDictByWeek[week]:
+                                currentList = correlationDictbyWeek[week]
+                                correlationOutput = currentList[data]
+                                correlationDict[data] = correlationOutput
+                       # for week in correlationDictByWeek
                         print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
