@@ -231,6 +231,7 @@ def mostNetTransfersIn(numberToDisplayUpTo):
     sortedNetTransfers = list(reversed(sorted(netTransfersByPlayer.items(), key = lambda x : x[1])))
 
     topIndex = 0
+    numberToDisplayUpTo = int(numberToDisplayUpTo)
     x = numberToDisplayUpTo - 1
     top10MostTransferedIn = list()
 
@@ -263,6 +264,7 @@ def mostNetTransfersOut(numberToDisplayUpTo):
     sortedNetTransfers = list(sorted(netTransfersByPlayer.items(), key = lambda x : x[1]))
 
     bottomIndex = 0
+    numberToDisplayUpTo = int(numberToDisplayUpTo)
     x = numberToDisplayUpTo - 1
     top10MostTransferedOut = list()
 

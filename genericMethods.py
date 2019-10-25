@@ -174,13 +174,25 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
                     None
                 else:
                     try:
-                        indexedValue = (float(currentPlayerDataToIterate[secondaryKey])-listOfCorrespondingMinValues[secondaryKey])/(listOfCorrespondingMaxValues[secondaryKey]-listOfCorrespondingMinValues[secondaryKey])*100
+                        value = float(currentPlayerDataToIterate[secondaryKey])
+                        max = float(listOfCorrespondingMaxValues[secondaryKey])
+                        min = float(listOfCorrespondingMinValues[secondaryKey])
+                        numerator = value - min
+                        denominator = max - min
+                        calculation = numerator / denominator
+                        indexedValue = calculation*100
                     except:
                         indexedValue = 0.0
                 indexedValues[secondaryKey] = indexedValue
         except:
                 currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
-                indexedValue = (float(currentPlayerDataToIterate) - listOfCorrespondingMinValues)/(listOfCorrespondingMaxValues -listOfCorrespondingMinValues)*100
+                value = float(currentPlayerDataToIterate)
+                max = float(listOfCorrespondingMaxValues)
+                min = float(listOfCorrespondingMinValues)
+                numerator = value - min
+                denominator = max - min
+                calculation = numerator / denominator
+                indexedValue = calculation*100
                 indexedValues = indexedValue
 
         finalPlayerIndexedData[primaryKey] = indexedValues
@@ -203,3 +215,31 @@ def listToDict(listToConvert):
         outputDict[name] = index
         i+=1
     return outputDict
+
+# Method to take data by gameweek and run correlation on it, creating a total average over all gameweeks
+def convertCorrelByWeekToAveragePerField(arrayToConvert):
+    correlationDict = dict()
+    runNumber = 1
+    for week in arrayToConvert:
+        for data in arrayToConvert[week]:
+            currentList = arrayToConvert[week]
+            correlationOutput = currentList[data]
+            # add or append value to dictionary - TODO: Convert to stand alone method
+            if runNumber == 1:
+                correlationDict[data] = []
+            correlationDict[data].append(correlationOutput)
+        runNumber += 1
+    
+    averageCorrelationDict = dict()
+
+    for data in correlationDict:
+        currentList = correlationDict[data]
+        average = averageOfList(currentList)
+        averageCorrelationDict[data] = average
+
+    return averageCorrelationDict
+
+# Average of all values in a given list
+def averageOfList(listToAverage):
+    average = sum(listToAverage)/len(listToAverage)
+    return average

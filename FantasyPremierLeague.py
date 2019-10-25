@@ -246,7 +246,7 @@ def playerRoutine():
                         else:
                             previousGameWeek = int(gameweekNumber) - 1
                             gameweekNumber = int(gameweekNumber)
-                        playerPerformance = predictPlayerPerformanceByGameweek(gameweekNumber, previousGameWeek)
+                        playerPerformance = predictPlayerPerformanceByGameweek(previousGameWeek, gameweekNumber)
                         formattedPlayerPerformance = listToDict(playerPerformance)
                         print("")
                         print("-----------------------------------")
@@ -262,26 +262,43 @@ def playerRoutine():
                             
                     elif playerUserInputInitialInt == 101:
                         gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        currentGameweek = 2
+                        currentGameweek = 1
                         correlationDictByWeek = dict()
-                        while currentGameweek < gameweekNumber:   
-                            progressStart = currentGameweek - 2
-                            progressEnd = gameweekNumber - 1
+                        allGameweekData = dict()
+                        while currentGameweek <= gameweekNumber:
+                            progressStart = currentGameweek
+                            progressEnd = gameweekNumber
                             print("")
-                            print("----------------------------------------")
-                            print(f"Stage {progressStart} of {progressEnd}:")
-                            previousGameweek = currentGameweek - 1
-                            playerPerformance = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek)
-                            correlationDictByWeek[currentGameweek] = playerPerformance
+                            print("--------------------------------------------------")
+                            print(f"Data gathering: {progressStart} of {progressEnd}:")
+                            dataForCurrentGameweek = generateDataForGameWeek(currentGameweek)
+                            allDataForCurrentGameweek = convertStringDictToInt(dataForCurrentGameweek)
+                            allGameweekData[currentGameweek] = allDataForCurrentGameweek
                             currentGameweek += 1
-                            print("----------------------------------------")
-                        correlationDict = dict()
-                        for week in correlationDictByWeek:
-                            for data in correlationDictByWeek[week]:
-                                currentList = correlationDictbyWeek[week]
-                                correlationOutput = currentList[data]
-                                correlationDict[data] = correlationOutput
-                       # for week in correlationDictByWeek
+                        print("--------------------------------------------------")
+                        print("")
+                        for gameweek in allGameweekData:   
+                            progressStart = gameweek - 1
+                            progressEnd = gameweekNumber - 1
+                            previousGameweek = gameweek - 1
+                            if previousGameweek > 0:
+                                print("-----------------------------------------------")
+                                print(f"Correlation: {progressStart} of {progressEnd}:")
+                                playerPerformance = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(allGameweekData, gameweek)
+                                correlationDictByWeek[gameweek] = playerPerformance
+                                print("-----------------------------------------------")
+
+                        
+                        print("Correlations completed")
+                        print("")
+                        print("---------------------------------------------")
+                        print("")
+
+                        averageCorrelByField = convertCorrelByWeekToAveragePerField(correlationDictByWeek)
+
+                        previousWeek = gameweekNumber - 1
+                        predictionsForGameweek = playerPerformanceWithCorrel(previousWeek, averageCorrelByField)
+
                         print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
@@ -403,7 +420,11 @@ def gameweekRoutine():
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
                         numberOfRecordsToShow = str.lower(input("> "))
-                        mostNetTransfersIn(numberOfRecordsToShow)
+                        topTransfers = mostNetTransfersIn(numberOfRecordsToShow)
+                        for record in topTransfers:
+                            print(record)
+                        print("--------------------------------------------")
+                        print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 5:
@@ -412,7 +433,11 @@ def gameweekRoutine():
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
                         numberOfRecordsToShow = str.lower(input("> "))
-                        mostNetTransfersOut(numberOfRecordsToShow)
+                        topTransfers =  mostNetTransfersOut(numberOfRecordsToShow)
+                        for record in topTransfers:
+                            print(record)
+                        print("--------------------------------------------")
+                        print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:

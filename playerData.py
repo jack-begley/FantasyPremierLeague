@@ -63,10 +63,6 @@ def allPlayerDataBySurname(playerSurname):
 
     return elementsList
 
-# All gameweek data for a player (by gameweek)
-def playerInfoByGameweek(gameweekNumber):
-    None
-
 # Create player first & last name list (and associated dictionary)
 def generatePlayersFullNameList():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -256,6 +252,8 @@ def calculateMinNumberInArray(arrayToCalculateMinFrom):
     try:
         for key in arrayToCalculateMinFrom:
                 minNumbers = min(list(arrayToCalculateMinFrom[key]))
+                if minNumbers == ",":
+                    minNumbers = 0
                 dictOfMinNumbersByKey[key] = minNumbers
         return dictOfMinNumbersByKey
     
@@ -264,6 +262,8 @@ def calculateMinNumberInArray(arrayToCalculateMinFrom):
         for secondaryKey in arrayToCalculateMinFrom:
             tempList.append(arrayToCalculateMinFrom[secondaryKey])
         minNumber = min(list(tempList))
+        if minNumber == "'":
+            minNumber = 0
 
         return minNumber
 
@@ -426,8 +426,9 @@ def rValuesPerField(correlationDictByAttribute):
 
 # Takes a number of seperate methods and creates a prediction on player performance for a specified week
 def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
+    gameweekData = generateDataForGameWeek(previousGameweek)
     # Generate the Correlation Coefficient list
-    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek)
+    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(gameweekData, currentGameweek)
     # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
     minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
     maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
@@ -463,15 +464,28 @@ def playerPerformanceForLastWeek(gameweekNumber):
     sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
     return sortedFinalIndexedData
 
+# Player performance with correlation
+def playerPerformanceWithCorrel(gameweekNumber, listOfRValues):
+    allDataForCurrentGameweek = generateDataForGameWeek(gameweekNumber)
+    minList = calculateMinNumberInArray(allDataForCurrentGameweek)
+    maxList = calculateMaxNumberInArray(allDataForCurrentGameweek)
+    dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
+    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, listOfRValues)
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+
+    return sortedFinalIndexedData
+
 # Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
-def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(currentGameweek, previousGameweek):
-    # Generate data for current and previous gameweek in correct format
-    dataForPreviousGameWeek = generateDataForGameWeek(previousGameweek)
-    allDataForPreviousGameWeek = convertStringDictToInt(dataForPreviousGameWeek)
-    dataForCurrentGameWeek = generateDataForGameWeek(currentGameweek)
-    allDataForCurrentGameWeek = convertStringDictToInt(dataForCurrentGameWeek)
-    # Correl: previous week vs current total points
-    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForCurrentGameWeek, 'total_points')
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelationOffIncludingLastGameweek, gameweekWeWantToPredictThePerformanceOf):
+    currentGameweek = gameweekWeWantToPredictThePerformanceOf
+    previousGameweek = currentGameweek - 1
+    allDataForPreviousGameWeek = arrayToBaseCorrelationOffIncludingLastGameweek[previousGameweek]
+    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForPreviousGameWeek , 'total_points')
     correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
     currentRList = rValuesPerField(correl)
     return currentRList
