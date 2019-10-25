@@ -1,6 +1,7 @@
 from gameweekSummary import *
 from playerData import *
 from genericMethods import *
+import operator
 
 """
 The FPL module.
@@ -164,7 +165,9 @@ def playerRoutine():
                 print(" [4] All player data for all gameweeks (to excel)")
                 print("")
                 print(" TEST:")
-                print(" [99] Test: all player ID's and generating the correlcoef")
+                print(" [99] Test: Rank player performance")
+                print(" [100] Test: How previous performance affects future performance")
+                print(" [101] Test: Create an average correlation based off past gameweeks")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -216,15 +219,97 @@ def playerRoutine():
                         exportPlayerDataByGameweek(playerIDs)
 
                     elif playerUserInputInitialInt == 99:
-                        elementsList = gatherHistoricalPlayerData()
-                        allData = convertStringDictToInt(elementsList, "allData")
-                        correl = correlcoeffGeneration(allData,'total_points')
-                        currentRList = rValuesPerField(correl)
-                        minList = calculateMinNumberInArray(allData)
-                        maxList = calculateMaxNumberInArray(allData)
-                        dataByPlayerForPreviousWeek = gatherPreviousGameweekDataByPlayer()
-                        indexedData = indexDataInADictionary(dataByPlayerForPreviousWeek, maxList, minList)
-                        finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        playerPerformance = playerPerformanceForLastWeek(gameweekNumber)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()
+
+                    elif playerUserInputInitialInt == 100:
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        print("---------------------------------------------------------------")
+                        print("Let us know what week you're interested in:")
+                        print(f"!! TYPE IN A GAMEWEEK NUMBER (CURRENT GAMEWEEK NO. IS: {gameweekNumber})")
+                        print("---------------------------------------------------------------")
+                        gameweekNumber = str.lower(input("> "))
+                        if gameweekNumber == "now":
+                            gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7))
+                            previousGameWeek = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        else:
+                            previousGameWeek = int(gameweekNumber) - 1
+                            gameweekNumber = int(gameweekNumber)
+                        playerPerformance = predictPlayerPerformanceByGameweek(previousGameWeek, gameweekNumber)
+                        formattedPlayerPerformance = listToDict(playerPerformance)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            headersOfData = generateHeadersList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()                    
+                            
+                    elif playerUserInputInitialInt == 101:
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        currentGameweek = 1
+                        correlationDictByWeek = dict()
+                        allGameweekData = dict()
+                        while currentGameweek <= gameweekNumber:
+                            progressStart = currentGameweek
+                            progressEnd = gameweekNumber
+                            print("")
+                            print("--------------------------------------------------")
+                            print(f"Data gathering: {progressStart} of {progressEnd}:")
+                            dataForCurrentGameweek = generateDataForGameWeek(currentGameweek)
+                            allDataForCurrentGameweek = convertStringDictToInt(dataForCurrentGameweek)
+                            allGameweekData[currentGameweek] = allDataForCurrentGameweek
+                            currentGameweek += 1
+                        print("--------------------------------------------------")
+                        print("")
+                        for gameweek in allGameweekData:   
+                            progressStart = gameweek - 1
+                            progressEnd = gameweekNumber - 1
+                            previousGameweek = gameweek - 1
+                            if previousGameweek > 0:
+                                print("-----------------------------------------------")
+                                print(f"Correlation: {progressStart} of {progressEnd}:")
+                                playerPerformance = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(allGameweekData, gameweek)
+                                correlationDictByWeek[gameweek] = playerPerformance
+                                print("-----------------------------------------------")
+
+                        
+                        print("Correlations completed")
+                        print("")
+                        print("---------------------------------------------")
+                        print("")
+
+                        averageCorrelByField = convertCorrelByWeekToAveragePerField(correlationDictByWeek)
+
+                        previousWeek = gameweekNumber - 1
+                        predictionsForGameweek = playerPerformanceWithCorrel(previousWeek, averageCorrelByField)
+
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()
 
                     else:
                         print("====================================================================================")
@@ -335,7 +420,11 @@ def gameweekRoutine():
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
                         numberOfRecordsToShow = str.lower(input("> "))
-                        mostNetTransfersIn(numberOfRecordsToShow)
+                        topTransfers = mostNetTransfersIn(numberOfRecordsToShow)
+                        for record in topTransfers:
+                            print(record)
+                        print("--------------------------------------------")
+                        print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 5:
@@ -344,7 +433,11 @@ def gameweekRoutine():
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
                         numberOfRecordsToShow = str.lower(input("> "))
-                        mostNetTransfersOut(numberOfRecordsToShow)
+                        topTransfers =  mostNetTransfersOut(numberOfRecordsToShow)
+                        for record in topTransfers:
+                            print(record)
+                        print("--------------------------------------------")
+                        print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 99:
@@ -379,7 +472,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.210")
+print("V.0.0.290")
 print("")
 print("==============================")
 print("")

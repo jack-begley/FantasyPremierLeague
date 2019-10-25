@@ -63,10 +63,6 @@ def allPlayerDataBySurname(playerSurname):
 
     return elementsList
 
-# All gameweek data for a player (by gameweek)
-def playerInfoByGameweek(gameweekNumber):
-    None
-
 # Create player first & last name list (and associated dictionary)
 def generatePlayersFullNameList():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -121,10 +117,12 @@ def generatePlayerIDToNameMatching():
         # Only run the below part if "y" is in the format of a dictionary (a list of data)
         if isinstance(y,dict):
             formattedY = json.loads(dumpsY)
+            firstName = formattedY['first_name']
             secondName = formattedY['second_name']
-            cleanedSecondName = str.lower(unicodeReplace(secondName))
+            fullName = f'{firstName} {secondName}'
+            cleanedFullName = str.lower(unicodeReplace(fullName))
             id = formattedY['id']
-            playerIDMatchList[cleanedSecondName] = id
+            playerIDMatchList[cleanedFullName] = id
 
     return playerIDMatchList
 
@@ -197,14 +195,13 @@ def gatherHistoricalPlayerData():
 
     return elementsList
 
-# Gather previous gameweeks data
-def gatherPreviousGameweekDataByPlayer():
+# Gather gameweek data specified
+def gatherGameweekDataByPlayer(gameweekOfInterest):
     playerNames = generatePlayerIDToNameMatching()
-    currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    focusGameWeek = currentGameWeek - 1
-    # DELETE AFTER TESTING: =====================================================================================================================================================
-    focusGameWeek = 8
-    #============================================================================================================================================================================
+    if gameweekOfInterest == None:
+        currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7) - 1
+    else:
+        currentGameWeek = gameweekOfInterest
     length = len(playerNames) - 1
     playerDataFinal = dict()
     # Gather the player data
@@ -227,7 +224,7 @@ def gatherPreviousGameweekDataByPlayer():
         currentPlayerList = dict()
 
         for data in allPlayerDataReadable['history']:    
-            if data['round'] == focusGameWeek:
+            if data['round'] == currentGameWeek:
                 playerDataFinal[playerName] = data
 
     return playerDataFinal
@@ -235,18 +232,40 @@ def gatherPreviousGameweekDataByPlayer():
 # Calculate the Max number of a dictionary array
 def calculateMaxNumberInArray(arrayToCalculateMaxFrom):
     dictOfMaxNumbersByKey = dict()
-    for key in arrayToCalculateMaxFrom:
-        maxNumbers = max(list(arrayToCalculateMaxFrom[key]))
-        dictOfMaxNumbersByKey[key] = maxNumbers
-    return dictOfMaxNumbersByKey
+    try:
+        for key in arrayToCalculateMaxFrom:
+                maxNumbers = max(list(arrayToCalculateMaxFrom[key]))
+                dictOfMaxNumbersByKey[key] = maxNumbers
+        return dictOfMaxNumbersByKey
+    
+    except:
+        tempList = list()
+        for secondaryKey in arrayToCalculateMaxFrom:
+            tempList.append(arrayToCalculateMaxFrom[secondaryKey])
+        maxNumber = max(list(tempList))
+
+        return maxNumber
 
 # Calculate the Max number in a dictionary array
 def calculateMinNumberInArray(arrayToCalculateMinFrom):
     dictOfMinNumbersByKey = dict()
-    for key in arrayToCalculateMinFrom:
-        minNumbers = min(list(arrayToCalculateMinFrom[key]))
-        dictOfMinNumbersByKey[key] = minNumbers
-    return dictOfMinNumbersByKey
+    try:
+        for key in arrayToCalculateMinFrom:
+                minNumbers = min(list(arrayToCalculateMinFrom[key]))
+                if minNumbers == ",":
+                    minNumbers = 0
+                dictOfMinNumbersByKey[key] = minNumbers
+        return dictOfMinNumbersByKey
+    
+    except:
+        tempList = list()
+        for secondaryKey in arrayToCalculateMinFrom:
+            tempList.append(arrayToCalculateMinFrom[secondaryKey])
+        minNumber = min(list(tempList))
+        if minNumber == "'":
+            minNumber = 0
+
+        return minNumber
 
 # Multiply one factor by another where there are two dictionaries that have matching keys - Player and Correlation data
 def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
@@ -264,33 +283,29 @@ def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
                 previousIndex = currentIndex + previousIndex
         finalPlayerIndex[player] =  previousIndex
 
-    sortedFinalPlayerData = list(reversed(sorted(finalPlayerIndex.items(), key = lambda x : x[1])))
-
-    return sortedFinalPlayerData
+    return finalPlayerIndex
         
-
 # Converts a dictionary that is string based to an integer list
-
-def convertStringDictToInt(inputList, outputListName):
+def convertStringDictToInt(inputList):
    # Get All data into integers in a comma seperated list
-    outputListName = dict()
+    outputList = dict()
     currentDict = dict()
     tempList = list()
     for element in inputList:
         try:
-            outputListName[element] = list(map(float, inputList[element].split(',')))
+            outputList[element] = list(map(float, inputList[element].split(',')))
         except BaseException:
             if element != "kickoff_time":
                 currentDict[element] = list(map(str, inputList[element].split(',')))
                 for n in currentDict[element]:
                         n = int((n).replace('False', '0').replace('True', '1').replace('None', '-1'))
                         tempList.append(n)
-                outputListName[element] = tempList
+                outputList[element] = tempList
                 currentDict = dict()
                 tempList = list()
             else:
                 None
-    return outputListName
+    return outputList
 
 # Export the player data by gameweek where the playerID's have been gathered
 def exportPlayerDataByGameweek(playerIDs):
@@ -408,3 +423,69 @@ def rValuesPerField(correlationDictByAttribute):
         currentRValue = correlationDictByAttribute[attribute][2]
         attributeRValues[attribute] = currentRValue
     return attributeRValues
+
+# Takes a number of seperate methods and creates a prediction on player performance for a specified week
+def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
+    gameweekData = generateDataForGameWeek(previousGameweek)
+    # Generate the Correlation Coefficient list
+    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(gameweekData, currentGameweek)
+    # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
+    minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
+    maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
+    dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(currentGameweek)
+    indexedData = indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+    # Combine correlation scores between previous data and current total points scored
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+    return sortedFinalIndexedData
+
+# Takes the correlations for the factors used to predict good performance and applies them to known top performers
+def playerPerformanceForLastWeek(gameweekNumber):
+    elementsList = gatherHistoricalPlayerData()
+    allData = convertStringDictToInt(elementsList)
+    # Correl needs to be updated to previous week vs current total points - method for generating that?
+    correl = correlcoeffGeneration(allData,'total_points')
+    currentRList = rValuesPerField(correl)
+    minList = calculateMinNumberInArray(allData)
+    maxList = calculateMaxNumberInArray(allData)
+    # Data by player by week current and previous indexed
+    dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
+    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
+    # Combine correlation scores between previous data and current total points scored
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+    return sortedFinalIndexedData
+
+# Player performance with correlation
+def playerPerformanceWithCorrel(gameweekNumber, listOfRValues):
+    allDataForCurrentGameweek = generateDataForGameWeek(gameweekNumber)
+    minList = calculateMinNumberInArray(allDataForCurrentGameweek)
+    maxList = calculateMaxNumberInArray(allDataForCurrentGameweek)
+    dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
+    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, listOfRValues)
+    maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
+    minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
+    # Index final scores to give an indication of performance
+    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
+
+    return sortedFinalIndexedData
+
+# Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelationOffIncludingLastGameweek, gameweekWeWantToPredictThePerformanceOf):
+    currentGameweek = gameweekWeWantToPredictThePerformanceOf
+    previousGameweek = currentGameweek - 1
+    allDataForPreviousGameWeek = arrayToBaseCorrelationOffIncludingLastGameweek[previousGameweek]
+    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForPreviousGameWeek , 'total_points')
+    correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
+    currentRList = rValuesPerField(correl)
+    return currentRList

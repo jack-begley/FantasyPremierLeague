@@ -231,6 +231,7 @@ def mostNetTransfersIn(numberToDisplayUpTo):
     sortedNetTransfers = list(reversed(sorted(netTransfersByPlayer.items(), key = lambda x : x[1])))
 
     topIndex = 0
+    numberToDisplayUpTo = int(numberToDisplayUpTo)
     x = numberToDisplayUpTo - 1
     top10MostTransferedIn = list()
 
@@ -239,7 +240,6 @@ def mostNetTransfersIn(numberToDisplayUpTo):
          topIndex = topIndex + 1
 
     return top10MostTransferedIn
-
 
 # Pulls up the top 10 net transfers out
 def mostNetTransfersOut(numberToDisplayUpTo):
@@ -264,6 +264,7 @@ def mostNetTransfersOut(numberToDisplayUpTo):
     sortedNetTransfers = list(sorted(netTransfersByPlayer.items(), key = lambda x : x[1]))
 
     bottomIndex = 0
+    numberToDisplayUpTo = int(numberToDisplayUpTo)
     x = numberToDisplayUpTo - 1
     top10MostTransferedOut = list()
 
@@ -272,3 +273,44 @@ def mostNetTransfersOut(numberToDisplayUpTo):
          bottomIndex = bottomIndex + 1
 
     return top10MostTransferedOut
+
+# Creates all data for a given gameweek: 
+def generateDataForGameWeek(gameweekNumber):
+    playerIDs = generatePlayerIDs()
+    # create url's for the current player and extract data from the "History" file where the game week is the current game week
+    length = len(playerIDs) - 1
+    elementsList = dict()
+    tempList = list()
+    # Gather the player data
+    for playerID in playerIDs:
+        currentIndex = list(playerIDs).index(playerID)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Gather data for gameweek {gameweekNumber}: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Data for gameweek {gameweekNumber} gathered: 100%")
+            sys.stdout.flush()
+            print("")
+
+        allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+
+        currentList = dict()
+
+        for data in allPlayerDataReadable['history']:        
+            dumpsData = json.dumps(data)
+            formattedData = json.loads(dumpsData)
+            if gameweekNumber == formattedData['round']:
+                for record in formattedData:
+                    currentRound = formattedData['round']
+                    currentList[record] = formattedData[record]
+                # Create data list for current player assigning to each key
+                for element in currentList:
+                    if element not in elementsList:
+                        elementsList[element] = (currentList[element])
+                    else:
+                        elementsList[element] = str(elementsList[element]) + ',' + str(currentList[element])
+                currentList = dict()
+
+    return elementsList

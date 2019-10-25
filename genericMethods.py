@@ -15,9 +15,8 @@ from datetime import date
 today = date.today()
 
 #Setting up url construction
-
 def mergeURL(sub):
-    return 'https://fantasy.premierleague.com/api/' + sub;
+    return 'https://fantasy.premierleague.com/api/' + sub
 
 # Load the data from a URL into a list readable format - strings can be used to determine position in the list (E.g. url['key'] ) 
 def generateJSONDumpsReadable(url):
@@ -121,18 +120,126 @@ def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
     
     return correlations
 
-# Index all data in a dictionary with 2 levels to 100 (where max is 100 and min is 0)
+# Generate coefficients between an array of data and one key in another array to test prediction of data
+def correlcoeffGenerationForPrediction(nameOfArrayToCorrelate, dictOfDataWeAreLookingToPredictAgainst):
+    # Correlation time
+    correlations = dict()
+    currentX = dict()
+    currentY = dict()
+    for values in dictOfDataWeAreLookingToPredictAgainst:
+        currentY = dictOfDataWeAreLookingToPredictAgainst[values]
+    lenY = len(currentY)
+    currentCorrel = list()
+    for element in nameOfArrayToCorrelate:
+        length = len(nameOfArrayToCorrelate) - 1
+        currentIndex = list(nameOfArrayToCorrelate).index(element)
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Running regression: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Regression complete: 100%")
+            sys.stdout.flush()
+            print("")
+        if element != 'kickoff_time':
+            currentX = nameOfArrayToCorrelate[element]
+            lenX = len(currentX)
+            if lenX > lenY:
+                currentX = currentX[:lenY]
+                currentCorrel = linregress(currentX,currentY)   
+            elif lenY > lenX:
+                currentY = currentY[:lenX]
+                currentCorrel = linregress(currentX,currentY)
+                for values in dictOfDataWeAreLookingToPredictAgainst:
+                    currentY = dictOfDataWeAreLookingToPredictAgainst[values]
+                lenY = len(currentY)
+            else:
+                currentCorrel = linregress(currentX,currentY)
+            correlations[element] = currentCorrel
+        else:
+            None
+    
+    return correlations
 
+# Index all data in a dictionary with 1 or 2 levels to 100 (where max is 100 and min is 0)
 def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, listOfCorrespondingMinValues):
     finalPlayerIndexedData = dict()
-    for player in listOfDataToIndex:
+    for primaryKey in listOfDataToIndex:
         indexedValues = dict()
-        for key in listOfDataToIndex[player]:
-            currentPlayerDataToIterate = listOfDataToIndex[player]
-            if key == 'kickoff_time':
-                None
-            else:
-                indexedValue = (float(currentPlayerDataToIterate[key])-listOfCorrespondingMinValues[key])/(listOfCorrespondingMaxValues[key]-listOfCorrespondingMinValues[key])*100
-                indexedValues[key] = indexedValue
-        finalPlayerIndexedData[player] = indexedValues
+        try:
+            for secondaryKey in listOfDataToIndex[primaryKey]:
+                currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
+                if secondaryKey == 'kickoff_time':
+                    None
+                else:
+                    try:
+                        value = float(currentPlayerDataToIterate[secondaryKey])
+                        max = float(listOfCorrespondingMaxValues[secondaryKey])
+                        min = float(listOfCorrespondingMinValues[secondaryKey])
+                        numerator = value - min
+                        denominator = max - min
+                        calculation = numerator / denominator
+                        indexedValue = calculation*100
+                    except:
+                        indexedValue = 0.0
+                indexedValues[secondaryKey] = indexedValue
+        except:
+                currentPlayerDataToIterate = listOfDataToIndex[primaryKey]
+                value = float(currentPlayerDataToIterate)
+                max = float(listOfCorrespondingMaxValues)
+                min = float(listOfCorrespondingMinValues)
+                numerator = value - min
+                denominator = max - min
+                calculation = numerator / denominator
+                indexedValue = calculation*100
+                indexedValues = indexedValue
+
+        finalPlayerIndexedData[primaryKey] = indexedValues
+
     return finalPlayerIndexedData
+
+# Takes a dictionary and outputs a single metric in 'string key: value' format
+def generateSingleEntryDictFromDict(addDataForCurrentGameweek, fieldToGenerateDataFrom):
+    outputDict = dict()
+    outputDict[fieldToGenerateDataFrom] = addDataForCurrentGameweek[fieldToGenerateDataFrom]
+    return outputDict
+
+# Convert a list to a dictionary where the list
+def listToDict(listToConvert):
+    outputDict = dict()
+    i = 0
+    while i < len(listToConvert):
+        variable = listToConvert[i]
+        name, index = variable
+        outputDict[name] = index
+        i+=1
+    return outputDict
+
+# Method to take data by gameweek and run correlation on it, creating a total average over all gameweeks
+def convertCorrelByWeekToAveragePerField(arrayToConvert):
+    correlationDict = dict()
+    runNumber = 1
+    for week in arrayToConvert:
+        for data in arrayToConvert[week]:
+            currentList = arrayToConvert[week]
+            correlationOutput = currentList[data]
+            # add or append value to dictionary - TODO: Convert to stand alone method
+            if runNumber == 1:
+                correlationDict[data] = []
+            correlationDict[data].append(correlationOutput)
+        runNumber += 1
+    
+    averageCorrelationDict = dict()
+
+    for data in correlationDict:
+        currentList = correlationDict[data]
+        average = averageOfList(currentList)
+        averageCorrelationDict[data] = average
+
+    return averageCorrelationDict
+
+# Average of all values in a given list
+def averageOfList(listToAverage):
+    average = sum(listToAverage)/len(listToAverage)
+    return average
