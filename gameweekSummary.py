@@ -1,3 +1,9 @@
+import os
+import sys
+
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
+
 from pprint import pprint
 import requests
 import json
@@ -16,7 +22,9 @@ from tkinter import Tk
 import sys, traceback
 import re
 import io
+from playerData import *
 from genericMethods import *
+from Teams import *
 
 # URL set up and league codes
 from datetime import date

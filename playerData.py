@@ -23,6 +23,7 @@ from scipy.stats.stats import pearsonr
 from scipy.stats import linregress
 from gameweekSummary import *
 from genericMethods import *
+from Teams import *
 
 #Setting up url construction
 
@@ -36,11 +37,11 @@ today = date.today()
 
 # All gameweek data for a player (by gameweek)
 def allPlayerDataBySurname(playerSurname):
-    playerID = matchUserInputToList(playerSurname,generatePlayerIDToNameMatching())
+    playerID = matchUserInputToList(playerSurname,generatePlayerIDToSurnameMatching())
     currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
     elementsList = dict()
     tempList = list()
-    allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+    allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
     PlayerList = dict()
 
     for data in allPlayerDataReadable['history']:        
@@ -68,8 +69,8 @@ def generatePlayersFullNameList():
     # Initialise the arrays outside the loop so that they cannot be overriden
     gameweekSummaryListFull = list()
     gameweekSummarySub = "bootstrap-static/"
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     # For all of the objects in the readable player data list under the "elements" key (the name of a list)
     for y in gameweekSummaryDataReadable['elements']:
@@ -89,8 +90,8 @@ def generatePlayersIdsList():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDList = list()
     gameweekSummarySub = "bootstrap-static/"
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     # For all of the objects in the readable player data list under the "elements" key (the name of a list)
     for y in gameweekSummaryDataReadable['elements']:
@@ -104,12 +105,33 @@ def generatePlayersIdsList():
     return playerIDList
 
 # Create player id list (and associated surname as the key)
-def generatePlayerIDToNameMatching():
+def generatePlayerIDToSurnameMatching():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDMatchList = dict()
     gameweekSummarySub = "bootstrap-static/"
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            secondName = formattedY['second_name']
+            cleanedFullName = str.lower(unicodeReplace(secondName))
+            id = formattedY['id']
+            playerIDMatchList[cleanedFullName] = id
+
+    return playerIDMatchList
+
+# Create player id list (and associated surname as the key)
+def generatePlayerIDToFullNameMatching():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     # For all of the objects in the readable player data list under the "elements" key (the name of a list)
     for y in gameweekSummaryDataReadable['elements']:
@@ -126,13 +148,34 @@ def generatePlayerIDToNameMatching():
 
     return playerIDMatchList
 
+# Create player name list (and associated name as key)
+def generatePlayerNameToIDMatching():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            secondName = formattedY['second_name']
+            cleanedSecondName = str.lower(unicodeReplace(secondName))
+            id = formattedY['id']
+            playerIDMatchList[id] = cleanedSecondName
+
+    return playerIDMatchList
+
 # Create player name list (and associated id as key)
 def generatePlayerNameToIDMatching():
     # Initialise the arrays outside the loop so that they cannot be overriden
     playerIDMatchList = dict()
     gameweekSummarySub = "bootstrap-static/"
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     # For all of the objects in the readable player data list under the "elements" key (the name of a list)
     for y in gameweekSummaryDataReadable['elements']:
@@ -154,7 +197,7 @@ def matchUserInputToList(userInput, listToMatchInputTo):
 
 # Create player first & last name list (and associated dictionary)
 def gatherHistoricalPlayerData():
-    playerIDs = generatePlayerIDs()
+    playerIDs = gameweekSummary.generatePlayerIDs()
     # create url's for the current player and extract data from the "History" file where the game week is the current game week
     currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
     length = len(playerIDs) - 1
@@ -173,7 +216,7 @@ def gatherHistoricalPlayerData():
             sys.stdout.flush()
             print("")
 
-        allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
         currentPlayerList = dict()
 
@@ -197,7 +240,7 @@ def gatherHistoricalPlayerData():
 
 # Gather gameweek data specified
 def gatherGameweekDataByPlayer(gameweekOfInterest):
-    playerNames = generatePlayerIDToNameMatching()
+    playerNames = generatePlayerIDToFullNameMatching()
     if gameweekOfInterest == None:
         currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7) - 1
     else:
@@ -219,7 +262,7 @@ def gatherGameweekDataByPlayer(gameweekOfInterest):
             sys.stdout.flush()
             print("")
 
-        allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
 
         currentPlayerList = dict()
 
@@ -311,12 +354,12 @@ def convertStringDictToInt(inputList):
 def exportPlayerDataByGameweek(playerIDs):
     playerName = dict()
     gameweekSummarySub = "bootstrap-static/"
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     for playerID in playerIDs:
-        currentPlayerURL = mergeURL('element-summary/')+str(playerID)+'/'
-        allPlayerDataReadable = generateJSONDumpsReadable(currentPlayerURL)
+        currentPlayerURL = genericMethods.mergeURL('element-summary/')+str(playerID)+'/'
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(currentPlayerURL)
         
         currentPlayerList = dict()
         
@@ -336,8 +379,8 @@ def exportPlayerDataByGameweek(playerIDs):
                 firstName = element['first_name']
                 secondName = element['second_name']
                 fullName = f'{firstName} {secondName}'
-                currentPlayerURL = mergeURL('element-summary/')+str(playerID)+'/'
-                allPlayerDataReadable = generateJSONDumpsReadable(currentPlayerURL)
+                currentPlayerURL = genericMethods.mergeURL('element-summary/')+str(playerID)+'/'
+                allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(currentPlayerURL)
                 currentPlayerList = dict()                
                 gameweekDict = dict()
                 for data in allPlayerDataReadable['history']:        
@@ -426,26 +469,26 @@ def rValuesPerField(correlationDictByAttribute):
 
 # Takes a number of seperate methods and creates a prediction on player performance for a specified week
 def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
-    gameweekData = generateDataForGameWeek(previousGameweek)
+    gameweekData = gameweekSummary.generateDataForGameWeek(previousGameweek)
     # Generate the Correlation Coefficient list
     currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(gameweekData, currentGameweek)
     # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
     minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
     maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
     dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(currentGameweek)
-    indexedData = indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
+    indexedData = genericMethods.indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
     finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
     # Combine correlation scores between previous data and current total points scored
     maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
     minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
     # Index final scores to give an indication of performance
-    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    finalIndexedPlayerDataIndexed = genericMethods.indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
     sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
     return sortedFinalIndexedData
 
 # Takes the correlations for the factors used to predict good performance and applies them to known top performers
 def playerPerformanceForLastWeek(gameweekNumber):
-    elementsList = gatherHistoricalPlayerData()
+    elementsList = gameweekSummary.gatherHistoricalPlayerData()
     allData = convertStringDictToInt(elementsList)
     # Correl needs to be updated to previous week vs current total points - method for generating that?
     correl = correlcoeffGeneration(allData,'total_points')
@@ -454,28 +497,28 @@ def playerPerformanceForLastWeek(gameweekNumber):
     maxList = calculateMaxNumberInArray(allData)
     # Data by player by week current and previous indexed
     dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
-    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    indexedData = genericMethods.indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
     finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
     # Combine correlation scores between previous data and current total points scored
     maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
     minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
     # Index final scores to give an indication of performance
-    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    finalIndexedPlayerDataIndexed = genericMethods.indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
     sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
     return sortedFinalIndexedData
 
 # Player performance with correlation
 def playerPerformanceWithCorrel(gameweekNumber, listOfRValues):
-    allDataForCurrentGameweek = generateDataForGameWeek(gameweekNumber)
+    allDataForCurrentGameweek = gameweekSummary.generateDataForGameWeek(gameweekNumber)
     minList = calculateMinNumberInArray(allDataForCurrentGameweek)
     maxList = calculateMaxNumberInArray(allDataForCurrentGameweek)
     dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
-    indexedData = indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
+    indexedData = genericMethods.indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
     finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, listOfRValues)
     maxNumberPlayers = calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
     minNumberPlayers = calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)
     # Index final scores to give an indication of performance
-    finalIndexedPlayerDataIndexed = indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
+    finalIndexedPlayerDataIndexed = genericMethods.indexDataInADictionary(finalIndexedPlayerDataWithCorrel, maxNumberPlayers, minNumberPlayers)
     sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
 
     return sortedFinalIndexedData

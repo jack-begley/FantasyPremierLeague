@@ -1,10 +1,20 @@
 from gameweekSummary import *
 from playerData import *
 from genericMethods import *
+from Teams import *
 import operator
+
 
 """
 The FPL module.
+
+Autentication Guide: https://medium.com/@bram.vanherle1/fantasy-premier-league-api-authentication-guide-2f7aeb2382e4
+
+https://fantasy.premierleague.com/api/my-team/{team-id}/
+https://fantasy.premierleague.com/api/entry/{team-id}/
+https://fantasy.premierleague.com/api/leagues-classic/{league-id}/standings/
+https://fantasy.premierleague.com/api/leagues-h2h/{league-id}/standings/
+https://fantasy.premierleague.com/api/entry/{team-id}/transfers-latest/
 
 Fantasy Premier League API:
 * /bootstrap-static [Y]
@@ -125,6 +135,9 @@ def introRoutine():
         userInputInt = int(userInput)
         if userInputInt ==  1:
             playerRoutine()
+            
+        if userInputInt ==  2:
+            teamsRoutine()
 
         if userInputInt ==  3:
             gameweekRoutine()
@@ -211,7 +224,7 @@ def playerRoutine():
                         print("!! TYPE IN A GAMEWEEK NUMBER")
                         print("-------------------------------------------")
                         gameweekNumber = str.lower(input("> "))
-                        playerInfoByGameweek(gameweekNumber)
+                        gatherGameweekDataByPlayer(gameweekNumber)
                         endRoutine()
 
                     elif playerUserInputInitialInt == 4:
@@ -229,7 +242,7 @@ def playerRoutine():
                         userInput = str.lower(input("> "))
                         if userInput == 'y':
                             gameweekHeaders = generateCommaSeperatedGameweekNumberList()
-                            printListToExcel(playerData, gameweekHeaders)
+                            printListToExcel(playerPerformance, gameweekHeaders)
                         else:
                             endRoutine()
 
@@ -325,7 +338,70 @@ def playerRoutine():
                     print("")
                     playerRoutine()
 
-# Player specific section of the program. Contains the menu items for the player part of the console app
+# Teams specific section of the program. Contains the menu items for the teams part of the app
+def teamsRoutine():
+                print("------------------------------------------------------------------------")
+                print("You've said you want to take a look at the teams data. You can look at:")
+                print("!! PLEASE SELECT A NUMBER")
+                print("------------------------------------------------------------------------")
+                print(" Print to console:")
+                print(" [1] My team")
+                print("")
+                print(" Data Exports: ")
+                print("")
+                print(" TEST:")
+                print(" [99] Test: Login and see top teams picks league")
+                print("------------------------------------------------------------------------")
+                print("")
+                print("What would you like to see?:")
+                playerUserInputInitial = input(">")
+                print("")
+                parse(playerUserInputInitial)
+
+                if isInt(playerUserInputInitial) == True:
+                    playerUserInputInitialInt = int(playerUserInputInitial)
+
+                    if playerUserInputInitialInt == 1:
+                        print("-----------------------------------")
+                        print("Please log into your account to access league data:")
+                        print("")
+                        username = input("Email: ")
+                        password = input("Password: ")
+                        currentTeam = getTeamDetails(2923192, username, password)
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 99:
+                        teamCap = int(input("How many teams do you want to pull data for?: "))
+                        print("-----------------------------------")
+                        print("Please log into your account to access league data:")
+                        print("")
+                        username = input("Email: ")
+                        password = input("Password: ")
+                        print(f'Gathering top {teamCap} teams data...')
+                        teamIDs = generateTeamIdsForTopPlayers(teamCap, username, password)
+                        playersSelectedCount = dict()
+                        print(f'Running through teams to capture top picked players...')
+                        for teamName in teamIDs:
+                            id = teamIDs[teamName]
+                            session = requests.session()
+                            currentTeamData = getTeamDetails(id, username, password)
+                            dataOfInterest = currentTeamData['picks']
+                            for data in dataOfInterest:
+                                if data['element'] in playersSelectedCount:
+                                    playersSelectedCount[data['element']] += 1
+                                else:
+                                    playersSelectedCount[data['element']] = 1
+                        referenceList = playerData.generatePlayerNameToIDMatching()
+                        playersMostSelected = dict()
+                        for id in playersSelectedCount:
+                            playerName = referenceList[id]
+                            playersMostSelected[playerName] = playersSelectedCount[id]
+
+                        playersSorted = sorted(playersMostSelected.items(), key=lambda x: x[1], reverse=True)
+                        
+                        endRoutine()
+
+# Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
 def gameweekRoutine():
                 print("------------------------------------------------------------------------")
                 print("You've said you want to take a look at the gameweek data. You can look at:")
@@ -472,7 +548,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.290")
+print("V.0.0.3")
 print("")
 print("==============================")
 print("")
