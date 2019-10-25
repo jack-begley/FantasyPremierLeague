@@ -28,6 +28,9 @@
     <Compile Include="genericMethods.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Teams.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="playerData.py">
       <SubType>Code</SubType>
     </Compile>

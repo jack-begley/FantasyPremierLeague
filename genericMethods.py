@@ -1,3 +1,9 @@
+import os
+import sys
+
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
+
 import requests
 import json
 import math
@@ -9,6 +15,10 @@ from tkinter import Tk
 import tkinter 
 import csv 
 import sys, traceback
+from gameweekSummary import *
+from playerData import *
+from Teams import *
+
 
 # URL set up and league codes
 from datetime import date
@@ -131,22 +141,12 @@ def correlcoeffGenerationForPrediction(nameOfArrayToCorrelate, dictOfDataWeAreLo
     lenY = len(currentY)
     currentCorrel = list()
     for element in nameOfArrayToCorrelate:
-        length = len(nameOfArrayToCorrelate) - 1
-        currentIndex = list(nameOfArrayToCorrelate).index(element)
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Running regression: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Regression complete: 100%")
-            sys.stdout.flush()
-            print("")
         if element != 'kickoff_time':
             currentX = nameOfArrayToCorrelate[element]
             lenX = len(currentX)
             if lenX > lenY:
                 currentX = currentX[:lenY]
+                newLenX = len(currentX)
                 currentCorrel = linregress(currentX,currentY)   
             elif lenY > lenX:
                 currentY = currentY[:lenX]
