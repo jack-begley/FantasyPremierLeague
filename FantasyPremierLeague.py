@@ -232,8 +232,10 @@ def playerRoutine():
                         exportPlayerDataByGameweek(playerIDs)
 
                     elif playerUserInputInitialInt == 99:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        playerPerformance = playerPerformanceForLastWeek(gameweekNumber)
+                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 2
+                        previousWeek = gameweekNumber - 1
+                        # TODO: Fix this method
+                        playerPerformance = playerPerformanceForLastWeek(previousWeek)
                         print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
