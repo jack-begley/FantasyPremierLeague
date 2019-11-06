@@ -243,3 +243,10 @@ def convertCorrelByWeekToAveragePerField(arrayToConvert):
 def averageOfList(listToAverage):
     average = sum(listToAverage)/len(listToAverage)
     return average
+
+# Get us the current gameweek number
+def generateCurrentGameweek():
+    dumps = generateJSONDumpsReadable('https://fantasy.premierleague.com/api/entry/1/')
+    for keys in dumps:
+        if keys == 'current_event':
+            return dumps[keys]

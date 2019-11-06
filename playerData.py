@@ -470,8 +470,9 @@ def rValuesPerField(correlationDictByAttribute):
 # Takes a number of seperate methods and creates a prediction on player performance for a specified week
 def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
     gameweekData = gameweekSummary.generateDataForGameWeek(previousGameweek)
+    gameweekCurrentData = gameweekSummary.generateDataForGameWeek(currentGameweek)
     # Generate the Correlation Coefficient list
-    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(gameweekData, currentGameweek)
+    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeekOnly(gameweekData, gameweekCurrentData, currentGameweek)
     # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
     minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
     maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
@@ -522,6 +523,15 @@ def playerPerformanceWithCorrel(gameweekNumber, listOfRValues):
     sortedFinalIndexedData = sorted(finalIndexedPlayerDataIndexed.items(), key=lambda x: x[1], reverse=True)
 
     return sortedFinalIndexedData
+
+# Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeekOnly(arrayToBaseCorrelationOffLastGameweek, arrayToBaseCorrelationOffThisGameweek, gameweekWeWantToPredictThePerformanceOf):
+    currentGameweek = gameweekWeWantToPredictThePerformanceOf
+    previousGameweek = currentGameweek - 1
+    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(arrayToBaseCorrelationOffThisGameweek, 'total_points')
+    correl = correlcoeffGenerationForPrediction(arrayToBaseCorrelationOffLastGameweek, totalPointsCurrentWeek)
+    currentRList = rValuesPerField(correl)
+    return currentRList
 
 # Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
 def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelationOffIncludingLastGameweek, gameweekWeWantToPredictThePerformanceOf):

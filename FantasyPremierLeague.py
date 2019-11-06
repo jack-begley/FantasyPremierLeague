@@ -232,7 +232,7 @@ def playerRoutine():
                         exportPlayerDataByGameweek(playerIDs)
 
                     elif playerUserInputInitialInt == 99:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 2
+                        gameweekNumber = generateCurrentGameweek()
                         previousWeek = gameweekNumber - 1
                         # TODO: Fix this method
                         playerPerformance = playerPerformanceForLastWeek(previousWeek)
@@ -249,19 +249,19 @@ def playerRoutine():
                             endRoutine()
 
                     elif playerUserInputInitialInt == 100:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        gameweekNumber = generateCurrentGameweek()
                         print("---------------------------------------------------------------")
                         print("Let us know what week you're interested in:")
                         print(f"!! TYPE IN A GAMEWEEK NUMBER (CURRENT GAMEWEEK NO. IS: {gameweekNumber})")
                         print("---------------------------------------------------------------")
                         gameweekNumber = str.lower(input("> "))
                         if gameweekNumber == "now":
-                            gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7))
-                            previousGameWeek = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                            gameweekNumber = generateCurrentGameweek()
+                            previousGameWeek = generateCurrentGameweek() - 1
                         else:
                             previousGameWeek = int(gameweekNumber) - 1
                             gameweekNumber = int(gameweekNumber)
-                        playerPerformance = predictPlayerPerformanceByGameweek(previousGameWeek, gameweekNumber)
+                        playerPerformance = predictPlayerPerformanceByGameweek(gameweekNumber, previousGameWeek)
                         formattedPlayerPerformance = listToDict(playerPerformance)
                         print("")
                         print("-----------------------------------")
@@ -276,7 +276,7 @@ def playerRoutine():
                             endRoutine()                    
                             
                     elif playerUserInputInitialInt == 101:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
+                        gameweekNumber = generateCurrentGameweek()
                         currentGameweek = 1
                         correlationDictByWeek = dict()
                         allGameweekData = dict()
@@ -348,6 +348,7 @@ def teamsRoutine():
                 print("------------------------------------------------------------------------")
                 print(" Print to console:")
                 print(" [1] My team")
+                print(" [2] Gameweek performance for a team")
                 print("")
                 print(" Data Exports: ")
                 print("")
@@ -370,6 +371,17 @@ def teamsRoutine():
                         username = input("Email: ")
                         password = input("Password: ")
                         currentTeam = getTeamDetails(2923192, username, password)
+                        endRoutine()                    
+                    
+                    if playerUserInputInitialInt == 2:
+                        print("-----------------------------------")
+                        print("Please type the team name in that you want to see data for:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        teamID = teamNames[userInput]
+                        performanceSummary = performanceSummaryForTeam(teamID)
+                        # printTeamDataToConsole(teamID)
                         endRoutine()
 
                     if playerUserInputInitialInt == 99:
