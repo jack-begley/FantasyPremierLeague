@@ -56,7 +56,7 @@ def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
     
 # Pull the data for a single users fantasy team
 def getTeamDetails(teamID, username, password):
-    gameweekNumber = generateCurrentGameweek()
+    gameweekNumber = genericMethods.generateCurrentGameweek()
     url = f'https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/'
     Response = loginToSecureURL(url, username, password)  
     Data = Response.json()
@@ -77,14 +77,14 @@ def teamNamesAsKeysAndIDsAsData():
     return teams
 
 # Returns all team ids ask keys, with their associated team names
-def teamNamesAsKeysAndIDsAsData():
+def teamIDsAsKeysAndNamesAsData():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
     for elements in readable:
         for keys in readable['teams']:
-           id = keys['name']
-           name = str.lower(keys['code'])
+           id = str.lower(keys['name'])
+           name = keys['code']
            teams[name] = id
     return teams
 
@@ -103,7 +103,13 @@ def printTeamDataToConsole(teamID):
                 for currentKey in keys:
                     currentValue = keys[currentKey]
                     print(f'{currentKey}: {currentValue}')
-    print('================================')
+            if keys['code'] == teamID:
+                net_strength_home = keys["strength_attack_home"] - keys["strength_defence_home"]
+                net_strength_away = keys["strength_attack_away"] - keys["strength_defence_away"]
+                print(f'net_strength_away: {net_strength_away}')
+                print(f'net_strength_home: {net_strength_home}')
+                print('================================')
+                return
 
 # Generate static data for team performance
 def generateDataForTeam(teamID):
@@ -129,8 +135,6 @@ def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
         currentGameweek = 1
         homeDict = dict()
         awayDict = dict()
-        homeDict = []
-        awayDict = []
         while currentGameweek <= maxGameweek:
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
             for gameweekData in currentDumps:
@@ -154,3 +158,19 @@ def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
         totalDict['home_performance'] = homeDict
 
         return totalDict
+
+# input is a team ID & the output is the game stats for last week for that team
+def generateGameweekStats(idOfTheTeamWeWantToLookAt):
+    lastGameweek = genericMethods.generateCurrentGameweek() - 1
+    teamID = idOfTheTeamWeWantToLookAt
+    urlBase = f'https://fantasy.premierleague.com/api/fixtures/?event={lastGameweek}'
+    gameweekDumps = genericMethods.generateJSONDumpsReadable(urlBase)
+    gameweekData = dict()
+    for dumps in gameweekDumps:
+            if teamID == dumps['team_a'] or teamID == dumps['team_h']:
+                for stats in dumps['stats']:
+                    currentIdentifier = stats['identifier']
+                    gameweekData[currentIdentifier] = stats
+
+    #TODO: TEST
+    return gameweekData

@@ -250,3 +250,19 @@ def generateCurrentGameweek():
     for keys in dumps:
         if keys == 'current_event':
             return dumps[keys]
+
+# Print data in a clean format where it has been indexed
+def printDataClean(indexedSetOfData, numberOfRecordsToShow):
+    x = 1
+    for data in indexedSetOfData:
+        currentIndex = list(indexedSetOfData).index(data)
+        if currentIndex <= numberOfRecordsToShow:
+            seperatedValues = str(data).split(',')
+            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '')
+            try:
+                cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
+            except:
+                cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
+            print(f'{cleanedName}: {cleanedData:,}')
+        else:
+            return
