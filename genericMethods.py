@@ -234,15 +234,10 @@ def convertCorrelByWeekToAveragePerField(arrayToConvert):
 
     for data in correlationDict:
         currentList = correlationDict[data]
-        average = averageOfList(currentList)
+        average = listAverage(currentList)
         averageCorrelationDict[data] = average
 
     return averageCorrelationDict
-
-# Average of all values in a given list
-def averageOfList(listToAverage):
-    average = sum(listToAverage)/len(listToAverage)
-    return average
 
 # Get us the current gameweek number
 def generateCurrentGameweek():
@@ -263,6 +258,11 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow):
                 cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
             except:
                 cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
+
             print(f'{cleanedName}: {cleanedData:,}')
         else:
             return
+
+# Returns the average of the values in a list
+def listAverage(list):
+    return sum(list)/len(list)
