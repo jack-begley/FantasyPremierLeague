@@ -565,3 +565,13 @@ def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
             playerCosts.append(key['now_cost'])
 
     return playerCosts
+
+# Creates a list of the players points
+def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPoints = list()
+    for key in currentDumps['elements']:
+        if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
+            playerPoints.append(key['total_points'])
+
+    return playerPoints

@@ -244,7 +244,7 @@ def generateCurrentGameweek():
             return dumps[keys]
 
 # Print data in a clean format where it has been indexed
-def printDataClean(indexedSetOfData, numberOfRecordsToShow):
+def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, appendAfterData):
     x = 1
     for data in indexedSetOfData:
         currentIndex = list(indexedSetOfData).index(data)
@@ -260,9 +260,9 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow):
                     cleanedData = str(seperatedValues[1].replace("'", '').replace(')', ''))
                 
             try:
-                print(f'{cleanedName}: {cleanedData:,}')
+                print(f'{cleanedName}: {appendBeforeData}{cleanedData:,}{appendAfterData}')
             except:
-                print(f'{cleanedName}: {cleanedData}')
+                print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
         else:
             return
 

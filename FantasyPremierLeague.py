@@ -442,7 +442,7 @@ def teamsRoutine():
                         print("--------------------------------------------")
                         print(f'Top 20 players picked by best performers for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(playersSorted, 20)
+                        genericMethods.printDataClean(playersSorted, 20, '', '')
                         print("--------------------------------------------")
 
                         endRoutine()
@@ -462,14 +462,16 @@ def teamsRoutine():
                             teamID = teamNames[currentTeam]
                             team = currentTeam.capitalize()
                             price = genericMethods.listAverage(generateListOfPlayersPricesInTeamByPosition(positionOfInterest, teamID))/10
-                            positionAverageCost[team] = round(price, 2)
+                            points = genericMethods.listAverage(generateListOfPlayersPointsInTeamByPosition(positionOfInterest, teamID))
+                            pricePerPoint = price/points
+                            positionAverageCost[team] = round(pricePerPoint, 2)
 
                         sortedAverageCost = sorted(positionAverageCost.items(), key=lambda x: x[1], reverse=False)
 
                         print("----------------------------------------------------------")
-                        print(f'Average cost of {positionName}s by team:')
+                        print(f'Average cost per point of {positionName}s by team:')
                         print("")
-                        genericMethods.printDataClean(sortedAverageCost, 20)
+                        genericMethods.printDataClean(sortedAverageCost, 20, '£', 'M per point scored')
                         print("----------------------------------------------------------")
                         print("")
 
@@ -508,7 +510,7 @@ def teamsRoutine():
                         print("----------------------------------------------------------")
                         print(f'Average match difficulty for the next {weekNumber} games:')
                         print("")
-                        printDifficultyScores(sortedTeamPerformance)
+                        genericMethods.printDataClean(sortedTeamPerformance, 20, '', '/10')
                         print("----------------------------------------------------------")
                         print("")
 
