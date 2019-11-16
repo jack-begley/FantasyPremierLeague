@@ -349,7 +349,7 @@ def teamsRoutine():
                 print(" [3] Single team summary")
                 print(" [4] Performance stats for a gameweek for a given team (TODO: add stats for players that week too)")
                 print(" [5] Login and see top teams picks league")
-                print(" [6] Average game difficulty for the next N games for a single team")
+                print(" [6] Average cost of position by team")
                 print(" [7] Average game difficulty for the next N games ranked for all teams")
                 print("")
                 print(" Data Exports: ")
@@ -449,16 +449,30 @@ def teamsRoutine():
 
                     if playerUserInputInitialInt == 6:
                         print("-----------------------------------")
-                        print("Please type the team name in that you want to see data for:")
+                        print("Please type the position you're interested in:")
+                        print("(Goalkeeper, Defender, Midfielder, or Forward)")
                         print("")
                         userInput = str.lower(input("> "))
+                        positions = generatePositionReference()
+                        positionOfInterest = positions[userInput]
+                        positionName = userInput.capitalize()
                         teamNames = teamNamesAsKeysAndIDsAsData()
-                        teamID = teamNames[userInput]
-                        print("-----------------------------------")
-                        print("And how many weeks do you want the average to be based off?:")
+                        positionAverageCost = dict()
+                        for currentTeam in teamNames:
+                            teamID = teamNames[currentTeam]
+                            team = currentTeam.capitalize()
+                            price = genericMethods.listAverage(generateListOfPlayersPricesInTeamByPosition(positionOfInterest, teamID))/10
+                            positionAverageCost[team] = round(price, 2)
+
+                        sortedAverageCost = sorted(positionAverageCost.items(), key=lambda x: x[1], reverse=False)
+
+                        print("----------------------------------------------------------")
+                        print(f'Average cost of {positionName}s by team:')
                         print("")
-                        weekNumber = int(input("> "))
-                        averageGameweekDifficulty = upcomingGameDifficulty(weekNumber, teamID)
+                        genericMethods.printDataClean(sortedAverageCost, 20)
+                        print("----------------------------------------------------------")
+                        print("")
+
                         endRoutine()
 
 
@@ -469,6 +483,7 @@ def teamsRoutine():
                         print("")
                         weekNumber = int(input("> "))
                         averageDifficultyByTeam = dict()
+                        finalDifficultyDict = dict()
                         length = len(teamNames)-1
                         for team in teamNames:
                             currentIndex = list(teamNames).index(team)
@@ -484,16 +499,16 @@ def teamsRoutine():
                                 print("")
 
                             currentTeamID = teamNames[team]
-                            averageGameweekDifficulty = upcomingGameDifficulty(weekNumber, currentTeamID)
+                            averageGameweekDifficulty = int(upcomingGameDifficulty(weekNumber, currentTeamID))
                             readableTeamName = team.capitalize()
-                            averageDifficultyByTeam[readableTeamName] = averageGameweekDifficulty        
+                            averageDifficultyByTeam[readableTeamName] = averageGameweekDifficulty
                             
                         sortedTeamPerformance = sorted(averageDifficultyByTeam.items(), key=lambda x: x[1], reverse=False)
 
                         print("----------------------------------------------------------")
                         print(f'Average match difficulty for the next {weekNumber} games:')
                         print("")
-                        genericMethods.printDataClean(sortedTeamPerformance, 20)
+                        printDifficultyScores(sortedTeamPerformance)
                         print("----------------------------------------------------------")
                         print("")
 

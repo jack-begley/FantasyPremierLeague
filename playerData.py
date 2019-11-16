@@ -542,3 +542,26 @@ def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelation
     correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
     currentRList = rValuesPerField(correl)
     return currentRList
+
+
+# Creates a list of the positions
+def generatePositionReference():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    positionsDict = dict()
+    for data in currentDumps['element_types']:
+        for key in data:
+            positionName = str.lower(data['singular_name'])
+            positionsDict[positionName] = data['id']
+            break
+
+    return positionsDict
+
+# Creates a list of the players and their price
+def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerCosts = list()
+    for key in currentDumps['elements']:
+        if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
+            playerCosts.append(key['now_cost'])
+
+    return playerCosts

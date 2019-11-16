@@ -177,10 +177,7 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
                         value = float(currentPlayerDataToIterate[secondaryKey])
                         max = float(listOfCorrespondingMaxValues[secondaryKey])
                         min = float(listOfCorrespondingMinValues[secondaryKey])
-                        numerator = value - min
-                        denominator = max - min
-                        calculation = numerator / denominator
-                        indexedValue = calculation*100
+                        indexedValue = indexValue(value, max, min)
                     except:
                         indexedValue = 0.0
                 indexedValues[secondaryKey] = indexedValue
@@ -257,12 +254,22 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow):
             try:
                 cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
             except:
-                cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
-
-            print(f'{cleanedName}: {cleanedData:,}')
+                try:
+                    cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
+                except:
+                    cleanedData = str(seperatedValues[1].replace("'", '').replace(')', ''))
+                
+            try:
+                print(f'{cleanedName}: {cleanedData:,}')
+            except:
+                print(f'{cleanedName}: {cleanedData}')
         else:
             return
 
 # Returns the average of the values in a list
 def listAverage(list):
     return sum(list)/len(list)
+
+# Returns the index value of the input
+def indexValue(valueToIndex, max, min):
+    return ((valueToIndex - min) / (max - min))*100

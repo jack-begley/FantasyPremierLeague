@@ -201,7 +201,7 @@ def upcomingGameDifficulty(numberOfGameweeksToPullDataFor, idOfTheTeamWeWantToLo
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         currentGameweek = genericMethods.generateCurrentGameweek() + 1
-        maxGameweek = currentGameweek + numberOfGameweeksToPullDataFor
+        maxGameweek = currentGameweek + (numberOfGameweeksToPullDataFor - 1)
         difficultyOfUpcomingGamesForTeam = list()
         while currentGameweek <= maxGameweek:
             teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
@@ -219,7 +219,7 @@ def upcomingGameDifficulty(numberOfGameweeksToPullDataFor, idOfTheTeamWeWantToLo
             else:
                 currentGameweek += 1
 
-        averageDifficultyScore = genericMethods.listAverage(difficultyOfUpcomingGamesForTeam)
+        averageDifficultyScore = round(((genericMethods.indexValue(genericMethods.listAverage(difficultyOfUpcomingGamesForTeam), 5, 2)) / 10) , 0)
 
         return averageDifficultyScore
 
@@ -236,4 +236,16 @@ def allTeamsPlayingForAGameweek(gameweekNumber, maxGameweekNumber):
              gameweekNumber += 1
     
      return teamsPlayed
-    
+
+ # Method for printing the 
+def printDifficultyScores(indexedSetOfData):
+    x = 1
+    for data in indexedSetOfData:
+        currentIndex = list(indexedSetOfData).index(data)
+        if currentIndex <= 20:
+            seperatedValues = str(data).split(',')
+            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '')
+            cleanedData = int(round(float(seperatedValues[1].replace(')', '')),2))
+            print(f'{cleanedName}: {cleanedData:,}/10')
+        else:
+            return
