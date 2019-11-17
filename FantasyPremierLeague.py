@@ -351,6 +351,7 @@ def teamsRoutine():
                 print(" [5] Login and see top teams picks league")
                 print(" [6] Average cost of position by team")
                 print(" [7] Average game difficulty for the next N games ranked for all teams")
+                print(" [8] Top 5 players by position for points per pound")
                 print("")
                 print(" Data Exports: ")
                 print("")
@@ -514,6 +515,48 @@ def teamsRoutine():
                         print("----------------------------------------------------------")
                         print("")
 
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 8:
+                        print("----------------------------------------------------------------------------------------------")
+                        print("Do you want to see the highest value for money (most) or the poorest value for money (least)?:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        print("-----------------------------------------------------------------------------------------------")
+                        print("Running...")
+                        positions = generatePositionReference()
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        playerIDs = generatePlayersIdsList()
+                        playerNames = generatePlayerNameToIDMatching()
+                        pricePerPoint = generateListOfPointsPerPoundPerPlayer()
+                        for positionName in positions:
+                            position = positions[positionName]
+                            positionData = pricePerPoint[position]
+                            playerPoundPerPoint = dict()
+                            for playerID in playerIDs:
+                                player = playerNames[playerID].capitalize()
+                                try:
+                                    if positionData[playerID] > 0:
+                                        playerPoundPerPoint[player] = round(positionData[playerID], 2)
+
+                                except:
+                                    None
+                        
+                            if userInput == 'most':
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=False)   
+                            if userInput == 'least':
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
+                            else:
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
+
+
+                            print("----------------------------------------------------------")
+                            print(f'Top ranked {positionName}s for points per pound:')
+                            print("")
+                            genericMethods.printDataClean(sortedAverageCost, 4, '', ' points per £M spent')
+                            print("----------------------------------------------------------")
+                            print("")
 
                         endRoutine()
 

@@ -575,3 +575,32 @@ def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
             playerPoints.append(key['total_points'])
 
     return playerPoints
+
+# Creates a list of the players points by players
+def generateListOfPointsPerPoundPerPlayer():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPointsGoalkeeper = dict()
+    playerPointsDefender = dict()
+    playerPointsMidfielder = dict()
+    playerPointsForward = dict()
+    pointsByPosition = dict()
+    for key in currentDumps['elements']:
+        if key['element_type'] == 1:
+            player = key['id']
+            playerPointsGoalkeeper[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 2:
+            player = key['id']
+            playerPointsDefender[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 3:
+            player = key['id']
+            playerPointsMidfielder[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 4:
+            player = key['id']
+            playerPointsForward[player] = (key['total_points']/key['now_cost'])
+
+    pointsByPosition[1] = playerPointsGoalkeeper
+    pointsByPosition[2] = playerPointsDefender
+    pointsByPosition[3] = playerPointsMidfielder
+    pointsByPosition[4] = playerPointsForward
+
+    return pointsByPosition

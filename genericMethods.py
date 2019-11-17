@@ -250,7 +250,7 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, ap
         currentIndex = list(indexedSetOfData).index(data)
         if currentIndex <= numberOfRecordsToShow:
             seperatedValues = str(data).split(',')
-            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '')
+            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
             try:
                 cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
             except:
