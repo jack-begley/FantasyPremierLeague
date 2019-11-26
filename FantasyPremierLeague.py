@@ -352,6 +352,7 @@ def teamsRoutine():
                 print(" [6] Average cost of position by team")
                 print(" [7] Average game difficulty for the next N games ranked for all teams")
                 print(" [8] Top 5 players by position for points per pound")
+                print(" [9] Top performers by position for last N gameweeks")
                 print("")
                 print(" Data Exports: ")
                 print("")
@@ -431,7 +432,7 @@ def teamsRoutine():
                                     playersSelectedCount[data['element']] += 1
                                 else:
                                     playersSelectedCount[data['element']] = 1
-                        referenceList = playerData.generatePlayerNameToIDMatching()
+                        referenceList = generatePlayerNameToIDMatching()
                         playersMostSelected = dict()
                         for id in playersSelectedCount:
                             playerName = referenceList[id]
@@ -560,6 +561,83 @@ def teamsRoutine():
 
                         endRoutine()
 
+                if playerUserInputInitialInt == 9:                        
+                    print("----------------------------------------------------------------------------------------------")
+                    print("How many gameweeks do you want to see?")
+                    print("")
+                    userInput = int(input("> "))
+                    print("-----------------------------------------------------------------------------------------------")
+                    print("Initialising method:")
+                    nowGameweek = genericMethods.generateCurrentGameweek()
+                    fromGameweek = nowGameweek - userInput
+                    count = fromGameweek
+                    currentGameweek = nowGameweek - userInput
+                    playerIDs = generatePlayersIdsList()
+                    playerNames = generatePlayerNameToIDMatching()
+                    positions = generatePositionReferenceIDAsKey()
+                    sumOfPlayerScores = dict()
+                    allGameweekData = dict()
+                    gameweekList = list()
+
+                    while count <= nowGameweek:
+                        gameweekList.append(count)
+                        count += 1
+
+                    gameweekListClean = "// "
+                    for week in gameweekList:
+                        gameweekListClean += f"{week}/ "
+
+                    length = len(playerIDs) - 1
+                    for playerID in playerIDs:
+                        playerDataList = generateListOfPointsFoNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                        sumOfPlayerScores[playerID] = sum(playerDataList)
+                        allGameweekData[playerID] = playerDataList
+
+                        currentIndex = list(playerIDs).index(playerID)
+                        runPercentageComplete = str(round((currentIndex/length)*100,1))
+                        if runPercentageComplete != "100.0":
+                            sys.stdout.write('\r'f"Gathering player scores: {runPercentageComplete}%"),
+                            sys.stdout.flush()
+                        else:
+                            sys.stdout.write('\r'"")
+                            sys.stdout.write(f"Player score data gathered: 100%")
+                            sys.stdout.flush()
+                            print("")
+                            
+                            
+                    sortedByPosition = sortPlayerDataByPosition(allGameweekData)
+                    sortedSumByPosition = sortPlayerDataByPosition(sumOfPlayerScores)
+
+
+
+                    for position in sortedByPosition:
+                        positionName = positions[position]
+                        currentPositionData = sortedByPosition[position]
+                        sortedSumPoints = sorted(sortedSumByPosition[position].items(), key=lambda x: x[1], reverse=True)
+                        top5Players = sortedSumPoints[:5]
+                        top5PlayersPreviousGameweeks = dict()
+                        print(f"Preparing {position} data to print to console...")
+                        print("")
+
+                        for playerTuple in top5Players:
+                            playerID = playerTuple[0]
+                            playerName = playerNames[playerID].capitalize()
+                            top5PlayersPreviousGameweeks[playerName] = currentPositionData[playerID]
+
+                        
+                        print("-----------------------------------------------------------------------------------------------------------")
+                        print(f'Top ranked {positionName}s for points over the last {userInput} games (GW {fromGameweek} to {nowGameweek}):')
+                        print("")
+                        print(f"Gameweek: {gameweekListClean}")
+                        print("-------------------------------------------------------")
+                        for player in top5PlayersPreviousGameweeks:
+                            playerData = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
+                            print(f"{player}: {playerData}")
+                        print("-----------------------------------------------------------------------------------------------------------")
+                        print("")
+                    endRoutine()
+
+
 # Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
 def gameweekRoutine():
                 print("------------------------------------------------------------------------")
@@ -651,32 +729,32 @@ def gameweekRoutine():
 
                     elif playerUserInputInitialInt == 4:
                         print("-------------------------------------------")
-                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10):")
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
-                        numberOfRecordsToShow = str.lower(input("> "))
+                        numberOfRecordsToShow = int(input("> "))
                         topTransfers = mostNetTransfersIn(numberOfRecordsToShow)
                         currentGameweek = genericMethods.generateCurrentGameweek()
                         print("--------------------------------------------")
                         print(f'Top {numberOfRecordsToShow} transfers in for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow)
+                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 5:
                         print("-------------------------------------------")
-                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:)")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:))")
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
-                        numberOfRecordsToShow = str.lower(input("> "))
+                        numberOfRecordsToShow = int(input("> "))
                         topTransfers =  mostNetTransfersOut(numberOfRecordsToShow)
                         currentGameweek = genericMethods.generateCurrentGameweek()
                         print("--------------------------------------------")
                         print(f'Top {numberOfRecordsToShow} transfers out for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow)
+                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
@@ -713,7 +791,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.3")
+print("V.0.1.0")
 print("")
 print("==============================")
 print("")

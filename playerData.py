@@ -556,6 +556,19 @@ def generatePositionReference():
 
     return positionsDict
 
+# Creates a list of the positions
+def generatePositionReferenceIDAsKey():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    positionsDict = dict()
+    for data in currentDumps['element_types']:
+        for key in data:
+            positionID = int(data['id'])
+            positionsDict[positionID] = data['singular_name']
+            break
+
+    return positionsDict
+
+
 # Creates a list of the players and their price
 def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
     currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
@@ -576,8 +589,8 @@ def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
 
     return playerPoints
 
-# Creates a list of the players points by players
-def generateListOfPointsPerPoundPerPlayer():
+# Creates a list of the players points per pound by players by position
+def generateListOfPointsPerPoundPerPlayerPerPosition():
     currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
     playerPointsGoalkeeper = dict()
     playerPointsDefender = dict()
@@ -597,6 +610,53 @@ def generateListOfPointsPerPoundPerPlayer():
         if key['element_type'] == 4:
             player = key['id']
             playerPointsForward[player] = (key['total_points']/key['now_cost'])
+
+    pointsByPosition[1] = playerPointsGoalkeeper
+    pointsByPosition[2] = playerPointsDefender
+    pointsByPosition[3] = playerPointsMidfielder
+    pointsByPosition[4] = playerPointsForward
+
+    return pointsByPosition
+
+
+# Creates a list of points for a given player for a given range of weeks
+
+def generateListOfPointsFoNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL(f'element-summary/{playerID}/'))
+    currentPlayersPoints = list()
+    currentGameweek = gameweekOfInterest
+    for data in currentDumps['history']:
+        if currentGameweek <= maxGameweek:
+            if data['round'] == currentGameweek:
+                currentData = data['total_points']
+                currentPlayersPoints.append(currentData)
+                currentGameweek += 1
+  
+    return currentPlayersPoints
+
+# Takes a array of player data where the player ID is the Key and sorts it by position
+
+def sortPlayerDataByPosition(arrayToSort):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPointsGoalkeeper = dict()
+    playerPointsDefender = dict()
+    playerPointsMidfielder = dict()
+    playerPointsForward = dict()
+    pointsByPosition = dict()
+    for player in arrayToSort:
+        for key in currentDumps['elements']:
+            if key['element_type'] == 1 and player == key['id']:
+                player = key['id']
+                playerPointsGoalkeeper[player] = arrayToSort[player]
+            if key['element_type'] == 2 and player == key['id']:
+                player = key['id']
+                playerPointsDefender[player] = arrayToSort[player]
+            if key['element_type'] == 3 and player == key['id']:
+                player = key['id']
+                playerPointsMidfielder[player] = arrayToSort[player]
+            if key['element_type'] == 4 and player == key['id']:
+                player = key['id']
+                playerPointsForward[player] = arrayToSort[player]
 
     pointsByPosition[1] = playerPointsGoalkeeper
     pointsByPosition[2] = playerPointsDefender
