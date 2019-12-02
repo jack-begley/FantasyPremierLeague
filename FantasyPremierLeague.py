@@ -174,9 +174,10 @@ def playerRoutine():
                 print(" [2] All gameweek data for a player (by surname)")
                 print(" [3] All player data by gameweek (number)")
                 print(" [4] Create predictions of performance for next gameweek")
+                print(" [5] IN PROGRESS: Generate list of player metrics that relate to performance")
                 print("")
                 print(" Data Exports: ")
-                print(" [5] All player data for all gameweeks (to excel)")
+                print(" [6] All player data for all gameweeks (to excel)")
                 print("")
                 print(" TEST:")
                 print(" [99] Test: Rank player performance")
@@ -227,13 +228,9 @@ def playerRoutine():
                         gatherGameweekDataByPlayer(gameweekNumber)
                         endRoutine()
 
-                    elif playerUserInputInitialInt == 5:
-                        playerIDs = generatePlayerIDs()
-                        exportPlayerDataByGameweek(playerIDs)
-
                     elif playerUserInputInitialInt == 4:
                         gameweekNumber = generateCurrentGameweek()
-                        currentGameweek = 1
+                        currentGameweek = gameweekNumber - 6
                         correlationDictByWeek = dict()
                         allGameweekData = dict()
                         while currentGameweek <= gameweekNumber:
@@ -273,12 +270,34 @@ def playerRoutine():
                         print("--------------------------------------------")
                         print(f'Predicted top 15 performers for GW{gameweekNumber}:')
                         print("")
-                        genericMethods.printDataClean(predictionsForGameweek, 15)
+                        genericMethods.printDataClean(predictionsForGameweek, 15,"","")
                         print("--------------------------------------------")
                         print("")
                         
                         endRoutine()
 
+                    elif playerUserInputInitialInt == 5:
+                        print("Running...")
+                        positions = generatePositionReference()
+                        teamIDs = teamIDsAsKeysAndNamesAsData()
+                        playerIDs = generatePlayersIdsList()
+                        playerNames = generatePlayerNameToIDMatching()
+                        scoresByPosition = dict()
+                        for positionName in positions:
+                            position = positions[positionName]
+                            for teamID in teamIDs:
+                                team = playerNames[teamID].capitalize()
+                                scoresByPosition[position] = generateListOfPlayersAndMetricsRelatedToPerformance(position,teamID)
+
+                        endRoutine()
+
+
+                    elif playerUserInputInitialInt == 6:
+                        playerIDs = generatePlayerIDs()
+                        exportPlayerDataByGameweek(playerIDs)
+                        
+                        endRoutine()
+                        
                     elif playerUserInputInitialInt == 99:
                         gameweekNumber = generateCurrentGameweek()
                         previousWeek = gameweekNumber - 1
@@ -530,7 +549,7 @@ def teamsRoutine():
                         teamNames = teamNamesAsKeysAndIDsAsData()
                         playerIDs = generatePlayersIdsList()
                         playerNames = generatePlayerNameToIDMatching()
-                        pricePerPoint = generateListOfPointsPerPoundPerPlayer()
+                        pricePerPoint = generateListOfPointsPerPoundPerPlayerPerPosition()
                         for positionName in positions:
                             position = positions[positionName]
                             positionData = pricePerPoint[position]
@@ -549,7 +568,7 @@ def teamsRoutine():
                             if userInput == 'least':
                                 sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
                             else:
-                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=False)
 
 
                             print("----------------------------------------------------------")
