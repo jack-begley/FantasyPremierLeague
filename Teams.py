@@ -249,3 +249,24 @@ def printDifficultyScores(indexedSetOfData):
             print(f'{cleanedName}: {cleanedData:,}/10')
         else:
             return
+
+# Generate list of playerID's and names for a given team
+def generateListOfPlayerIDsAsKeysForTeam(teamID):
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            if formattedY['team'] == teamID:
+                firstName = formattedY['first_name']
+                secondName = formattedY['second_name']
+                fullName = f'{firstName} {secondName}'
+                cleanedFullName = str.lower(genericMethods.unicodeReplace(fullName))
+                id = formattedY['id']
+                playerIDMatchList[id] = cleanedFullName
+
+    return playerIDMatchList

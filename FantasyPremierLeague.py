@@ -277,17 +277,35 @@ def playerRoutine():
                         endRoutine()
 
                     elif playerUserInputInitialInt == 5:
+                        print("--------------------------------------------------------")
+                        print("Let us know how many weeks you want to look back across:")
+                        print("!! TYPE IN A NUMBER")
+                        print("--------------------------------------------------------")
+                        userInputGameweekDifference = int(input("> "))
                         print("Running...")
                         positions = generatePositionReference()
+                        maxGameweek = genericMethods.generateCurrentGameweek()
+                        currentGameweek = maxGameweek - userInputGameweekDifference
                         teamIDs = teamIDsAsKeysAndNamesAsData()
                         playerIDs = generatePlayersIdsList()
                         playerNames = generatePlayerNameToIDMatching()
-                        scoresByPosition = dict()
-                        for positionName in positions:
-                            position = positions[positionName]
+                        scoreByGameweek = dict()
+                        while currentGameweek <= maxGameweek:
+                            scoreByTeams = dict()
                             for teamID in teamIDs:
-                                team = playerNames[teamID].capitalize()
-                                scoresByPosition[position] = generateListOfPlayersAndMetricsRelatedToPerformance(position,teamID)
+                                scoreByPlayers = dict()
+                                currentPlayersList = generateListOfPlayerIDsAsKeysForTeam(teamID)
+                                team = teamIDs[teamID].capitalize()
+                                for playerID in currentPlayersList:
+                                    player = playerNames[playerID].capitalize()
+                                    scoreByPlayers[player] = generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek)
+
+                                scoreByTeams[team] = scoreByPlayers
+                            
+                            scoreByGameweek[currentGameweek] = scoreByTeams
+
+                            currentGameweek += 1
+
 
                         endRoutine()
 
@@ -602,7 +620,7 @@ def teamsRoutine():
                         gameweekList.append(count)
                         count += 1
 
-                    gameweekListClean = "// "
+                    gameweekListClean = "/ "
                     for week in gameweekList:
                         gameweekListClean += f"{week}/ "
 
@@ -635,7 +653,7 @@ def teamsRoutine():
                         sortedSumPoints = sorted(sortedSumByPosition[position].items(), key=lambda x: x[1], reverse=True)
                         top5Players = sortedSumPoints[:5]
                         top5PlayersPreviousGameweeks = dict()
-                        print(f"Preparing {position} data to print to console...")
+                        print(f"Preparing {positionName} data to print to console...")
                         print("")
 
                         for playerTuple in top5Players:
@@ -810,7 +828,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.1.0")
+print("V.0.1.109")
 print("")
 print("==============================")
 print("")

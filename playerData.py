@@ -142,7 +142,7 @@ def generatePlayerIDToFullNameMatching():
             firstName = formattedY['first_name']
             secondName = formattedY['second_name']
             fullName = f'{firstName} {secondName}'
-            cleanedFullName = str.lower(unicodeReplace(fullName))
+            cleanedFullName = str.lower(genericMethods.unicodeReplace(fullName))
             id = formattedY['id']
             playerIDMatchList[cleanedFullName] = id
 
@@ -591,58 +591,6 @@ def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
 
     return playerPoints
 
-# Creates a list of the players and metrics related to their performance
-
-#TODO: Pull player by player (for a team)?
-
-def generateListOfPlayersAndMetricsRelatedToPerformance(teamID, numberOfGameweeksToLookBackTo):
-        urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-        maxGameweek = genericMethods.generateCurrentGameweek()
-        startGameweek = maxGameweek - (numberOfGameweeksToLookBackTo - 1)
-        totalDict = dict()
-        homeDict = dict()
-        awayDict = dict()
-        while currentGameweek <= maxGameweek:
-            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
-            for gameweekData in currentDumps:
-                if gameweekData['team_h'] == teamID:
-                    for data in gameweekData:
-                        if data == 'stats':
-                            for gameweekStats in gameweekData[data]:
-                                dataToAddToList = dict()
-                                for stat in gameweekStats['h']:
-                                    currentStat = gameweekStats['identifier']
-                                    currentPlayer = stat['element']
-                                    dataToAddToList[currentPlayer] = stat['value']
-                                awayDict[currentStat] = dataToAddToList
-                        else:
-                            homeDict[data] = gameweekData[data]
-                    homeDict['was_away'] = False
-                    homeDict['was_home'] = True
-                    totalDict[currentGameweek] = homeDict
-
-                if gameweekData['team_a'] == teamID:
-                    for data in gameweekData:
-                        if data == 'stats':
-                            for gameweekStats in gameweekData[data]:
-                                dataToAddToList = dict()
-                                for stat in gameweekStats['a']:
-                                    currentStat = gameweekStats['identifier']
-                                    currentPlayer = stat['element']
-                                    dataToAddToList[currentPlayer] = stat['value']
-                                homeDict[currentStat] = dataToAddToList
-
-                        else:
-                            awayDict[data] = gameweekData[data]
-                    awayDict['was_away'] = True
-                    awayDict['was_home'] = False
-                    totalDict[currentGameweek] = awayDict
-            
-            currentGameweek += 1
-
-        return totalDict
-
-
 # Creates a list of the players points per pound by players by position
 def generateListOfPointsPerPoundPerPlayerPerPosition():
     currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
@@ -718,3 +666,32 @@ def sortPlayerDataByPosition(arrayToSort):
     pointsByPosition[4] = playerPointsForward
 
     return pointsByPosition
+
+
+# Creates a list of the players and metrics related to their performance
+
+#TODO: Pull player by player (for a team)?
+
+def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        playerDict = dict()
+        statsDict = dict()
+        playerDataForWeek = dict() 
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{currentGameweek}/live')
+        for gameweekData in currentDumps['elements']:
+            if gameweekData['id'] == playerID:
+                for data in gameweekData:
+                    if data == 'stats':
+                        statsDict[data] = gameweekData[data]
+                        playerDataForWeek = statsDict
+                    if data == 'explain':
+                        for gameweekStats in gameweekData[data]:
+                            for stats in gameweekStats['stats']:
+                                dataToAddToList = dict()
+                                dataToAddToList['points_scored'] = stats['points']
+                                dataToAddToList['frequency_of_occurance'] = stats['value']
+                                playerDataForWeek[stats['identifier']] = dataToAddToList
+                            playerDict = playerDataForWeek
+
+
+        return playerDict
