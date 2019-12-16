@@ -682,15 +682,16 @@ def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGamewee
             if gameweekData['id'] == playerID:
                 for data in gameweekData:
                     if data == 'stats':
-                        statsDict[data] = gameweekData[data]
-                        playerDataForWeek = statsDict
+                        for key in gameweekData['stats']:
+                            currentData =gameweekData['stats']
+                            dataToAdd = currentData[key]
+                            playerDataForWeek[key] = dataToAdd
                     if data == 'explain':
                         for gameweekStats in gameweekData[data]:
                             for stats in gameweekStats['stats']:
-                                dataToAddToList = dict()
-                                dataToAddToList['points_scored'] = stats['points']
-                                dataToAddToList['frequency_of_occurance'] = stats['value']
-                                playerDataForWeek[stats['identifier']] = dataToAddToList
+                                dataKey = stats['identifier']
+                                dataToAdd = stats['points']
+                                playerDataForWeek[dataKey] = dataToAdd
                             playerDict = playerDataForWeek
 
 

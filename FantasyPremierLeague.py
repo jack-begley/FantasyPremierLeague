@@ -604,7 +604,7 @@ def teamsRoutine():
                     print("")
                     userInput = int(input("> "))
                     print("-----------------------------------------------------------------------------------------------")
-                    print("Initialising method:")
+                    print("Initialising method...")
                     nowGameweek = genericMethods.generateCurrentGameweek()
                     fromGameweek = nowGameweek - userInput
                     count = fromGameweek
