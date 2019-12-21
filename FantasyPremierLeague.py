@@ -173,14 +173,15 @@ def playerRoutine():
                 print(" [1] Single player data for current gameweek (by surname)")
                 print(" [2] All gameweek data for a player (by surname)")
                 print(" [3] All player data by gameweek (number)")
+                print(" [4] Create predictions of performance for next gameweek")
+                print(" [5] IN PROGRESS: Generate list of player metrics that relate to performance")
                 print("")
                 print(" Data Exports: ")
-                print(" [4] All player data for all gameweeks (to excel)")
+                print(" [6] All player data for all gameweeks (to excel)")
                 print("")
                 print(" TEST:")
                 print(" [99] Test: Rank player performance")
                 print(" [100] Test: How previous performance affects future performance")
-                print(" [101] Test: Create an average correlation based off past gameweeks")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -228,56 +229,8 @@ def playerRoutine():
                         endRoutine()
 
                     elif playerUserInputInitialInt == 4:
-                        playerIDs = generatePlayerIDs()
-                        exportPlayerDataByGameweek(playerIDs)
-
-                    elif playerUserInputInitialInt == 99:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 2
-                        previousWeek = gameweekNumber - 1
-                        # TODO: Fix this method
-                        playerPerformance = playerPerformanceForLastWeek(previousWeek)
-                        print("")
-                        print("-----------------------------------")
-                        print("Would you like to export the data?:")
-                        print("!! TYPE IN Y/N")
-                        print("-----------------------------------")
-                        userInput = str.lower(input("> "))
-                        if userInput == 'y':
-                            gameweekHeaders = generateCommaSeperatedGameweekNumberList()
-                            printListToExcel(playerPerformance, gameweekHeaders)
-                        else:
-                            endRoutine()
-
-                    elif playerUserInputInitialInt == 100:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        print("---------------------------------------------------------------")
-                        print("Let us know what week you're interested in:")
-                        print(f"!! TYPE IN A GAMEWEEK NUMBER (CURRENT GAMEWEEK NO. IS: {gameweekNumber})")
-                        print("---------------------------------------------------------------")
-                        gameweekNumber = str.lower(input("> "))
-                        if gameweekNumber == "now":
-                            gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7))
-                            previousGameWeek = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        else:
-                            previousGameWeek = int(gameweekNumber) - 1
-                            gameweekNumber = int(gameweekNumber)
-                        playerPerformance = predictPlayerPerformanceByGameweek(previousGameWeek, gameweekNumber)
-                        formattedPlayerPerformance = listToDict(playerPerformance)
-                        print("")
-                        print("-----------------------------------")
-                        print("Would you like to export the data?:")
-                        print("!! TYPE IN Y/N")
-                        print("-----------------------------------")
-                        userInput = str.lower(input("> "))
-                        if userInput == 'y':
-                            headersOfData = generateHeadersList()
-                            printListToExcel(playerData, gameweekHeaders)
-                        else:
-                            endRoutine()                    
-                            
-                    elif playerUserInputInitialInt == 101:
-                        gameweekNumber = (math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)) - 1
-                        currentGameweek = 1
+                        gameweekNumber = generateCurrentGameweek()
+                        currentGameweek = gameweekNumber - 6
                         correlationDictByWeek = dict()
                         allGameweekData = dict()
                         while currentGameweek <= gameweekNumber:
@@ -314,6 +267,60 @@ def playerRoutine():
                         previousWeek = gameweekNumber - 1
                         predictionsForGameweek = playerPerformanceWithCorrel(previousWeek, averageCorrelByField)
 
+                        print("--------------------------------------------")
+                        print(f'Predicted top 15 performers for GW{gameweekNumber}:')
+                        print("")
+                        genericMethods.printDataClean(predictionsForGameweek, 15,"","")
+                        print("--------------------------------------------")
+                        print("")
+                        
+                        endRoutine()
+
+                    elif playerUserInputInitialInt == 5:
+                        print("--------------------------------------------------------")
+                        print("Let us know how many weeks you want to look back across:")
+                        print("!! TYPE IN A NUMBER")
+                        print("--------------------------------------------------------")
+                        userInputGameweekDifference = int(input("> "))
+                        print("Running...")
+                        positions = generatePositionReference()
+                        maxGameweek = genericMethods.generateCurrentGameweek()
+                        currentGameweek = maxGameweek - userInputGameweekDifference
+                        teamIDs = teamIDsAsKeysAndNamesAsData()
+                        playerIDs = generatePlayersIdsList()
+                        playerNames = generatePlayerNameToIDMatching()
+                        scoreByGameweek = dict()
+                        while currentGameweek <= maxGameweek:
+                            scoreByTeams = dict()
+                            for teamID in teamIDs:
+                                scoreByPlayers = dict()
+                                currentPlayersList = generateListOfPlayerIDsAsKeysForTeam(teamID)
+                                team = teamIDs[teamID].capitalize()
+                                for playerID in currentPlayersList:
+                                    player = playerNames[playerID].capitalize()
+                                    scoreByPlayers[player] = generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek)
+
+                                scoreByTeams[team] = scoreByPlayers
+                            
+                            scoreByGameweek[currentGameweek] = scoreByTeams
+
+                            currentGameweek += 1
+
+
+                        endRoutine()
+
+
+                    elif playerUserInputInitialInt == 6:
+                        playerIDs = generatePlayerIDs()
+                        exportPlayerDataByGameweek(playerIDs)
+                        
+                        endRoutine()
+                        
+                    elif playerUserInputInitialInt == 99:
+                        gameweekNumber = generateCurrentGameweek()
+                        previousWeek = gameweekNumber - 1
+                        # TODO: Fix this method
+                        playerPerformance = playerPerformanceForLastWeek(previousWeek)
                         print("")
                         print("-----------------------------------")
                         print("Would you like to export the data?:")
@@ -322,9 +329,36 @@ def playerRoutine():
                         userInput = str.lower(input("> "))
                         if userInput == 'y':
                             gameweekHeaders = generateCommaSeperatedGameweekNumberList()
-                            printListToExcel(playerData, gameweekHeaders)
+                            printListToExcel(playerPerformance, gameweekHeaders)
                         else:
                             endRoutine()
+
+                    elif playerUserInputInitialInt == 100:
+                        gameweekNumber = generateCurrentGameweek()
+                        print("---------------------------------------------------------------")
+                        print("Let us know what week you're interested in:")
+                        print(f"!! TYPE IN A GAMEWEEK NUMBER (CURRENT GAMEWEEK NO. IS: {gameweekNumber})")
+                        print("---------------------------------------------------------------")
+                        gameweekNumber = str.lower(input("> "))
+                        if gameweekNumber == "now":
+                            gameweekNumber = generateCurrentGameweek()
+                            previousGameWeek = generateCurrentGameweek() - 1
+                        else:
+                            previousGameWeek = int(gameweekNumber) - 1
+                            gameweekNumber = int(gameweekNumber)
+                        playerPerformance = predictPlayerPerformanceByGameweek(gameweekNumber, previousGameWeek)
+                        formattedPlayerPerformance = listToDict(playerPerformance)
+                        print("")
+                        print("-----------------------------------")
+                        print("Would you like to export the data?:")
+                        print("!! TYPE IN Y/N")
+                        print("-----------------------------------")
+                        userInput = str.lower(input("> "))
+                        if userInput == 'y':
+                            headersOfData = generateHeadersList()
+                            printListToExcel(playerData, gameweekHeaders)
+                        else:
+                            endRoutine()                    
 
                     else:
                         print("====================================================================================")
@@ -348,11 +382,20 @@ def teamsRoutine():
                 print("------------------------------------------------------------------------")
                 print(" Print to console:")
                 print(" [1] My team")
+                print(" [2] All weeks performance for a given team")
+                print(" [3] Single team summary")
+                print(" [4] Performance stats for a gameweek for a given team (TODO: add stats for players that week too)")
+                print(" [5] Login and see top teams picks league")
+                print(" [6] Average cost of position by team")
+                print(" [7] Average game difficulty for the next N games ranked for all teams")
+                print(" [8] Top 5 players by position for points per pound")
+                print(" [9] Top performers by position for last N gameweeks")
+                print(" [10] Average goals conceeded by team for difficulty this week")
+                print(" [11] Average goals scored by team for difficulty this week")
                 print("")
                 print(" Data Exports: ")
                 print("")
                 print(" TEST:")
-                print(" [99] Test: Login and see top teams picks league")
                 print("------------------------------------------------------------------------")
                 print("")
                 print("What would you like to see?:")
@@ -370,9 +413,43 @@ def teamsRoutine():
                         username = input("Email: ")
                         password = input("Password: ")
                         currentTeam = getTeamDetails(2923192, username, password)
+                        endRoutine()                    
+                    
+                    if playerUserInputInitialInt == 2:
+                        print("-----------------------------------")
+                        print("Please type the team name in that you want to see data for:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        teamID = teamNames[userInput]
+                        teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+                        currentTeamName = teamIDsAndNames[teamID]
+                        performanceSummary = performanceSummaryForTeam(teamID)
+
                         endRoutine()
 
-                    if playerUserInputInitialInt == 99:
+                    if playerUserInputInitialInt == 3:
+                        print("-----------------------------------")
+                        print("Please type the team name in that you want to see data for:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        teamID = teamNames[userInput]
+                        printTeamDataToConsole(teamID)
+                        # printTeamDataToConsole(teamID)
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 4:
+                        print("-----------------------------------")
+                        print("Please type the team name in that you want to see data for:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        teamID = teamNames[userInput]
+                        statsForPreviousGameweek = generateGameweekStats(teamID)
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 5:
                         teamCap = int(input("How many teams do you want to pull data for?: "))
                         print("-----------------------------------")
                         print("Please log into your account to access league data:")
@@ -383,6 +460,7 @@ def teamsRoutine():
                         teamIDs = generateTeamIdsForTopPlayers(teamCap, username, password)
                         playersSelectedCount = dict()
                         print(f'Running through teams to capture top picked players...')
+                        # TODO: Turn into actual method and give progress
                         for teamName in teamIDs:
                             id = teamIDs[teamName]
                             session = requests.session()
@@ -393,14 +471,292 @@ def teamsRoutine():
                                     playersSelectedCount[data['element']] += 1
                                 else:
                                     playersSelectedCount[data['element']] = 1
-                        referenceList = playerData.generatePlayerNameToIDMatching()
+                        referenceList = generatePlayerNameToIDMatching()
                         playersMostSelected = dict()
                         for id in playersSelectedCount:
-                            playerName = referenceList[id]
-                            playersMostSelected[playerName] = playersSelectedCount[id]
+                            playerName = referenceList[id].capitalize()
+                            currentSelectedCount = playersSelectedCount[id]
+                            percentageSelected = int((playersSelectedCount[id] / teamCap)*100)
+                            playersMostSelected[playerName] = percentageSelected
 
                         playersSorted = sorted(playersMostSelected.items(), key=lambda x: x[1], reverse=True)
                         
+                        currentGameweek = genericMethods.generateCurrentGameweek()
+                        print("--------------------------------------------")
+                        print(f'Top 20 players picked by best performers for GW{currentGameweek}:')
+                        print("")
+                        genericMethods.printDataClean(playersSorted, 20, '', '%')
+                        print("--------------------------------------------")
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 6:
+                        print("-----------------------------------")
+                        print("Please type the position you're interested in:")
+                        print("(Goalkeeper, Defender, Midfielder, or Forward)")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        positions = generatePositionReference()
+                        positionOfInterest = positions[userInput]
+                        positionName = userInput.capitalize()
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        positionAverageCost = dict()
+                        for currentTeam in teamNames:
+                            teamID = teamNames[currentTeam]
+                            team = currentTeam.capitalize()
+                            price = genericMethods.listAverage(generateListOfPlayersPricesInTeamByPosition(positionOfInterest, teamID))/10
+                            points = genericMethods.listAverage(generateListOfPlayersPointsInTeamByPosition(positionOfInterest, teamID))
+                            pricePerPoint = price/points
+                            positionAverageCost[team] = round(pricePerPoint, 2)
+
+                        sortedAverageCost = sorted(positionAverageCost.items(), key=lambda x: x[1], reverse=False)
+
+                        print("----------------------------------------------------------")
+                        print(f'Average cost per point of {positionName}s by team:')
+                        print("")
+                        genericMethods.printDataClean(sortedAverageCost, 20, '£', 'M per point scored')
+                        print("----------------------------------------------------------")
+                        print("")
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 7:
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        print("-----------------------------------")
+                        print("How many weeks do you want the average to be based off?:")
+                        print("")
+                        weekNumber = int(input("> "))
+                        averageDifficultyByTeam = dict()
+                        finalDifficultyDict = dict()
+                        length = len(teamNames)-1
+                        for team in teamNames:
+                            currentIndex = list(teamNames).index(team)
+                            runPercentageComplete = str(round((currentIndex/length)*100,1))
+                            if runPercentageComplete != "100.0":
+                                sys.stdout.write('\r'f"Calculating average game difficulty: {runPercentageComplete}%"),
+                                sys.stdout.flush()
+                            else:
+                                sys.stdout.write('\r'"")
+                                sys.stdout.write(f"Average game difficulty calculation complete: {runPercentageComplete}%")
+                                sys.stdout.flush()
+                                print("")
+                                print("")
+
+                            currentTeamID = teamNames[team]
+                            averageGameweekDifficulty = int(upcomingGameDifficulty(weekNumber, currentTeamID))
+                            readableTeamName = team.capitalize()
+                            averageDifficultyByTeam[readableTeamName] = averageGameweekDifficulty
+                            
+                        sortedTeamPerformance = sorted(averageDifficultyByTeam.items(), key=lambda x: x[1], reverse=False)
+
+                        print("----------------------------------------------------------")
+                        print(f'Average match difficulty for the next {weekNumber} games:')
+                        print("")
+                        genericMethods.printDataClean(sortedTeamPerformance, 20, '', '/10')
+                        print("----------------------------------------------------------")
+                        print("")
+
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 8:
+                        print("----------------------------------------------------------------------------------------------")
+                        print("Do you want to see the highest value for money (most) or the poorest value for money (least)?:")
+                        print("")
+                        userInput = str.lower(input("> "))
+                        print("-----------------------------------------------------------------------------------------------")
+                        print("Running...")
+                        positions = generatePositionReference()
+                        teamNames = teamNamesAsKeysAndIDsAsData()
+                        playerIDs = generatePlayersIdsList()
+                        playerNames = generatePlayerNameToIDMatching()
+                        pricePerPoint = generateListOfPointsPerPoundPerPlayerPerPosition()
+                        for positionName in positions:
+                            position = positions[positionName]
+                            positionData = pricePerPoint[position]
+                            playerPoundPerPoint = dict()
+                            for playerID in playerIDs:
+                                player = playerNames[playerID].capitalize()
+                                try:
+                                    if positionData[playerID] > 0:
+                                        playerPoundPerPoint[player] = round(positionData[playerID], 2)
+
+                                except:
+                                    None
+                        
+                            if userInput == 'most':
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=False)   
+                            if userInput == 'least':
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
+                            else:
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=False)
+
+
+                            print("----------------------------------------------------------")
+                            print(f'Top ranked {positionName}s for points per pound:')
+                            print("")
+                            genericMethods.printDataClean(sortedAverageCost, 4, '', ' points per £M spent')
+                            print("----------------------------------------------------------")
+                            print("")
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 9:                        
+                        print("----------------------------------------------------------------------------------------------")
+                        print("How many gameweeks do you want to see?")
+                        print("")
+                        userInput = int(input("> "))
+                        print("-----------------------------------------------------------------------------------------------")
+                        print("Initialising method...")
+                        nowGameweek = genericMethods.generateCurrentGameweek()
+                        fromGameweek = nowGameweek - userInput
+                        count = fromGameweek
+                        currentGameweek = nowGameweek - userInput
+                        playerIDs = generatePlayersIdsList()
+                        playerNames = generatePlayerNameToIDMatching()
+                        positions = generatePositionReferenceIDAsKey()
+                        sumOfPlayerScores = dict()
+                        allGameweekData = dict()
+                        gameweekList = list()
+
+                        while count <= nowGameweek:
+                            gameweekList.append(count)
+                            count += 1
+
+                        gameweekListClean = "/ "
+                        for week in gameweekList:
+                            gameweekListClean += f"{week}/ "
+
+                        length = len(playerIDs) - 1
+                        for playerID in playerIDs:
+                            playerDataList = generateListOfPointsFoNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                            sumOfPlayerScores[playerID] = sum(playerDataList)
+                            allGameweekData[playerID] = playerDataList
+
+                            currentIndex = list(playerIDs).index(playerID)
+                            runPercentageComplete = str(round((currentIndex/length)*100,1))
+                            if runPercentageComplete != "100.0":
+                                sys.stdout.write('\r'f"Gathering player scores: {runPercentageComplete}%"),
+                                sys.stdout.flush()
+                            else:
+                                sys.stdout.write('\r'"")
+                                sys.stdout.write(f"Player score data gathered: 100%")
+                                sys.stdout.flush()
+                                print("")
+                            
+                            
+                        sortedByPosition = sortPlayerDataByPosition(allGameweekData)
+                        sortedSumByPosition = sortPlayerDataByPosition(sumOfPlayerScores)
+
+
+
+                        for position in sortedByPosition:
+                            positionName = positions[position]
+                            currentPositionData = sortedByPosition[position]
+                            sortedSumPoints = sorted(sortedSumByPosition[position].items(), key=lambda x: x[1], reverse=True)
+                            top5Players = sortedSumPoints[:5]
+                            top5PlayersPreviousGameweeks = dict()
+                            print(f"Preparing {positionName} data to print to console...")
+                            print("")
+
+                            for playerTuple in top5Players:
+                                playerID = playerTuple[0]
+                                playerName = playerNames[playerID].capitalize()
+                                top5PlayersPreviousGameweeks[playerName] = currentPositionData[playerID]
+
+                        
+                            print("-----------------------------------------------------------------------------------------------------------")
+                            print(f'Top ranked {positionName}s for points over the last {userInput} games (GW {fromGameweek} to {nowGameweek}):')
+                            print("")
+                            print(f"Gameweek: {gameweekListClean}")
+                            print("-------------------------------------------------------")
+                            for player in top5PlayersPreviousGameweeks:
+                                playerData = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
+                                print(f"{player}: {playerData}")
+                            print("-----------------------------------------------------------------------------------------------------------")
+                            print("")
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 10:
+                        teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+                        teamDifficultyReference = dict()
+                        nextGameDifficultyByTeam = dict()
+                        length = len(teamIDsAndNames)
+                        nextGameweek = genericMethods.generateCurrentGameweek()
+
+                        for teamID in teamIDsAndNames:
+                            teamName = teamIDsAndNames[teamID]
+                            teamDifficultyReference[teamID] = goalsConceededByDifficulty(teamID)
+                            nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
+
+                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+                            genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceeded index", "Complete: Gathered team difficulty and goals conceeded index")
+
+                        nextGameLikelihoodtoConceed = dict()
+
+                        for teamID in nextGameDifficultyByTeam:
+                            teamName = teamIDsAndNames[teamID].capitalize()
+                            upcomingDifficulty = nextGameDifficultyByTeam[teamID]
+                            try:
+                                activeTeamReference = teamDifficultyReference[teamID]
+                                avgGoals = activeTeamReference[upcomingDifficulty]
+                            except:
+                                avgGoals = "N/A"
+
+                            nextGameLikelihoodtoConceed[teamName] = avgGoals
+                                                        
+                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+                            genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+
+                        print("")
+                        print(f"Estimate for goals conceeded GW{nextGameweek}")
+                        print("")
+
+                        for teamName in nextGameLikelihoodtoConceed:
+                            goalsToBeConceeded = nextGameLikelihoodtoConceed[teamName]
+                            print(f"{teamName}: {goalsToBeConceeded}")
+
+                        endRoutine()
+
+                    if playerUserInputInitialInt == 11:
+                        teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+                        teamDifficultyReference = dict()
+                        nextGameDifficultyByTeam = dict()
+                        length = len(teamIDsAndNames)
+                        nextGameweek = genericMethods.generateCurrentGameweek()
+
+                        for teamID in teamIDsAndNames:
+                            teamName = teamIDsAndNames[teamID]
+                            teamDifficultyReference[teamID] = goalsScoredByDifficulty(teamID)
+                            nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
+
+                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+                            genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals scored index", "Complete: Gathered team difficulty and goals scored index")
+
+                        nextGameLikelihoodtoConceed = dict()
+
+                        for teamID in nextGameDifficultyByTeam:
+                            teamName = teamIDsAndNames[teamID].capitalize()
+                            upcomingDifficulty = nextGameDifficultyByTeam[teamID]
+                            try:
+                                activeTeamReference = teamDifficultyReference[teamID]
+                                avgGoals = activeTeamReference[upcomingDifficulty]
+                            except:
+                                avgGoals = "N/A"
+
+                            nextGameLikelihoodtoConceed[teamName] = avgGoals
+                                                        
+                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+                            genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+
+                        print("")
+                        print(f"Estimate for goals scored GW{nextGameweek}")
+                        print("")
+
+                        for teamName in nextGameLikelihoodtoConceed:
+                            goalsToBeScored = nextGameLikelihoodtoConceed[teamName]
+                            print(f"{teamName}: {goalsToBeScored}")
+
                         endRoutine()
 
 # Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
@@ -494,26 +850,32 @@ def gameweekRoutine():
 
                     elif playerUserInputInitialInt == 4:
                         print("-------------------------------------------")
-                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10):")
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
-                        numberOfRecordsToShow = str.lower(input("> "))
+                        numberOfRecordsToShow = int(input("> "))
                         topTransfers = mostNetTransfersIn(numberOfRecordsToShow)
-                        for record in topTransfers:
-                            print(record)
+                        currentGameweek = genericMethods.generateCurrentGameweek()
+                        print("--------------------------------------------")
+                        print(f'Top {numberOfRecordsToShow} transfers in for GW{currentGameweek}:')
+                        print("")
+                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
 
                     elif playerUserInputInitialInt == 5:
                         print("-------------------------------------------")
-                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:")
+                        print("How many players do you want to see (e.g. for \"Top 10\" type 10:))")
                         print("!! TYPE IN A NUMBER")
                         print("-------------------------------------------")
-                        numberOfRecordsToShow = str.lower(input("> "))
+                        numberOfRecordsToShow = int(input("> "))
                         topTransfers =  mostNetTransfersOut(numberOfRecordsToShow)
-                        for record in topTransfers:
-                            print(record)
+                        currentGameweek = genericMethods.generateCurrentGameweek()
+                        print("--------------------------------------------")
+                        print(f'Top {numberOfRecordsToShow} transfers out for GW{currentGameweek}:')
+                        print("")
+                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
@@ -550,7 +912,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.0.3")
+print("V.0.1.109")
 print("")
 print("==============================")
 print("")

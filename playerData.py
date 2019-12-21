@@ -142,7 +142,7 @@ def generatePlayerIDToFullNameMatching():
             firstName = formattedY['first_name']
             secondName = formattedY['second_name']
             fullName = f'{firstName} {secondName}'
-            cleanedFullName = str.lower(unicodeReplace(fullName))
+            cleanedFullName = str.lower(genericMethods.unicodeReplace(fullName))
             id = formattedY['id']
             playerIDMatchList[cleanedFullName] = id
 
@@ -470,11 +470,13 @@ def rValuesPerField(correlationDictByAttribute):
 # Takes a number of seperate methods and creates a prediction on player performance for a specified week
 def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
     gameweekData = gameweekSummary.generateDataForGameWeek(previousGameweek)
+    gameweekCurrentData = gameweekSummary.generateDataForGameWeek(currentGameweek)
     # Generate the Correlation Coefficient list
-    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(gameweekData, currentGameweek)
+    currentRList = generateCorrelCoeffToPredictPerfomanceBasedOnPastWeekOnly(gameweekData, gameweekCurrentData, currentGameweek)
     # Apply correlation data to metrics for current Gameweek to estimate this weeks performance
     minList = calculateMinNumberInArray(allDataForCurrentGameWeek)
     maxList = calculateMaxNumberInArray(allDataForCurrentGameWeek)
+    currentGameweek += 1
     dataByPlayerForCurrentWeek = gatherGameweekDataByPlayer(currentGameweek)
     indexedData = genericMethods.indexDataInADictionary(dataByPlayerForCurrentWeek, maxList, minList)
     finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
@@ -496,6 +498,7 @@ def playerPerformanceForLastWeek(gameweekNumber):
     minList = calculateMinNumberInArray(allData)
     maxList = calculateMaxNumberInArray(allData)
     # Data by player by week current and previous indexed
+    gameweekNumber += 1
     dataByPlayerForWeek = gatherGameweekDataByPlayer(gameweekNumber)
     indexedData = genericMethods.indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
     finalIndexedPlayerDataWithCorrel = createPlayerIndexing(indexedData, currentRList)
@@ -524,11 +527,172 @@ def playerPerformanceWithCorrel(gameweekNumber, listOfRValues):
     return sortedFinalIndexedData
 
 # Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
-def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelationOffIncludingLastGameweek, gameweekWeWantToPredictThePerformanceOf):
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeekOnly(arrayToBaseCorrelationOffLastGameweek, arrayToBaseCorrelationOffThisGameweek, gameweekWeWantToPredictThePerformanceOf):
     currentGameweek = gameweekWeWantToPredictThePerformanceOf
     previousGameweek = currentGameweek - 1
+    totalPointsCurrentWeek =  generateSingleEntryDictFromDict(arrayToBaseCorrelationOffThisGameweek, 'total_points')
+    correl = correlcoeffGenerationForPrediction(arrayToBaseCorrelationOffLastGameweek, totalPointsCurrentWeek)
+    currentRList = rValuesPerField(correl)
+    return currentRList
+
+# Measures the prediction power of the previous weeks data on the current week and generates a correlation coefficient for each field in the data
+def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelationOffIncludingLastGameweek, gameweekWeWantToPredictThePerformanceOf):
+    currentGameweek = gameweekWeWantToPredictThePerformanceOf + 1
+    previousGameweek = gameweekWeWantToPredictThePerformanceOf
     allDataForPreviousGameWeek = arrayToBaseCorrelationOffIncludingLastGameweek[previousGameweek]
     totalPointsCurrentWeek =  generateSingleEntryDictFromDict(allDataForPreviousGameWeek , 'total_points')
     correl = correlcoeffGenerationForPrediction(allDataForPreviousGameWeek, totalPointsCurrentWeek)
     currentRList = rValuesPerField(correl)
     return currentRList
+
+
+# Creates a list of the positions
+def generatePositionReference():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    positionsDict = dict()
+    for data in currentDumps['element_types']:
+        for key in data:
+            positionName = str.lower(data['singular_name'])
+            positionsDict[positionName] = data['id']
+            break
+
+    return positionsDict
+
+# Creates a list of the positions
+def generatePositionReferenceIDAsKey():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    positionsDict = dict()
+    for data in currentDumps['element_types']:
+        for key in data:
+            positionID = int(data['id'])
+            positionsDict[positionID] = data['singular_name']
+            break
+
+    return positionsDict
+
+
+# Creates a list of the players and their price
+def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerCosts = list()
+    for key in currentDumps['elements']:
+        if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
+            playerCosts.append(key['now_cost'])
+
+    return playerCosts
+
+# Creates a list of the players points
+def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPoints = list()
+    for key in currentDumps['elements']:
+        if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
+            playerPoints.append(key['total_points'])
+
+    return playerPoints
+
+# Creates a list of the players points per pound by players by position
+def generateListOfPointsPerPoundPerPlayerPerPosition():
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPointsGoalkeeper = dict()
+    playerPointsDefender = dict()
+    playerPointsMidfielder = dict()
+    playerPointsForward = dict()
+    pointsByPosition = dict()
+    for key in currentDumps['elements']:
+        if key['element_type'] == 1:
+            player = key['id']
+            playerPointsGoalkeeper[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 2:
+            player = key['id']
+            playerPointsDefender[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 3:
+            player = key['id']
+            playerPointsMidfielder[player] = (key['total_points']/key['now_cost'])
+        if key['element_type'] == 4:
+            player = key['id']
+            playerPointsForward[player] = (key['total_points']/key['now_cost'])
+
+    pointsByPosition[1] = playerPointsGoalkeeper
+    pointsByPosition[2] = playerPointsDefender
+    pointsByPosition[3] = playerPointsMidfielder
+    pointsByPosition[4] = playerPointsForward
+
+    return pointsByPosition
+
+
+# Creates a list of points for a given player for a given range of weeks
+
+def generateListOfPointsFoNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL(f'element-summary/{playerID}/'))
+    currentPlayersPoints = list()
+    currentGameweek = gameweekOfInterest
+    for data in currentDumps['history']:
+        if currentGameweek <= maxGameweek:
+            if data['round'] == currentGameweek:
+                currentData = data['total_points']
+                currentPlayersPoints.append(currentData)
+                currentGameweek += 1
+  
+    return currentPlayersPoints
+
+# Takes a array of player data where the player ID is the Key and sorts it by position
+
+def sortPlayerDataByPosition(arrayToSort):
+    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    playerPointsGoalkeeper = dict()
+    playerPointsDefender = dict()
+    playerPointsMidfielder = dict()
+    playerPointsForward = dict()
+    pointsByPosition = dict()
+    for player in arrayToSort:
+        for key in currentDumps['elements']:
+            if key['element_type'] == 1 and player == key['id']:
+                player = key['id']
+                playerPointsGoalkeeper[player] = arrayToSort[player]
+            if key['element_type'] == 2 and player == key['id']:
+                player = key['id']
+                playerPointsDefender[player] = arrayToSort[player]
+            if key['element_type'] == 3 and player == key['id']:
+                player = key['id']
+                playerPointsMidfielder[player] = arrayToSort[player]
+            if key['element_type'] == 4 and player == key['id']:
+                player = key['id']
+                playerPointsForward[player] = arrayToSort[player]
+
+    pointsByPosition[1] = playerPointsGoalkeeper
+    pointsByPosition[2] = playerPointsDefender
+    pointsByPosition[3] = playerPointsMidfielder
+    pointsByPosition[4] = playerPointsForward
+
+    return pointsByPosition
+
+
+# Creates a list of the players and metrics related to their performance
+
+#TODO: Pull player by player (for a team)?
+
+def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        playerDict = dict()
+        statsDict = dict()
+        playerDataForWeek = dict() 
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{currentGameweek}/live')
+        for gameweekData in currentDumps['elements']:
+            if gameweekData['id'] == playerID:
+                for data in gameweekData:
+                    if data == 'stats':
+                        for key in gameweekData['stats']:
+                            currentData =gameweekData['stats']
+                            dataToAdd = currentData[key]
+                            playerDataForWeek[key] = dataToAdd
+                    if data == 'explain':
+                        for gameweekStats in gameweekData[data]:
+                            for stats in gameweekStats['stats']:
+                                dataKey = stats['identifier']
+                                dataToAdd = stats['points']
+                                playerDataForWeek[dataKey] = dataToAdd
+                            playerDict = playerDataForWeek
+
+
+        return playerDict

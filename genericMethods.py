@@ -177,10 +177,7 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
                         value = float(currentPlayerDataToIterate[secondaryKey])
                         max = float(listOfCorrespondingMaxValues[secondaryKey])
                         min = float(listOfCorrespondingMinValues[secondaryKey])
-                        numerator = value - min
-                        denominator = max - min
-                        calculation = numerator / denominator
-                        indexedValue = calculation*100
+                        indexedValue = indexValue(value, max, min)
                     except:
                         indexedValue = 0.0
                 indexedValues[secondaryKey] = indexedValue
@@ -234,12 +231,58 @@ def convertCorrelByWeekToAveragePerField(arrayToConvert):
 
     for data in correlationDict:
         currentList = correlationDict[data]
-        average = averageOfList(currentList)
+        average = listAverage(currentList)
         averageCorrelationDict[data] = average
 
     return averageCorrelationDict
 
-# Average of all values in a given list
-def averageOfList(listToAverage):
-    average = sum(listToAverage)/len(listToAverage)
-    return average
+# Get us the current gameweek number
+def generateCurrentGameweek():
+    dumps = generateJSONDumpsReadable('https://fantasy.premierleague.com/api/entry/1/')
+    for keys in dumps:
+        if keys == 'current_event':
+            return dumps[keys]
+
+# Print data in a clean format where it has been indexed
+def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, appendAfterData):
+    x = 1
+    for data in indexedSetOfData:
+        currentIndex = list(indexedSetOfData).index(data)
+        if currentIndex <= numberOfRecordsToShow:
+            seperatedValues = str(data).split(',')
+            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
+            try:
+                cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
+            except:
+                try:
+                    cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
+                except:
+                    cleanedData = str(seperatedValues[1].replace("'", '').replace(')', ''))
+                
+            try:
+                print(f'{cleanedName}: {appendBeforeData}{cleanedData:,}{appendAfterData}')
+            except:
+                print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
+        else:
+            return
+
+# Returns the average of the values in a list
+def listAverage(list):
+    return sum(list)/len(list)
+
+# Returns the index value of the input
+def indexValue(valueToIndex, max, min):
+    return ((valueToIndex - min) / (max - min))*100
+
+# Run percentage
+def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):
+    runPercentageComplete = str(round((currentIndex/maxLen)*100,1))
+    if runPercentageComplete != "100.0":
+        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%"),
+        sys.stdout.flush()
+    else:
+        sys.stdout.write('\r'"")
+        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%")
+        sys.stdout.flush()
+        print("")
+        print("")
