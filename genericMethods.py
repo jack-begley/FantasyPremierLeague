@@ -273,3 +273,16 @@ def listAverage(list):
 # Returns the index value of the input
 def indexValue(valueToIndex, max, min):
     return ((valueToIndex - min) / (max - min))*100
+
+# Run percentage
+def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):
+    runPercentageComplete = str(round((currentIndex/maxLen)*100,1))
+    if runPercentageComplete != "100.0":
+        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%"),
+        sys.stdout.flush()
+    else:
+        sys.stdout.write('\r'"")
+        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%")
+        sys.stdout.flush()
+        print("")
+        print("")
