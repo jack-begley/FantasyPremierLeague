@@ -14,7 +14,6 @@ from playerData import *
 from genericMethods import *
 
 
-
 # Verifies Auth to allow users to activate URLs that require login
 def loginToSecureURL(urlResponseToReturn, username, password):
     session = requests.session()
@@ -31,7 +30,6 @@ def loginToSecureURL(urlResponseToReturn, username, password):
     responses = session.post(login, data=payload)
     
     return session.get(urlResponseToReturn,  auth=HTTPBasicAuth(username, password))
-
 
 # Generates the ID's for the top fantasy teams in the world for the number specified by the users up to 50
 def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
@@ -126,7 +124,6 @@ def generateDataForTeam(teamID):
 
     return teams
 
-
 # Get all data for a gameweek for a team
 
 # TODO: Finish this method off to print the data for a single team sensibly
@@ -134,7 +131,7 @@ def generateDataForTeam(teamID):
 def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-        maxGameweek = genericMethods.generateCurrentGameweek()
+        maxGameweek = genericMethods.generateCurrentGameweek() + 1
         currentGameweek = 1
         totalDict = dict()
         homeDict = dict()
@@ -277,7 +274,7 @@ def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         currentGameweek = 1
-        maxGameweek = genericMethods.generateCurrentGameweek()
+        maxGameweek = genericMethods.generateCurrentGameweek() + 1
         difficulty2 = list()
         difficulty3 = list()
         difficulty4 = list()
@@ -290,27 +287,29 @@ def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt):
                 for gameweekData in currentDumps:
                         if gameweekData['team_a'] == teamID:
                             if gameweekData['team_h_score'] != None:
-                                gameweekDifficulty = gameweekData['team_a_difficulty']
-                                if gameweekDifficulty == 2:
-                                        difficulty2.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 3:
-                                        difficulty3.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 4:
-                                        difficulty4.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 5:
-                                        difficulty5.append(gameweekData['team_h_score'])
+                                if gameweekData['team_h_score'] <= 5:
+                                    gameweekDifficulty = gameweekData['team_a_difficulty']
+                                    if gameweekDifficulty == 2:
+                                            difficulty2.append(gameweekData['team_h_score'])
+                                    if gameweekDifficulty == 3:
+                                            difficulty3.append(gameweekData['team_h_score'])
+                                    if gameweekDifficulty == 4:
+                                            difficulty4.append(gameweekData['team_h_score'])
+                                    if gameweekDifficulty == 5:
+                                            difficulty5.append(gameweekData['team_h_score'])
                             currentGameweek += 1
                         if gameweekData['team_h'] == teamID:
                             if gameweekData['team_a_score'] != None:
-                                gameweekDifficulty = gameweekData['team_h_difficulty']
-                                if gameweekDifficulty == 2:
-                                        difficulty2.append(gameweekData['team_a_score'])
-                                if gameweekDifficulty == 3:
-                                        difficulty3.append(gameweekData['team_a_score'])
-                                if gameweekDifficulty == 4:
-                                        difficulty4.append(gameweekData['team_a_score'])
-                                if gameweekDifficulty == 5:
-                                        difficulty5.append(gameweekData['team_a_score'])
+                                if gameweekData['team_a_score'] <= 5:
+                                    gameweekDifficulty = gameweekData['team_h_difficulty']
+                                    if gameweekDifficulty == 2:
+                                            difficulty2.append(gameweekData['team_a_score'])
+                                    if gameweekDifficulty == 3:
+                                            difficulty3.append(gameweekData['team_a_score'])
+                                    if gameweekDifficulty == 4:
+                                            difficulty4.append(gameweekData['team_a_score'])
+                                    if gameweekDifficulty == 5:
+                                            difficulty5.append(gameweekData['team_a_score'])
                             currentGameweek += 1
             else:
                 currentGameweek += 1
@@ -336,7 +335,7 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         currentGameweek = 1
-        maxGameweek = genericMethods.generateCurrentGameweek()
+        maxGameweek = genericMethods.generateCurrentGameweek() + 1
         difficulty2 = list()
         difficulty3 = list()
         difficulty4 = list()
@@ -351,18 +350,6 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt):
                             if gameweekData['team_a_score'] != None:
                                 gameweekDifficulty = gameweekData['team_a_difficulty']
                                 if gameweekDifficulty == 2:
-                                        difficulty2.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 3:
-                                        difficulty3.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 4:
-                                        difficulty4.append(gameweekData['team_h_score'])
-                                if gameweekDifficulty == 5:
-                                        difficulty5.append(gameweekData['team_h_score'])
-                            currentGameweek += 1
-                        if gameweekData['team_h'] == teamID:
-                            if gameweekData['team_h_score'] != None:
-                                gameweekDifficulty = gameweekData['team_h_difficulty']
-                                if gameweekDifficulty == 2:
                                         difficulty2.append(gameweekData['team_a_score'])
                                 if gameweekDifficulty == 3:
                                         difficulty3.append(gameweekData['team_a_score'])
@@ -370,6 +357,18 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt):
                                         difficulty4.append(gameweekData['team_a_score'])
                                 if gameweekDifficulty == 5:
                                         difficulty5.append(gameweekData['team_a_score'])
+                            currentGameweek += 1
+                        if gameweekData['team_h'] == teamID:
+                            if gameweekData['team_h_score'] != None:
+                                gameweekDifficulty = gameweekData['team_h_difficulty']
+                                if gameweekDifficulty == 2:
+                                        difficulty2.append(gameweekData['team_h_score'])
+                                if gameweekDifficulty == 3:
+                                        difficulty3.append(gameweekData['team_h_score'])
+                                if gameweekDifficulty == 4:
+                                        difficulty4.append(gameweekData['team_h_score'])
+                                if gameweekDifficulty == 5:
+                                        difficulty5.append(gameweekData['team_h_score'])
                             currentGameweek += 1
             else:
                 currentGameweek += 1
@@ -389,13 +388,12 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt):
 
         return averageGoalsByDifficulty
 
-
 # A method to pulling the upcoming gameweek difficulty for a particular team
 
 def nextGameDifficulty(idOfTheTeamWeWantToLookAt):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-        currentGameweek = genericMethods.generateCurrentGameweek()
+        currentGameweek = genericMethods.generateCurrentGameweek() + 1
         teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
         if teamID in teamsPlayingInCurrentPeriod:
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
@@ -406,3 +404,93 @@ def nextGameDifficulty(idOfTheTeamWeWantToLookAt):
                         return gameweekData['team_h_difficulty']
         else:
                 return None
+
+# Combined method for pulling the upcoming likelihoood for a team to score for all teams
+
+def generateLikelihoodToScoreByTeamForNextGame():
+    teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+    teamDifficultyReference = dict()
+    nextGameDifficultyByTeam = dict()
+    length = len(teamIDsAndNames) -1
+    nextGameweek = genericMethods.generateCurrentGameweek()
+
+    for teamID in teamIDsAndNames:
+        teamName = teamIDsAndNames[teamID]
+        teamDifficultyReference[teamID] = goalsScoredByDifficulty(teamID)
+        nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
+
+        currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+        genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals scored index", "Complete: Gathered team difficulty and goals scored index")
+
+    print("")
+    nextGameLikelihoodtoConceed = dict()
+
+    for teamID in nextGameDifficultyByTeam:
+        teamName = teamIDsAndNames[teamID].capitalize()
+        upcomingDifficulty = nextGameDifficultyByTeam[teamID]
+        try:
+            activeTeamReference = teamDifficultyReference[teamID]
+            avgGoals = activeTeamReference[upcomingDifficulty]
+        except:
+            avgGoals = "N/A"
+
+        nextGameLikelihoodtoConceed[teamName] = avgGoals
+                                                        
+        currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+        genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+
+    print("")
+
+    return nextGameLikelihoodtoConceed
+
+# Combined method for pulling the upcoming likelihoood for a team to conceed for all teams
+
+def generateLikelihoodToConceedByTeamForNextGame():
+    teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+    teamDifficultyReference = dict()
+    nextGameDifficultyByTeam = dict()
+    length = len(teamIDsAndNames) - 1
+    nextGameweek = genericMethods.generateCurrentGameweek() + 1
+
+    for teamID in teamIDsAndNames:
+        teamName = teamIDsAndNames[teamID]
+        teamDifficultyReference[teamID] = goalsConceededByDifficulty(teamID)
+        nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
+
+        currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+        genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceeded index", "Complete: Gathered team difficulty and goals conceeded index")
+
+    nextGameLikelihoodtoConceed = dict()
+    print("")
+
+    for teamID in nextGameDifficultyByTeam:
+        teamName = teamIDsAndNames[teamID].capitalize()
+        upcomingDifficulty = nextGameDifficultyByTeam[teamID]
+        try:
+            activeTeamReference = teamDifficultyReference[teamID]
+            avgGoals = activeTeamReference[upcomingDifficulty]
+        except:
+            avgGoals = "N/A"
+
+        nextGameLikelihoodtoConceed[teamName] = avgGoals
+                                                        
+        currentIndex = list(teamIDsAndNames.keys()).index(teamID)
+        genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+
+    print("")
+
+    return nextGameLikelihoodtoConceed
+
+# Generate list of fixtures
+
+def fixturesForGameweekByTeamID(gameweek):
+    urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
+    currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
+    fixtureData = dict()
+    for gameweekData in currentDumps:
+        homeTeam = gameweekData['team_h']
+        awayTeam = gameweekData['team_a']
+        fixtureData[awayTeam] = homeTeam
+
+    return fixtureData
+
