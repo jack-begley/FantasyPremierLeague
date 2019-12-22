@@ -392,6 +392,7 @@ def teamsRoutine():
                 print(" [9] Top performers by position for last N gameweeks")
                 print(" [10] Average goals conceeded by team for difficulty this week")
                 print(" [11] Average goals scored by team for difficulty this week")
+                print(" [12] Estimates for results based on previous perfomance at the same difficulty")
                 print("")
                 print(" Data Exports: ")
                 print("")
@@ -678,38 +679,10 @@ def teamsRoutine():
                         endRoutine()
 
                     if playerUserInputInitialInt == 10:
-                        teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
-                        teamDifficultyReference = dict()
-                        nextGameDifficultyByTeam = dict()
-                        length = len(teamIDsAndNames)
-                        nextGameweek = genericMethods.generateCurrentGameweek()
-
-                        for teamID in teamIDsAndNames:
-                            teamName = teamIDsAndNames[teamID]
-                            teamDifficultyReference[teamID] = goalsConceededByDifficulty(teamID)
-                            nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
-
-                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
-                            genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceeded index", "Complete: Gathered team difficulty and goals conceeded index")
-
-                        nextGameLikelihoodtoConceed = dict()
-
-                        for teamID in nextGameDifficultyByTeam:
-                            teamName = teamIDsAndNames[teamID].capitalize()
-                            upcomingDifficulty = nextGameDifficultyByTeam[teamID]
-                            try:
-                                activeTeamReference = teamDifficultyReference[teamID]
-                                avgGoals = activeTeamReference[upcomingDifficulty]
-                            except:
-                                avgGoals = "N/A"
-
-                            nextGameLikelihoodtoConceed[teamName] = avgGoals
-                                                        
-                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
-                            genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+                        nextGameLikelihoodtoConceed = generateLikelihoodToConceedByTeamForNextGame()
 
                         print("")
-                        print(f"Estimate for goals conceeded GW{nextGameweek}")
+                        print(f"Estimate for goals scored GW{nextGameweek}")
                         print("")
 
                         for teamName in nextGameLikelihoodtoConceed:
@@ -719,45 +692,64 @@ def teamsRoutine():
                         endRoutine()
 
                     if playerUserInputInitialInt == 11:
-                        teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
-                        teamDifficultyReference = dict()
-                        nextGameDifficultyByTeam = dict()
-                        length = len(teamIDsAndNames)
-                        nextGameweek = genericMethods.generateCurrentGameweek()
-
-                        for teamID in teamIDsAndNames:
-                            teamName = teamIDsAndNames[teamID]
-                            teamDifficultyReference[teamID] = goalsScoredByDifficulty(teamID)
-                            nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID)
-
-                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
-                            genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals scored index", "Complete: Gathered team difficulty and goals scored index")
-
-                        nextGameLikelihoodtoConceed = dict()
-
-                        for teamID in nextGameDifficultyByTeam:
-                            teamName = teamIDsAndNames[teamID].capitalize()
-                            upcomingDifficulty = nextGameDifficultyByTeam[teamID]
-                            try:
-                                activeTeamReference = teamDifficultyReference[teamID]
-                                avgGoals = activeTeamReference[upcomingDifficulty]
-                            except:
-                                avgGoals = "N/A"
-
-                            nextGameLikelihoodtoConceed[teamName] = avgGoals
-                                                        
-                            currentIndex = list(teamIDsAndNames.keys()).index(teamID)
-                            genericMethods.runPercentage(length, currentIndex, "Gathering upcoming difficulty by team", "Complete: Gathered upcoming difficulty by team")
+                        nextGameLikelihoodtoScore = generateLikelihoodToScoreByTeamForNextGame()
 
                         print("")
                         print(f"Estimate for goals scored GW{nextGameweek}")
                         print("")
 
-                        for teamName in nextGameLikelihoodtoConceed:
-                            goalsToBeScored = nextGameLikelihoodtoConceed[teamName]
+                        for teamName in nextGameLikelihoodtoScore:
+                            goalsToBeScored = nextGameLikelihoodtoScore[teamName]
                             print(f"{teamName}: {goalsToBeScored}")
 
                         endRoutine()
+
+                    if playerUserInputInitialInt == 12:
+                        nextGameweek = genericMethods.generateCurrentGameweek()
+                        nextGameLikelihoodtoScore = generateLikelihoodToScoreByTeamForNextGame()
+                        nextGameLikelihoodtoConceed = generateLikelihoodToConceedByTeamForNextGame()
+                        fixturesForGameweek = fixturesForGameweekByTeamID(nextGameweek)
+                        teamIdList = teamIDsAsKeysAndNamesAsData()
+
+                        print(f"Estimated results based on past performance for GW{nextGameweek}:")
+
+                        for teamId in teamIdList:
+                            try:
+                                away = fixturesForGameweek[teamId]
+                                home = teamId
+                                
+                                homeName = teamIdList[home].capitalize()
+                                homeScore = nextGameLikelihoodtoScore[homeName]
+                                homeConceed = nextGameLikelihoodtoConceed[homeName]
+                                homeNet = homeScore - homeConceed
+
+                                awayName = teamIdList[away].capitalize()
+                                awayScore = nextGameLikelihoodtoScore[awayName]
+                                awayConceed = nextGameLikelihoodtoConceed[awayName]
+                                awayNet = awayScore - awayConceed
+
+                                if awayNet != 0 and homeNet != 0:
+                                    result = round(-(homeNet / awayNet), 1)
+
+                                elif homeNet == 0:
+                                    result = - awayNet
+
+                                elif awayNet == 0:
+                                    result = homeNet
+
+                                if homeNet > awayNet:
+                                    print(f"{homeName} (W) vs. (L) {awayName} = {result}")
+
+                                if homeNet == awayNet:
+                                    print(f"{homeName} (D) vs. (D) {awayName} : {result}")
+                                    
+                                if homeNet < awayNet:
+                                    print(f"{homeName} (L) vs. (W) {awayName} : {result}")
+                            except:
+                                None
+
+                        endRoutine()
+
 
 # Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
 def gameweekRoutine():
