@@ -2,6 +2,7 @@ from gameweekSummary import *
 from playerData import *
 from genericMethods import *
 from Teams import *
+import Teams
 import operator
 
 
@@ -392,7 +393,14 @@ def teamsRoutine():
                 print(" [9] Top performers by position for last N gameweeks")
                 print(" [10] Average goals conceeded by team for difficulty this week")
                 print(" [11] Average goals scored by team for difficulty this week")
-                print(" [12] Estimates for results based on previous perfomance at the same difficulty")
+                print("")
+                print(" Predicting Results: ")
+                print("")
+                print(" [12] Methods 1: Home Conceed vs. Home Score")
+                print("")
+                print(" Historical Results: ")
+                print("")
+                print(" [13] Results by gameweek")
                 print("")
                 print(" Data Exports: ")
                 print("")
@@ -704,12 +712,25 @@ def teamsRoutine():
 
                         endRoutine()
 
+
                     if playerUserInputInitialInt == 12:
-                        nextGameweek = genericMethods.generateCurrentGameweek()
-                        nextGameLikelihoodtoScore = generateLikelihoodToScoreByTeamForNextGame()
-                        nextGameLikelihoodtoConceed = generateLikelihoodToConceedByTeamForNextGame()
-                        fixturesForGameweek = fixturesForGameweekByTeamID(nextGameweek)
-                        teamIdList = teamIDsAsKeysAndNamesAsData()
+                        nextGameweek = genericMethods.generateCurrentGameweek() + 1
+
+                        nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
+                        nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+                        fixturesForGameweek = Teams.fixturesForGameweekByTeamID(nextGameweek)
+                        teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+
+                                                
+                        print("----------------------------------------------------------------------------------------------")
+                        print("Would you like to see the actual results, or just who won?")
+                        print("[1] Winners only")
+                        print("[2] Full result")
+                        print("")
+                        userInput = int(input("> "))
+                        print("------------------------------")
+
+                        userInput = 1
 
                         print(f"Estimated results based on past performance for GW{nextGameweek}:")
 
@@ -728,6 +749,8 @@ def teamsRoutine():
                                 awayConceed = nextGameLikelihoodtoConceed[awayName]
                                 awayNet = awayScore - awayConceed
 
+                                overallNet = homeNet - awayNet
+
                                 if awayNet != 0 and homeNet != 0:
                                     result = round(-(homeNet / awayNet), 1)
 
@@ -736,20 +759,90 @@ def teamsRoutine():
 
                                 elif awayNet == 0:
                                     result = homeNet
+                                
+                                if userInput == 1:
+                                    homeNameUpper = homeName.upper()
+                                    awayNameUpper = awayName.upper()
+                                    if overallNet > 0.65:
+                                        print(f"{homeNameUpper} VS {awayName}")
 
-                                if homeNet > awayNet:
-                                    print(f"{homeName} (W) vs. (L) {awayName} = {result}")
-
-                                if homeNet == awayNet:
-                                    print(f"{homeName} (D) vs. (D) {awayName} : {result}")
+                                    if -0.65 <= overallNet <= 0.65:
+                                        print(f"{homeName} DRAW {awayName}")
                                     
-                                if homeNet < awayNet:
-                                    print(f"{homeName} (L) vs. (W) {awayName} : {result}")
+                                    if overallNet < -0.65:
+                                        print(f"{homeName} VS {awayNameUpper}")
+
+                                if userInput == 2:
+                                    if homeNet > awayNet:
+                                        print(f"{homeName} (W) vs (L) {awayName} = {result}")
+
+                                    if homeNet == awayNet:
+                                        print(f"{homeName} (D) vs (D) {awayName} = {result}")
+                                    
+                                    if homeNet < awayNet:
+                                        print(f"{homeName} (L) vs (W) {awayName} = {result}")
                             except:
                                 None
 
-                        endRoutine()
 
+                        endRoutine()
+                        
+                    if playerUserInputInitialInt == 13:
+                        maxGameweek = genericMethods.generateCurrentGameweek()
+                        teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+                        currentGameweek = 1
+
+                        print("----------------------------------------------------------------------------------------------")
+                        print("Would you like to see the actual results, or just who won?")
+                        print("[1] Winners only")
+                        print("[2] Full result")
+                        print("")
+                        userInput = int(input("> "))
+                        print("------------------------------")
+
+                        while currentGameweek <= maxGameweek:
+                            print(f"Results for GW{currentGameweek}:")
+                            print("------------------------------")
+                            
+                            results = Teams.resultsForGameweek(currentGameweek)
+                            fixtures = Teams.fixturesForGameweek(currentGameweek)
+
+                            for teamId in teamIdList:
+                                
+                                try:
+                                    homeName = teamIdList[teamId].capitalize()
+                                    awayId = fixtures[teamId]
+                                    awayName = teamIdList[awayId].capitalize()
+
+                                    homeResult = results[teamId]
+                                    awayResult = results[awayId]
+
+                                    if userInput == 1:
+                                        if homeResult > awayResult:
+                                            homeNameUpper = homeName.upper()
+                                            winner = f"{homeNameUpper}"
+
+                                        if homeResult == awayResult:
+                                            winner = f"DRAW"
+
+                                        if homeResult < awayResult:
+                                            awayNameUpper = awayName.upper()
+                                            winner = f"{awayNameUpper}"
+
+                                        print(f"{winner}")
+
+                                    if userInput == 2:
+                                        print(f"({homeName}) {homeResult} vs {awayResult} ({awayName})")
+
+                                except:
+                                    None
+
+                            currentGameweek += 1
+                            print("")
+                            print("------------------------------")
+
+
+                        endRoutine()
 
 # Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
 def gameweekRoutine():
@@ -904,7 +997,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.1.109")
+print("V.0.1.120")
 print("")
 print("==============================")
 print("")
