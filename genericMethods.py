@@ -246,23 +246,19 @@ def generateCurrentGameweek():
 # Print data in a clean format where it has been indexed
 def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, appendAfterData):
     x = 1
-    for data in indexedSetOfData:
-        currentIndex = list(indexedSetOfData).index(data)
+    keys = list(indexedSetOfData.keys())
+    firstKey = keys[0]
+    if indexedSetOfData[firstKey] is tuple:
+        formattedSet = reformattedSortedTupleAsDict(indexedSetOfData)
+    else:
+        formattedSet = indexedSetOfData
+    for data in formattedSet:
+        currentIndex = list(formattedSet).index(data)
         if currentIndex <= numberOfRecordsToShow:
-            seperatedValues = str(data).split(',')
-            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
-            try:
-                cleanedData = int(str(seperatedValues[1]).replace("'", '').replace(')', ''))
-            except:
-                try:
-                    cleanedData = round(float(seperatedValues[1].replace(')', '')),2)
-                except:
-                    cleanedData = str(seperatedValues[1].replace("'", '').replace(')', ''))
+            cleanedName = str(data).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
+            cleanedData = str(formattedSet[data]).replace('(', '').replace(')', '').replace('[', '').replace(']', '').replace("'", '').replace('"', '')
                 
-            try:
-                print(f'{cleanedName}: {appendBeforeData}{cleanedData:,}{appendAfterData}')
-            except:
-                print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
+            print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
         else:
             return
 
@@ -286,3 +282,12 @@ def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):
         sys.stdout.flush()
         print("")
         print("")
+
+def reformattedSortedTupleAsDict(listOfTuples):
+    reformattedDict = dict()
+    for tuples in listOfTuples:
+        item0 = tuples[0]
+        item1 = tuples[1]
+        reformattedDict[item0] = item1
+
+    return reformattedDict

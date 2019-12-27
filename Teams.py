@@ -194,7 +194,7 @@ def generateGameweekStats(idOfTheTeamWeWantToLookAt):
 
 # A method to pull the upcoming (N) gameweek difficulty for a particular team
 
-def upcomingGameDifficulty(numberOfGameweeksToPullDataFor, idOfTheTeamWeWantToLookAt):
+def upcomingGameDifficultyListed(numberOfGameweeksToPullDataFor, idOfTheTeamWeWantToLookAt):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         currentGameweek = genericMethods.generateCurrentGameweek() + 1
@@ -206,19 +206,17 @@ def upcomingGameDifficulty(numberOfGameweeksToPullDataFor, idOfTheTeamWeWantToLo
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
                 for gameweekData in currentDumps:
                         if gameweekData['team_a'] == teamID:
-                            difficultyOfUpcomingGamesForTeam.append(gameweekData['team_a_difficulty'])
+                            difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_a_difficulty']))
                             currentGameweek += 1
                             break
                         if gameweekData['team_h'] == teamID:
-                            difficultyOfUpcomingGamesForTeam.append(gameweekData['team_h_difficulty'])
+                            difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_h_difficulty']))
                             currentGameweek += 1
                             break
             else:
                 currentGameweek += 1
 
-        averageDifficultyScore = round(((genericMethods.indexValue(genericMethods.listAverage(difficultyOfUpcomingGamesForTeam), 5, 2)) / 10) , 0)
-
-        return averageDifficultyScore
+        return difficultyOfUpcomingGamesForTeam
 
 # List the ID's of any team that has played in a given period
 
@@ -487,7 +485,7 @@ def fixturesForGameweekByTeamID(gameweek):
     for gameweekData in currentDumps:
         homeTeam = gameweekData['team_h']
         awayTeam = gameweekData['team_a']
-        fixtureData[awayTeam] = homeTeam
+        fixtureData[homeTeam] = awayTeam
 
     return fixtureData
 

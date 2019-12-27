@@ -602,16 +602,16 @@ def generateListOfPointsPerPoundPerPlayerPerPosition():
     for key in currentDumps['elements']:
         if key['element_type'] == 1:
             player = key['id']
-            playerPointsGoalkeeper[player] = (key['total_points']/key['now_cost'])
+            playerPointsGoalkeeper[player] = (key['total_points']/(key['now_cost']/10))
         if key['element_type'] == 2:
             player = key['id']
-            playerPointsDefender[player] = (key['total_points']/key['now_cost'])
+            playerPointsDefender[player] = (key['total_points']/(key['now_cost']/10))
         if key['element_type'] == 3:
             player = key['id']
-            playerPointsMidfielder[player] = (key['total_points']/key['now_cost'])
+            playerPointsMidfielder[player] = (key['total_points']/(key['now_cost']/10))
         if key['element_type'] == 4:
             player = key['id']
-            playerPointsForward[player] = (key['total_points']/key['now_cost'])
+            playerPointsForward[player] = (key['total_points']/(key['now_cost']/10))
 
     pointsByPosition[1] = playerPointsGoalkeeper
     pointsByPosition[2] = playerPointsDefender

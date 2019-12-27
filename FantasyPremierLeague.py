@@ -4,6 +4,7 @@ from genericMethods import *
 from Teams import *
 import Teams
 import operator
+from collections import OrderedDict
 
 
 """
@@ -485,6 +486,7 @@ def teamsRoutine():
                             playersMostSelected[playerName] = percentageSelected
 
                         playersSorted = sorted(playersMostSelected.items(), key=lambda x: x[1], reverse=True)
+                        finalPlayers = genericMethods.reformattedSortedTupleAsDict(playersSorted)
                         
                         currentGameweek = genericMethods.generateCurrentGameweek()
                         print("--------------------------------------------")
@@ -515,11 +517,12 @@ def teamsRoutine():
                             positionAverageCost[team] = round(pricePerPoint, 2)
 
                         sortedAverageCost = sorted(positionAverageCost.items(), key=lambda x: x[1], reverse=False)
+                        finalAverageCost = genericMethods.reformattedSortedTupleAsDict(sortedAverageCost)
 
                         print("----------------------------------------------------------")
                         print(f'Average cost per point of {positionName}s by team:')
                         print("")
-                        genericMethods.printDataClean(sortedAverageCost, 20, '£', 'M per point scored')
+                        genericMethods.printDataClean(finalAverageCost, 20, '£', 'M per point scored')
                         print("----------------------------------------------------------")
                         print("")
 
@@ -531,34 +534,42 @@ def teamsRoutine():
                         print("How many weeks do you want the average to be based off?:")
                         print("")
                         weekNumber = int(input("> "))
+                        listedDifficultyByTeam = dict()
                         averageDifficultyByTeam = dict()
                         finalDifficultyDict = dict()
                         length = len(teamNames)-1
+
                         for team in teamNames:
                             currentIndex = list(teamNames).index(team)
-                            runPercentageComplete = str(round((currentIndex/length) * 100 , 1))
-                            if runPercentageComplete != "100.0":
-                                sys.stdout.write('\r'f"Calculating average game difficulty: {runPercentageComplete}%"),
-                                sys.stdout.flush()
-                            else:
-                                sys.stdout.write('\r'"")
-                                sys.stdout.write(f"Average game difficulty calculation complete: {runPercentageComplete}%")
-                                sys.stdout.flush()
-                                print("")
-                                print("")
+                            genericMethods.runPercentage(length, currentIndex, "Gathering list of upcoming game difficulty: ", "Complete: Calculating average game difficulty: ")
 
                             currentTeamID = teamNames[team]
-                            averageGameweekDifficulty = int(upcomingGameDifficulty(weekNumber, currentTeamID))
+                            listedGameweekDifficulty = upcomingGameDifficultyListed(weekNumber, currentTeamID)
                             readableTeamName = team.capitalize()
-                            averageDifficultyByTeam[readableTeamName] = averageGameweekDifficulty
+                            listedDifficultyByTeam[readableTeamName] = listedGameweekDifficulty
                             
-                        sortedTeamPerformance = sorted(averageDifficultyByTeam.items(), key=lambda x: x[1], reverse=False)
+                        gameweekList = list()
+                        count = genericMethods.generateCurrentGameweek() + 1
+                        nowGameweek = genericMethods.generateCurrentGameweek() + weekNumber
+
+                        while count <= nowGameweek:
+                            gameweekList.append(count)
+                            count += 1
+
+                        gameweekListClean = "/ "
+                        for week in gameweekList:
+                            gameweekListClean += f"{week} / "
+
+                        sortedTeamSumDifficulty = sorted(listedDifficultyByTeam.items(), key=lambda x: sum(x[1]), reverse=False)
+                        sortedTeamAverageDifficultyList = OrderedDict()
 
                         print("----------------------------------------------------------")
-                        print(f'Average match difficulty for the next {weekNumber} games:')
-                        print("1/10 = piece of piss, 10/10 = no chance")
+                        print(f'Match difficulty for the next {weekNumber} games from easy to most difficult run:')
                         print("")
-                        genericMethods.printDataClean(sortedTeamPerformance, 20, '', '/10')
+                        print(f"Gameweek: {gameweekListClean}")
+                        print("-------------------------------------------------------")
+                        print("")
+                        genericMethods.printDataClean(sortedTeamSumDifficulty, 20, '', '')
                         print("----------------------------------------------------------")
                         print("")
 
@@ -591,17 +602,20 @@ def teamsRoutine():
                                     None
                         
                             if userInput == 'most':
-                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)   
+                                sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True) 
+                                finalAverageCost = genericMethods.reformattedSortedTupleAsDict(sortedAverageCost)
                             if userInput == 'least':
                                 sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=False)
+                                finalAverageCost = genericMethods.reformattedSortedTupleAsDict(sortedAverageCost)
                             else:
                                 sortedAverageCost = sorted(playerPoundPerPoint.items(), key=lambda x: x[1], reverse=True)
+                                finalAverageCost = genericMethods.reformattedSortedTupleAsDict(sortedAverageCost)
 
 
                             print("----------------------------------------------------------")
                             print(f'Top ranked {positionName}s for points per pound:')
                             print("")
-                            genericMethods.printDataClean(sortedAverageCost, 4, '', ' points per £M spent')
+                            genericMethods.printDataClean(finalAverageCost, 5, '', ' points per £M spent')
                             print("----------------------------------------------------------")
                             print("")
 
@@ -660,11 +674,12 @@ def teamsRoutine():
                             positionName = positions[position]
                             currentPositionData = sortedByPosition[position]
                             sortedSumPoints = sorted(sortedSumByPosition[position].items(), key=lambda x: x[1], reverse=True)
-                            top5Players = sortedSumPoints[:5]
+                            finalSumPoints = genericMethods.reformattedSortedTupleAsDict(sortedSumPoints)
+                            top5Players = final[:5]
                             top5PlayersPreviousGameweeks = dict()
 
-                            for playerTuple in top5Players:
-                                playerID = playerTuple[0]
+                            for player in top5Players:
+                                playerID = playerTuple[player]
                                 playerName = playerNames[playerID].capitalize()
                                 top5PlayersPreviousGameweeks[playerName] = currentPositionData[playerID]
 
@@ -879,7 +894,7 @@ def gameweekRoutine():
                                 for player in gameweekSummaryListFull:
                                     print(player)
                             elif int(playerListInput) == 2:
-                                gameweekSummaryListCleaned = str(gameweekSummaryListSecond).replace("'","").replace("[","").replace("]","")
+                                gameweekSummaryListCleaned = str(gameweekSummaryListFull).replace("'","").replace("[","").replace("]","")
                                 print(gameweekSummaryListCleaned)
                                 copyTo = Tk()
                                 copyTo.clipboard_clear()
