@@ -24,6 +24,7 @@ from scipy.stats import linregress
 from gameweekSummary import *
 from genericMethods import *
 from Teams import *
+import Teams
 
 #Setting up url construction
 
@@ -145,27 +146,6 @@ def generatePlayerIDToFullNameMatching():
             cleanedFullName = str.lower(genericMethods.unicodeReplace(fullName))
             id = formattedY['id']
             playerIDMatchList[cleanedFullName] = id
-
-    return playerIDMatchList
-
-# Create player name list (and associated name as key)
-def generatePlayerNameToIDMatching():
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
-
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            secondName = formattedY['second_name']
-            cleanedSecondName = str.lower(unicodeReplace(secondName))
-            id = formattedY['id']
-            playerIDMatchList[id] = cleanedSecondName
 
     return playerIDMatchList
 

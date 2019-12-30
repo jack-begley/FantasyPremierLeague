@@ -86,6 +86,49 @@ def teamIDsAsKeysAndNamesAsData():
            teams[name] = id
     return teams
 
+# Returns all team ids ask keys, with their historic gameweek difficulty as a comma seperated list for each team
+def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
+    teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(startGameweek, endGameweek)
+    urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
+    teams = dict()
+    difficultyOfUpcomingGamesForTeam = list()
+    for teamID in teamsPlayingInCurrentPeriod:
+        currentGameweek = startGameweek
+        while currentGameweek <= endGameweek:
+            teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
+            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
+            for gameweekData in currentDumps:
+                    if gameweekData['team_a'] == teamID:
+                        difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_a_difficulty']))
+                        currentGameweek += 1
+                        break
+                    if gameweekData['team_h'] == teamID:
+                        difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_h_difficulty']))
+                        currentGameweek += 1
+                        break
+            else:
+                currentGameweek += 1
+
+        teams[teamID] = difficultyOfUpcomingGamesForTeam
+
+    return teams
+
+# Returns all team ids ask keys, with their associated players as a comma seperated list for each team
+def teamIDsAsKeysAndPlayerIDsAsList():
+    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
+    readable = genericMethods.generateJSONDumpsReadable(url)
+    teams = dict()
+    playerIDs = list()
+    for elements in readable:
+        for keys in readable['teams']:
+           id = keys['id']
+           for players in readable['elements']:
+               if players['team'] == id:
+                   playerIDs.append(players['id'])
+           teams[id] = playerIDs
+
+    return teams
+
 # Print current data for team to console
 def printTeamDataToConsole(teamID):
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
