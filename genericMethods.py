@@ -15,9 +15,9 @@ from tkinter import Tk
 import tkinter 
 import csv 
 import sys, traceback
-from gameweekSummary import *
-from playerData import *
-from Teams import *
+import gameweekSummary
+import playerData
+import Teams
 
 
 # URL set up and league codes
@@ -36,17 +36,6 @@ def generateJSONDumpsReadable(url):
         Readable = json.loads(Dumps)
 
         return Readable
-
-# Generates a comma seperated list of the gameweek numbers (currently with 'gameweek' in position 0)
-def generateCommaSeperatedGameweekNumberList():
-    currentGameweek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    gameweekList = list()
-    gameweekList.append('gameweek')
-    x = 1
-    while x < currentGameweek:
-        gameweekList.append(x)
-        x = x + 1
-    return gameweekList
 
 # Try and parse text as an int. Returns integer or text
 def parse(userInput):

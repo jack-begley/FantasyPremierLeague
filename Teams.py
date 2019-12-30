@@ -9,9 +9,7 @@ import genericMethods
 import playerData
 import gameweekSummary
 from requests.auth import HTTPBasicAuth
-from gameweekSummary import *
-from playerData import *
-from genericMethods import *
+
 
 
 # Verifies Auth to allow users to activate URLs that require login
@@ -33,7 +31,7 @@ def loginToSecureURL(urlResponseToReturn, username, password):
 
 # Generates the ID's for the top fantasy teams in the world for the number specified by the users up to 50
 def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
-    JSON = loginToSecureURL('https://fantasy.premierleague.com/api/leagues-classic/314/standings/', username, password)
+    JSON = Teams.loginToSecureURL('https://fantasy.premierleague.com/api/leagues-classic/314/standings/', username, password)
     Data = JSON.json()
     Dumps = json.dumps(Data)
     readableData = json.loads(Dumps)
@@ -56,7 +54,7 @@ def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
 def getTeamDetails(teamID, username, password):
     gameweekNumber = genericMethods.generateCurrentGameweek()
     url = f'https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/'
-    Response = loginToSecureURL(url, username, password)  
+    Response = Teams.loginToSecureURL(url, username, password)  
     Data = Response.json()
     Dumps = json.dumps(Data)
     readableData = json.loads(Dumps)
@@ -88,14 +86,13 @@ def teamIDsAsKeysAndNamesAsData():
 
 # Returns all team ids ask keys, with their historic gameweek difficulty as a comma seperated list for each team
 def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
-    teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(startGameweek, endGameweek)
     urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
     teams = dict()
     for teamID in teamsPlayingInCurrentPeriod:
         difficultyOfUpcomingGamesForTeam = list()
         currentGameweek = startGameweek
         while currentGameweek <= endGameweek:
-            teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
+            teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
             for gameweekData in currentDumps:
                     if gameweekData['team_a'] == teamID:
@@ -152,23 +149,7 @@ def printTeamDataToConsole(teamID):
                 print('================================')
                 return
 
-# Generate static data for team performance
-def generateDataForTeam(teamID):
-    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
-    readable = genericMethods.generateJSONDumpsReadable(url)
-    teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-            if keys['id'] == teamID:
-                teams[keys] = readable[keys]
-
-    teams['net_strength_home'] = teams["strength_attack_home"] - teams["strength_defence_home"]
-    teams['net_strength_away'] = teams["strength_attack_away"] - teams["strength_defence_away"]
-
-    return teams
-
 # Get all data for a gameweek for a team
-
 # TODO: Finish this method off to print the data for a single team sensibly
 
 def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
@@ -244,7 +225,7 @@ def upcomingGameDifficultyListed(numberOfGameweeksToPullDataFor, idOfTheTeamWeWa
         maxGameweek = currentGameweek + (numberOfGameweeksToPullDataFor - 1)
         difficultyOfUpcomingGamesForTeam = list()
         while currentGameweek <= maxGameweek:
-            teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
+            teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
             if teamID in teamsPlayingInCurrentPeriod:
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
                 for gameweekData in currentDumps:
@@ -274,19 +255,6 @@ def allTeamsPlayingForAGameweek(gameweekNumber, maxGameweekNumber):
              gameweekNumber += 1
     
      return teamsPlayed
-
- # Method for printing the 
-def printDifficultyScores(indexedSetOfData):
-    x = 1
-    for data in indexedSetOfData:
-        currentIndex = list(indexedSetOfData).index(data)
-        if currentIndex <= 20:
-            seperatedValues = str(data).split(',')
-            cleanedName = str(seperatedValues[0]).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '')
-            cleanedData = int(round(float(seperatedValues[1].replace(')', '')),2))
-            print(f'{cleanedName}: {cleanedData:,}/10')
-        else:
-            return
 
 # Generate list of playerID's and names for a given team
 def generateListOfPlayerIDsAsKeysForTeam(teamID):
@@ -322,7 +290,7 @@ def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficulty5 = list()
         difficultyOfGamesWithGoalsConceededListed = dict()
         while gameweek <= maxGameweek:
-            teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(gameweek, gameweek)
+            teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
             if teamID in teamsPlayingInCurrentPeriod:
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
                 for gameweekData in currentDumps:
@@ -383,7 +351,7 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficulty5 = list()
         difficultyOfGamesWithGoalsScoredListed = dict()
         while gameweek <= maxGameweek:
-            teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(gameweek, gameweek)
+            teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
             if teamID in teamsPlayingInCurrentPeriod:
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
                 for gameweekData in currentDumps:
@@ -434,7 +402,7 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
 def nextGameDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-        teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(gameweek, gameweek)
+        teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
         if teamID in teamsPlayingInCurrentPeriod:
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
             for gameweekData in currentDumps:
@@ -448,15 +416,15 @@ def nextGameDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
 # Combined method for pulling the upcoming likelihoood for a team to score for all teams
 
 def generateLikelihoodToScoreByTeamForNextGame(gameweek):
-    teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+    teamIDsAndNames = Teams.teamIDsAsKeysAndNamesAsData()
     teamDifficultyReference = dict()
     nextGameDifficultyByTeam = dict()
     length = len(teamIDsAndNames) - 1
 
     for teamID in teamIDsAndNames:
         teamName = teamIDsAndNames[teamID]
-        teamDifficultyReference[teamID] = goalsScoredByDifficulty(teamID, gameweek)
-        nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID, gameweek)
+        teamDifficultyReference[teamID] = Teams.goalsScoredByDifficulty(teamID, gameweek)
+        nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 
         currentIndex = list(teamIDsAndNames.keys()).index(teamID)
         genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals scored index", "Complete: Gathered team difficulty and goals scored index")
@@ -485,15 +453,15 @@ def generateLikelihoodToScoreByTeamForNextGame(gameweek):
 # Combined method for pulling the upcoming likelihoood for a team to conceed for all teams
 
 def generateLikelihoodToConceedByTeamForNextGame(gameweek):
-    teamIDsAndNames = teamIDsAsKeysAndNamesAsData()
+    teamIDsAndNames = Teams.teamIDsAsKeysAndNamesAsData()
     teamDifficultyReference = dict()
     nextGameDifficultyByTeam = dict()
     length = len(teamIDsAndNames) - 1
 
     for teamID in teamIDsAndNames:
-        teamName = teamIDsAndNames[teamID]
-        teamDifficultyReference[teamID] = goalsConceededByDifficulty(teamID, gameweek)
-        nextGameDifficultyByTeam[teamID] = nextGameDifficulty(teamID, gameweek)
+        teamName = Teams.teamIDsAndNames[teamID]
+        teamDifficultyReference[teamID] = Teams.goalsConceededByDifficulty(teamID, gameweek)
+        nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 
         currentIndex = list(teamIDsAndNames.keys()).index(teamID)
         genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceeded index", "Complete: Gathered team difficulty and goals conceeded index")
@@ -537,7 +505,7 @@ def fixturesForGameweekByTeamID(gameweek):
 def resultsForGameweek(gameweek):
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         results = dict()
-        teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(gameweek, gameweek)
+        teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
         currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
         for gameweekData in currentDumps:
             homeTeam = gameweekData['team_h']
@@ -555,7 +523,7 @@ def resultsForGameweek(gameweek):
 def fixturesForGameweek(gameweek):
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         fixtures = dict()
-        teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(gameweek, gameweek)
+        teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
         currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
         for gameweekData in currentDumps:
             homeTeam = gameweekData['team_h']
