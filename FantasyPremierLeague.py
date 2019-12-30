@@ -722,7 +722,6 @@ def teamsRoutine():
 
                         endRoutine()
 
-
                     if playerUserInputInitialInt == 12:
                         nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
@@ -797,7 +796,6 @@ def teamsRoutine():
                             except:
                                 None
 
-
                     if playerUserInputInitialInt == 13:
                         nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
@@ -869,8 +867,8 @@ def teamsRoutine():
 
                         endRoutine()
 
-                        endRoutine()
-                        
+                        endRoutine()             
+                      
                     if playerUserInputInitialInt == 14:
                         maxGameweek = genericMethods.generateCurrentGameweek() + 1
                         teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
@@ -928,7 +926,6 @@ def teamsRoutine():
 
                         endRoutine()
 
-
                     if playerUserInputInitialInt == 15:
                         currentGameweek = 1
                         endGameweek = genericMethods.generateCurrentGameweek() + 1
@@ -984,7 +981,6 @@ def teamsRoutine():
 
                         endRoutine()
 
-
                     if playerUserInputInitialInt == 16:
                         currentGameweek = 1
                         endGameweek = genericMethods.generateCurrentGameweek() + 1
@@ -1034,8 +1030,6 @@ def teamsRoutine():
 
                         endRoutine()
 
-                    # TODO: Get method printing with the gameweek difficulty of the players for their scores
-
                     if playerUserInputInitialInt == 17:                        
                         print("----------------------------------------------------------------------------------------------")
                         print("How many gameweeks do you want to see?")
@@ -1049,6 +1043,7 @@ def teamsRoutine():
                         currentGameweek = nowGameweek - userInput
                         playerIDs = generatePlayersIdsList()
                         playerNames = generatePlayerNameToIDMatching()
+                        playerIDsToNames = generatePlayerIDToSurnameMatching()
                         positions = generatePositionReferenceIDAsKey()
                         teamIDandPlayerID = teamIDsAsKeysAndPlayerIDsAsList()
                         gameweekDifficultyByTeam = teamIDsAsKeysAndGameweekDifficultyAsList(fromGameweek, nowGameweek)
@@ -1102,8 +1097,9 @@ def teamsRoutine():
                             print(f"Gameweek: {gameweekListClean}")
                             print("-------------------------------------------------------")
                             for player in top5PlayersPreviousGameweeks:
-                                teamID = playerNameTeamID[player]
-                                difficultyList = gameweekDifficultyByTeam[teamID]
+                                playerID = playerIDsToNames[str.lower(player)]
+                                teamID = playerNameTeamID[playerID]
+                                difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
                                 playerData = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
                                 print(f"{player}: {playerData}")
                                 print(f"Game difficulty: {difficultyList}")
@@ -1111,6 +1107,26 @@ def teamsRoutine():
                             print("-----------------------------------------------------------------------------------------------------------")
                             print("")
                         endRoutine()
+                    
+                    if playerUserInputInitialInt == 18:
+                        currentGameweek = genericMethods.generateCurrentGameweek()
+                        playerInfluence = playerInfluence(currentGameweek)
+                        playerNames = generatePlayerNameToIDMatching()
+
+                        print("-----------------------------------------------------------------------------------------------------------")
+                        print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
+                        print("")
+                        print(f"Gameweek: {gameweekListClean}")
+                        print("-------------------------------------------------------")
+                        for player in playerInfluence:
+                            playerName = str(playerNames[player]).capitalize()
+                            playerInfluence = playerInfluence[player]
+                            print(f"{playerName}: {playerInfluence}")
+
+                        endRoutine()
+
+
+
 # Gameweek specific section of the program. Contains the menu items for the gameweek part of the console app
 def gameweekRoutine():
                 print("------------------------------------------------------------------------")

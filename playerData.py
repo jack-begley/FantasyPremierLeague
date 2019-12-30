@@ -676,3 +676,21 @@ def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGamewee
 
 
         return playerDict
+
+# Returns the influence of each player in order for a given gameweek
+
+def playerInfluence(gameweekOFInterest):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        playerDict = dict()
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{currentGameweek}/live')     
+        for gameweekData in currentDumps['elements']:
+            for data in gameweekData['stats']:
+                playerID = data['id']
+                influence = data['influence']
+                playerDict[playerID] = influence
+
+        
+        sortedInfluence = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+        playerInfluence = genericMethods.reformattedSortedTupleAsDict(sortedInfluence)
+
+        return playerInfluence

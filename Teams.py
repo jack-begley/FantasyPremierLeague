@@ -91,8 +91,8 @@ def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
     teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(startGameweek, endGameweek)
     urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
     teams = dict()
-    difficultyOfUpcomingGamesForTeam = list()
     for teamID in teamsPlayingInCurrentPeriod:
+        difficultyOfUpcomingGamesForTeam = list()
         currentGameweek = startGameweek
         while currentGameweek <= endGameweek:
             teamsPlayingInCurrentPeriod = allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
@@ -118,10 +118,10 @@ def teamIDsAsKeysAndPlayerIDsAsList():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
-    playerIDs = list()
     for elements in readable:
         for keys in readable['teams']:
            id = keys['id']
+           playerIDs = list()
            for players in readable['elements']:
                if players['team'] == id:
                    playerIDs.append(players['id'])
