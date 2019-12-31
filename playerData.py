@@ -235,7 +235,7 @@ def gatherGameweekDataByPlayer(gameweekOfInterest):
             sys.stdout.flush()
             print("")
 
-        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
         currentPlayerList = dict()
 
@@ -520,7 +520,7 @@ def generateCorrelCoeffToPredictPerfomanceBasedOnPastWeek(arrayToBaseCorrelation
 
 # Creates a list of the positions
 def generatePositionReference():
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     positionsDict = dict()
     for data in currentDumps['element_types']:
         for key in data:
@@ -532,7 +532,7 @@ def generatePositionReference():
 
 # Creates a list of the positions
 def generatePositionReferenceIDAsKey():
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     positionsDict = dict()
     for data in currentDumps['element_types']:
         for key in data:
@@ -544,7 +544,7 @@ def generatePositionReferenceIDAsKey():
 
 # Creates a list of the players and their price
 def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     playerCosts = list()
     for key in currentDumps['elements']:
         if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
@@ -554,7 +554,7 @@ def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
 
 # Creates a list of the players points
 def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     playerPoints = list()
     for key in currentDumps['elements']:
         if key['element_type'] == positionOfPlayers and key['team'] == idOfTeam:
@@ -564,7 +564,7 @@ def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
 
 # Creates a list of the players points per pound by players by position
 def generateListOfPointsPerPoundPerPlayerPerPosition():
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     playerPointsGoalkeeper = dict()
     playerPointsDefender = dict()
     playerPointsMidfielder = dict()
@@ -593,7 +593,7 @@ def generateListOfPointsPerPoundPerPlayerPerPosition():
 
 # Creates a list of points for a given player for a given range of weeks
 def generateListOfPointsFoNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL(f'element-summary/{playerID}/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
     currentPlayersPoints = list()
     currentGameweek = gameweekOfInterest
     for data in currentDumps['history']:
@@ -607,7 +607,7 @@ def generateListOfPointsFoNGameweeksPerPlayer(playerID, gameweekOfInterest, maxG
 
 # Takes a array of player data where the player ID is the Key and sorts it by position
 def sortPlayerDataByPosition(arrayToSort):
-    currentDumps = genericMethods.generateJSONDumpsReadable(mergeURL('bootstrap-static/'))
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
     playerPointsGoalkeeper = dict()
     playerPointsDefender = dict()
     playerPointsMidfielder = dict()
@@ -663,15 +663,15 @@ def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGamewee
         return playerDict
 
 # Returns the influence of each player in order for a given gameweek
-def playerInfluence(gameweekOFInterest):
+def playerInfluence(gameweekOfInterest):
         urlBase = 'https://fantasy.premierleague.com/api/'
         playerDict = dict()
-        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{currentGameweek}/live')     
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{gameweekOfInterest}/live')     
         for gameweekData in currentDumps['elements']:
-            for data in gameweekData['stats']:
-                playerID = data['id']
-                influence = data['influence']
-                playerDict[playerID] = influence
+            gameweekStats = gameweekData['stats']
+            playerID = gameweekData['id']
+            influence = gameweekStats['influence']
+            playerDict[playerID] = influence
 
         
         sortedInfluence = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)

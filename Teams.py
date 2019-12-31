@@ -5,9 +5,11 @@ file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
 import requests
+import json
 import genericMethods
 import playerData
 import gameweekSummary
+import Teams
 from requests.auth import HTTPBasicAuth
 
 
@@ -87,6 +89,7 @@ def teamIDsAsKeysAndNamesAsData():
 # Returns all team ids ask keys, with their historic gameweek difficulty as a comma seperated list for each team
 def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
     urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
+    teamsPlayingInCurrentPeriod =  Teams.allTeamsPlayingForAGameweek(startGameweek, endGameweek)
     teams = dict()
     for teamID in teamsPlayingInCurrentPeriod:
         difficultyOfUpcomingGamesForTeam = list()
@@ -459,7 +462,7 @@ def generateLikelihoodToConceedByTeamForNextGame(gameweek):
     length = len(teamIDsAndNames) - 1
 
     for teamID in teamIDsAndNames:
-        teamName = Teams.teamIDsAndNames[teamID]
+        teamName = teamIDsAndNames[teamID]
         teamDifficultyReference[teamID] = Teams.goalsConceededByDifficulty(teamID, gameweek)
         nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 

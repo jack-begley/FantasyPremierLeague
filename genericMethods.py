@@ -246,8 +246,12 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, ap
         if currentIndex <= numberOfRecordsToShow:
             cleanedName = str(data).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
             cleanedData = str(formattedSet[data]).replace('(', '').replace(')', '').replace('[', '').replace(']', '').replace("'", '').replace('"', '')
+            try:
+                cleanedDataFormatted = thousandFormatting(int(cleanedData))
+            except:
+                cleanedDataFormatted = cleanedData
                 
-            print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
+            print(f'{cleanedName}: {appendBeforeData}{cleanedDataFormatted}{appendAfterData}')
         else:
             return
 
@@ -280,3 +284,11 @@ def reformattedSortedTupleAsDict(listOfTuples):
         reformattedDict[item0] = item1
 
     return reformattedDict
+
+# Repeat length of string
+def repeatStringToLength(stringToRepeat, length):
+    return (stringToRepeat * (int(length/len(stringToRepeat))+1))[:length]
+
+# Thousand seperator
+def thousandFormatting(number): 
+    return f"{number:,}"

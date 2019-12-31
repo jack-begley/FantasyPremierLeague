@@ -23,6 +23,7 @@ import sys, traceback
 import re
 import io
 import playerData
+import gameweekSummary
 import genericMethods
 import Teams
 
@@ -223,7 +224,7 @@ def mostNetTransfersIn(numberToDisplayUpTo):
     gameweekSummarySub = "bootstrap-static/"
 
     url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     for data in gameweekSummaryDataReadable['elements']:
         dumpsIds = json.dumps(data)
@@ -256,7 +257,7 @@ def mostNetTransfersOut(numberToDisplayUpTo):
     gameweekSummarySub = "bootstrap-static/"
 
     url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     for data in gameweekSummaryDataReadable['elements']:
         dumpsIds = json.dumps(data)

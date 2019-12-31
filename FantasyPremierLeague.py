@@ -3,6 +3,7 @@ import playerData
 import genericMethods
 import Teams
 import operator
+import requests
 from collections import OrderedDict
 
 
@@ -114,7 +115,7 @@ def endRoutine():
         introRoutine()
     else:
 
-        sys.exit(0)
+        sys.exit()
 
 # The first stage of the program. Contains the top menu items for the console app
 def introRoutine():
@@ -131,7 +132,7 @@ def introRoutine():
     print("What would you like to see?:")
     userInput = input(">")
     print("")
-    genericMethods.genericMethods.parse(userInput)
+    genericMethods.parse(userInput)
     if genericMethods.isInt(userInput) == True:
         userInputInt = int(userInput)
         if userInputInt ==  1:
@@ -500,7 +501,7 @@ def teamsRoutine():
                         print("--------------------------------------------")
                         print(f'Top 20 players picked by best performers for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(playersSorted, 20, '', '%')
+                        genericMethods.printDataClean(finalPlayers, 20, '', '%')
                         print("--------------------------------------------")
 
                         endRoutine()
@@ -549,7 +550,7 @@ def teamsRoutine():
 
                         for team in teamNames:
                             currentIndex = list(teamNames).index(team)
-                            genericMethods.runPercentage(length, currentIndex, "Gathering list of upcoming game difficulty: ", "Complete: Calculating average game difficulty: ")
+                            genericMethods.runPercentage(length, currentIndex, "Gathering list of upcoming game difficulty", "Complete: Calculating average game difficulty")
 
                             currentTeamID = teamNames[team]
                             listedGameweekDifficulty = Teams.upcomingGameDifficultyListed(weekNumber, currentTeamID)
@@ -662,7 +663,7 @@ def teamsRoutine():
                             allGameweekData[playerID] = playerDataList
 
                             currentIndex = list(playerIDs).index(playerID)
-                            genericMethods.runPercentage(length, currentIndex, 'Gathering player scores:', 'Player score data gathered:')                           
+                            genericMethods.runPercentage(length, currentIndex, 'Gathering player scores', 'Player score data gathered')                           
                             
                         sortedByPosition = playerData.sortPlayerDataByPosition(allGameweekData)
                         sortedSumByPosition = playerData.sortPlayerDataByPosition(sumOfPlayerScores)
@@ -673,12 +674,12 @@ def teamsRoutine():
                             positionName = positions[position]
                             currentPositionData = sortedByPosition[position]
                             sortedSumPoints = sorted(sortedSumByPosition[position].items(), key=lambda x: x[1], reverse=True)
-                            finalSumPoints = genericMethods.reformattedSortedTupleAsDict(sortedSumPoints)
-                            top5Players = final[:5]
+                            top5Players = sortedSumPoints[:5]
+                            finalSumPoints = genericMethods.reformattedSortedTupleAsDict(top5Players)
                             top5PlayersPreviousGameweeks = dict()
 
-                            for player in top5Players:
-                                playerID = playerTuple[player]
+                            for player in finalSumPoints:
+                                playerID = player
                                 playerName = playerNames[playerID].capitalize()
                                 top5PlayersPreviousGameweeks[playerName] = currentPositionData[playerID]
 
@@ -764,9 +765,6 @@ def teamsRoutine():
 
                                 overallNet = homeNet - awayNet
 
-                                if goalDifference < 0 :
-                                    goalDifference = - goalDifference
-
                                 if awayNet != 0 and homeNet != 0:
                                     result = round((homeNet / awayNet), 1)
                                 elif homeNet == 0:
@@ -836,12 +834,8 @@ def teamsRoutine():
                                 awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
                                 homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
 
-                                goalDifference = int(round(homeGoals - awayGoals, 0))
-
-
-                                if goalDifference < 0 :
-                                    goalDifference = - goalDifference
-                               
+                                goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
+                              
                                 if userInput == 1:
                                     homeNameUpper = homeName.upper()
                                     awayNameUpper = awayName.upper()
@@ -1100,11 +1094,18 @@ def teamsRoutine():
                             print("-------------------------------------------------------")
                             for player in top5PlayersPreviousGameweeks:
                                 playerID = playerIDsToNames[str.lower(player)]
+                                remainingLength = 15 - len(player)
+                                gameDifficulty = "Game difficulty"
+                                playerName = player + genericMethods.repeatStringToLength(" ", remainingLength) 
+                                if remainingLength < 0 :
+                                    supplementLength = len(player) - 15
+                                    gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
+                                    playerName = player
                                 teamID = playerNameTeamID[playerID]
                                 difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
                                 playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
-                                print(f"{player}: {playerDataTop5}")
-                                print(f"Game difficulty: {difficultyList}")
+                                print(f"{playerName}: {playerDataTop5}")
+                                print(f"{gameDifficulty}: {difficultyList}")
                                 print("")
                             print("-----------------------------------------------------------------------------------------------------------")
                             print("")
@@ -1117,9 +1118,8 @@ def teamsRoutine():
                         playerNames = playerData.generatePlayerNameToIDMatching()
 
                         print("-----------------------------------------------------------------------------------------------------------")
-                        print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
+                        print(f'Top ranked players for points for GW{currentGameweek}:')
                         print("")
-                        print(f"Gameweek: {gameweekListClean}")
                         print("-------------------------------------------------------")
                         for player in playersByInfluence:
                             playerName = str(playerNames[player]).capitalize()
@@ -1225,11 +1225,12 @@ def gameweekRoutine():
                         print("-------------------------------------------")
                         numberOfRecordsToShow = int(input("> "))
                         topTransfers = gameweekSummary.mostNetTransfersIn(numberOfRecordsToShow)
+                        topTransfersFormatted = genericMethods.reformattedSortedTupleAsDict(topTransfers)
                         currentGameweek = genericMethods.generateCurrentGameweek() + 1
                         print("--------------------------------------------")
                         print(f'Top {numberOfRecordsToShow} transfers in for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
+                        genericMethods.printDataClean(topTransfersFormatted, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
@@ -1241,11 +1242,12 @@ def gameweekRoutine():
                         print("-------------------------------------------")
                         numberOfRecordsToShow = int(input("> "))
                         topTransfers =  gameweekSummary.mostNetTransfersOut(numberOfRecordsToShow)
+                        topTransfersFormatted = genericMethods.reformattedSortedTupleAsDict(topTransfers)
                         currentGameweek = genericMethods.generateCurrentGameweek() + 1
                         print("--------------------------------------------")
                         print(f'Top {numberOfRecordsToShow} transfers out for GW{currentGameweek}:')
                         print("")
-                        genericMethods.printDataClean(topTransfers, numberOfRecordsToShow, "", "")
+                        genericMethods.printDataClean(topTransfersFormatted, numberOfRecordsToShow, "", "")
                         print("--------------------------------------------")
                         print("")
                         endRoutine()
