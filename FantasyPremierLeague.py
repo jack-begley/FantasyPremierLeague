@@ -401,16 +401,18 @@ def teamsRoutine():
                 print(" [11] Average goals scored by team for difficulty this week")
                 print(" [12] Predicting next gameweek results")
                 print(" [13] Predicting next gameweek results based on goals")
+                print(" [14] Weighted predictions for next gameweek based on goals")
                 print("")
                 print(" Historical Results: ")
                 print("")
-                print(" [14] Results by gameweek")
-                print(" [15] Predictions for historical gameweeks")
-                print(" [16] Predictions for historical gameweeks based on goals")
+                print(" [15] Results by gameweek")
+                print(" [16] Predictions for historical gameweeks")
+                print(" [17] Predictions for historical gameweeks based on goals")
+                print(" [18] Weighted predictions for historical gameweeks based on goals")
                 print("")
                 print(" TEST:")
-                print(" [17] Top performers by position for last N gameweeks with gameweek difficulty (and next gameweek difficulty?)")
-                print(" [18] Players by Influence")
+                print(" [19] Top performers by position for last N gameweeks with gameweek difficulty (and next gameweek difficulty?)")
+                print(" [20] Players by Influence")
                 print("")
                 print("------------------------------------------------------------------------")
                 print("")
@@ -863,9 +865,66 @@ def teamsRoutine():
 
                         endRoutine()
 
-                        endRoutine()             
-                      
                     if playerUserInputInitialInt == 14:
+                        nextGameweek = genericMethods.generateCurrentGameweek() + 1
+
+                        teamStrength = Teams.strengthHomeAndAwayByTeam()
+                        nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
+                        nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+                        fixturesForGameweek = Teams.fixturesForGameweekByTeamID(nextGameweek)
+                        teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+                        
+                        print(f"Estimated results based on past performance for GW{nextGameweek}:")
+
+                        for teamId in teamIdList:
+                            try:
+                                away = fixturesForGameweek[teamId]
+                                home = teamId
+                                
+                                homeTeamStrength = teamStrength[home]
+                                awayTeamStrength = teamStrength[away]
+                                
+                                homeTeamHomeStrength = homeTeamStrength['home']
+                                homeTeamAwayStrength = homeTeamStrength['away']
+                                
+                                awayTeamHomeStrength = awayTeamStrength['home']
+                                awayTeamAwayStrength = awayTeamStrength['away']
+
+                                homeTeamFactor = homeTeamHomeStrength / homeTeamAwayStrength
+                                awayTeamFactor = awayTeamAwayStrength / awayTeamHomeStrength
+
+                                homeName = teamIdList[home].capitalize()
+                                homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactor
+                                homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactor
+
+                                awayName = teamIdList[away].capitalize()
+                                awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactor
+                                awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactor
+                                    
+                                awayGoals = (awayScore + homeConceed) / 2
+                                homeGoals = (homeScore + awayConceed) / 2
+                                    
+                                awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
+                                homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
+
+                                goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
+   
+                                if goalDifference >= 1:
+                                    print(f"{homeName} (W) {homeGoalsRounded} vs {awayGoalsRounded} (L) {awayName}")
+
+                                if -1 < goalDifference < 1:
+                                    print(f"{homeName} (D) {homeGoalsRounded} vs {awayGoalsRounded} (D) {awayName}")
+                                    
+                                if goalDifference <= -1:
+                                    print(f"{homeName} (L) {homeGoalsRounded} vs {awayGoalsRounded} (W) {awayName}")
+
+                            except:
+                                None
+
+
+                        endRoutine()
+                      
+                    if playerUserInputInitialInt == 15:
                         maxGameweek = genericMethods.generateCurrentGameweek() + 1
                         teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
                         currentGameweek = 1
@@ -922,7 +981,7 @@ def teamsRoutine():
 
                         endRoutine()
 
-                    if playerUserInputInitialInt == 15:
+                    if playerUserInputInitialInt == 16:
                         currentGameweek = 1
                         endGameweek = genericMethods.generateCurrentGameweek() + 1
                         while currentGameweek <= endGameweek:
@@ -977,12 +1036,12 @@ def teamsRoutine():
 
                         endRoutine()
 
-                    if playerUserInputInitialInt == 16:
-                        currentGameweek = 1
+                    if playerUserInputInitialInt == 17:
+                        currentGameweek = 2
                         endGameweek = genericMethods.generateCurrentGameweek() + 1
                         while currentGameweek <= endGameweek:
-                            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek)
-                            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek)
+                            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek - 1)
+                            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek - 1)
                             fixturesForGameweek = Teams.fixturesForGameweekByTeamID(currentGameweek)
                             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
 
@@ -1000,25 +1059,67 @@ def teamsRoutine():
                                     awayName = teamIdList[away].capitalize()
                                     awayScore = nextGameLikelihoodtoScore[awayName]
                                     awayConceed = nextGameLikelihoodtoConceed[awayName]
-                                    
-                                    awayGoals = (awayScore + homeConceed) / 2
-                                    homeGoals = (homeScore + awayConceed) / 2
-                                    
-                                    awayGoalsRounded = (awayScore + homeConceed) / 2
-                                    homeGoalsRounded = (homeScore + awayConceed) / 2
+                                                                       
+                                    awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
+                                    homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
 
-                                    goalDifference = homeGoals - awayGoals
+                                    goalDifference = homeGoalsRounded - awayGoalsRounded
                                     if goalDifference < 0 :
                                         goalDifference = - goalDifference
                                 
-                                    if goalDifference > 1:
-                                        print(f"{homeName} (W) {homeGoalsRounded} vs {homeGoalsRounded} (L) {awayName} = {result}")
+                                    print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
 
-                                    if 1 <= goalDifference <= 1:
-                                        print(f"{homeName} (D) {homeGoalsRounded} vs {homeGoalsRounded} (D) {awayName} = {result}")
-                                    
-                                    if goalDifference < 1:
-                                        print(f"{homeName} (L) {homeGoalsRounded} vs {homeGoalsRounded} (W) {awayName} = {result}")
+                                except:
+                                    None
+
+                            currentGameweek += 1
+
+                        endRoutine()
+                    
+                    if playerUserInputInitialInt == 18:
+                        currentGameweek = 2
+                        endGameweek = genericMethods.generateCurrentGameweek() + 1
+                        while currentGameweek <= endGameweek:
+                            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek - 1)
+                            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek - 1)
+                            fixturesForGameweek = Teams.fixturesForGameweekByTeamID(currentGameweek)
+                            teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+                            teamStrength = Teams.strengthHomeAndAwayByTeam()
+                            
+                            print(f"Estimated results based on past performance for GW{currentGameweek}:")
+
+                            for teamId in teamIdList:
+                                try:
+                                    away = fixturesForGameweek[teamId]
+                                    home = teamId
+                                                                
+                                    homeTeamHomeStrength = homeTeamStrength['home']
+                                    homeTeamAwayStrength = homeTeamStrength['away']
+                                
+                                    awayTeamHomeStrength = awayTeamStrength['home']
+                                    awayTeamAwayStrength = awayTeamStrength['away']
+
+                                    homeTeamFactor = homeTeamHomeStrength / homeTeamAwayStrength
+                                    awayTeamFactor = awayTeamAwayStrength / awayTeamHomeStrength
+
+                                    homeName = teamIdList[home].capitalize()
+                                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactor
+                                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactor
+
+                                    awayName = teamIdList[away].capitalize()
+                                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactor
+                                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactor
+                                                                       
+                                    awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
+                                    homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
+
+                                    goalDifference = homeGoalsRounded - awayGoalsRounded
+
+                                    if goalDifference < 0 :
+                                        goalDifference = - goalDifference
+                                
+                                    print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
+
                                 except:
                                     None
 
@@ -1026,7 +1127,7 @@ def teamsRoutine():
 
                         endRoutine()
 
-                    if playerUserInputInitialInt == 17:                        
+                    if playerUserInputInitialInt == 19:                        
                         print("----------------------------------------------------------------------------------------------")
                         print("How many gameweeks do you want to see?")
                         print("")
@@ -1111,7 +1212,7 @@ def teamsRoutine():
                             print("")
                         endRoutine()
                     
-                    if playerUserInputInitialInt == 18:
+                    if playerUserInputInitialInt == 20:
                         currentGameweek = genericMethods.generateCurrentGameweek()
                         print("Gathering player influence scores...")
                         playersByInfluence = playerData.playerInfluence(currentGameweek)

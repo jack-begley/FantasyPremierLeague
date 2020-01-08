@@ -535,3 +535,21 @@ def fixturesForGameweek(gameweek):
             fixtures[homeTeam] = awayTeam
 
         return fixtures
+
+# Returns all team ID's as keys, with their associated home and away strength
+
+def strengthHomeAndAwayByTeam():
+    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
+    readable = genericMethods.generateJSONDumpsReadable(url)
+    teams = dict()
+    for elements in readable:
+        for keys in readable['teams']:
+           strength = dict()
+           id = keys['id']
+           awayStrength = keys['strength_overall_away']
+           homeStrength = keys['strength_overall_home']
+           strength['home'] = homeStrength
+           strength['away'] = awayStrength
+           teams[id] = strength
+
+    return teams
