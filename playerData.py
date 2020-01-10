@@ -592,17 +592,21 @@ def generateListOfPointsPerPoundPerPlayerPerPosition():
     return pointsByPosition
 
 # Creates a list of points for a given player for a given range of weeks
-def generateListOfPointsFoNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
+def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
     currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
     currentPlayersPoints = list()
     currentGameweek = gameweekOfInterest
+    previousGameweek = currentGameweek
     for data in currentDumps['history']:
-        if currentGameweek <= maxGameweek:
+        if gameweekOfInterest <= currentGameweek <= maxGameweek:
+            if data['round'] == currentGameweek + 1:
+                currentPlayersPoints.append(0)
+                currentGameweek += 1
             if data['round'] == currentGameweek:
                 currentData = data['total_points']
                 currentPlayersPoints.append(currentData)
                 currentGameweek += 1
-  
+                  
     return currentPlayersPoints
 
 # Takes a array of player data where the player ID is the Key and sorts it by position

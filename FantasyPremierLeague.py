@@ -660,7 +660,7 @@ def teamsRoutine():
 
                         length = len(playerIDs) - 1
                         for playerID in playerIDs:
-                            playerDataList = playerData.generateListOfPointsFoNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                            playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
                             sumOfPlayerScores[playerID] = sum(playerDataList)
                             allGameweekData[playerID] = playerDataList
 
@@ -852,13 +852,13 @@ def teamsRoutine():
 
                                 if userInput == 2:
                                     if goalDifference >= 1:
-                                        print(f"{homeName} (W) {homeGoalsRounded} vs {awayGoalsRounded} (L) {awayName}")
+                                        print(f"{homeName} {homeGoalsRounded}-{awayGoalsRounded} {awayName}")
 
                                     if -1 < goalDifference < 1:
-                                        print(f"{homeName} (D) {homeGoalsRounded} vs {awayGoalsRounded} (D) {awayName}")
+                                        print(f"{homeName} {homeGoalsRounded}-{awayGoalsRounded} {awayName}")
                                     
                                     if goalDifference <= -1:
-                                        print(f"{homeName} (L) {homeGoalsRounded} vs {awayGoalsRounded} (W) {awayName}")
+                                        print(f"{homeName} {homeGoalsRounded}-{awayGoalsRounded} {awayName}")
                             except:
                                 None
 
@@ -1158,7 +1158,7 @@ def teamsRoutine():
 
                         length = len(playerIDs) - 1
                         for playerID in playerIDs:
-                            playerDataList = playerData.generateListOfPointsFoNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                            playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
                             sumOfPlayerScores[playerID] = sum(playerDataList)
                             allGameweekData[playerID] = playerDataList
 
