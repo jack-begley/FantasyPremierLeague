@@ -546,10 +546,14 @@ def strengthHomeAndAwayByTeam():
         for keys in readable['teams']:
            strength = dict()
            id = keys['id']
-           awayStrength = keys['strength_overall_away']
-           homeStrength = keys['strength_overall_home']
-           strength['home'] = homeStrength
-           strength['away'] = awayStrength
+           awayStrengthDefence = keys['strength_defence_away']
+           awayStrengthAttack = keys['strength_attack_away']
+           homeStrengthDefence = keys['strength_defence_home']
+           homeStrengthAttack = keys['strength_attack_home']
+           strength['homeDefence'] = homeStrengthDefence
+           strength['homeAttack'] = homeStrengthAttack
+           strength['awayDefence'] = awayStrengthDefence
+           strength['awayAttack'] = awayStrengthAttack
            teams[id] = strength
 
     return teams

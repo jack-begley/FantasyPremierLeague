@@ -788,13 +788,13 @@ def teamsRoutine():
 
                                 if userInput == 2:
                                     if overallNet > 0.65:
-                                        print(f"{homeName} (W) {homeGoals} vs {awayGoals} (L) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
 
                                     if -0.65 <= overallNet <= 0.65:
-                                        print(f"{homeName} (D) {homeGoals} vs {awayGoals} (D) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
                                     
                                     if overallNet < -0.65:
-                                        print(f"{homeName} (L) {homeGoals} vs {awayGoals} (W) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
                             except:
                                 None
 
@@ -884,22 +884,28 @@ def teamsRoutine():
                                 homeTeamStrength = teamStrength[home]
                                 awayTeamStrength = teamStrength[away]
                                 
-                                homeTeamHomeStrength = homeTeamStrength['home']
-                                homeTeamAwayStrength = homeTeamStrength['away']
+                                homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
+                                homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
+                                homeTeamAwayStrengthAttack = homeTeamStrength['awayAttack']
+                                homeTeamAwayStrengthDefence = homeTeamStrength['awayDefence']
                                 
-                                awayTeamHomeStrength = awayTeamStrength['home']
-                                awayTeamAwayStrength = awayTeamStrength['away']
+                                awayTeamHomeStrengthAttack = awayTeamStrength['homeAttack']
+                                awayTeamHomeStrengthDefence = awayTeamStrength['homeDefence']
+                                awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
+                                awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
 
-                                homeTeamFactor = homeTeamHomeStrength / homeTeamAwayStrength
-                                awayTeamFactor = awayTeamAwayStrength / awayTeamHomeStrength
+                                homeTeamFactorAttack = homeTeamHomeStrengthAttack / homeTeamAwayStrengthAttack
+                                homeTeamFactorDefence = homeTeamHomeStrengthDefence / homeTeamAwayStrengthDefence
+                                awayTeamFactorAttack = awayTeamAwayStrengthAttack / awayTeamHomeStrengthAttack
+                                awayTeamFactorDefence = awayTeamAwayStrengthDefence / awayTeamHomeStrengthDefence
 
                                 homeName = teamIdList[home].capitalize()
-                                homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactor
-                                homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactor
+                                homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactorAttack
+                                homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactorDefence
 
                                 awayName = teamIdList[away].capitalize()
-                                awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactor
-                                awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactor
+                                awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactorAttack
+                                awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactorDefence
                                     
                                 awayGoals = (awayScore + homeConceed) / 2
                                 homeGoals = (homeScore + awayConceed) / 2
@@ -910,13 +916,13 @@ def teamsRoutine():
                                 goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
    
                                 if goalDifference >= 1:
-                                    print(f"{homeName} (W) {homeGoalsRounded} vs {awayGoalsRounded} (L) {awayName}")
+                                    print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
 
                                 if -1 < goalDifference < 1:
-                                    print(f"{homeName} (D) {homeGoalsRounded} vs {awayGoalsRounded} (D) {awayName}")
+                                    print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
                                     
                                 if goalDifference <= -1:
-                                    print(f"{homeName} (L) {homeGoalsRounded} vs {awayGoalsRounded} (W) {awayName}")
+                                    print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
 
                             except:
                                 None
@@ -1022,13 +1028,13 @@ def teamsRoutine():
                                         result = round(homeNet, 1)
                                 
                                     if overallNet > 0.65:
-                                        print(f"{homeName} (W) {homeGoals} vs {awayGoals} (L) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
 
                                     if -0.65 <= overallNet <= 0.65:
-                                        print(f"{homeName} (D) {homeGoals} vs {awayGoals} (D) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
                                     
                                     if overallNet < -0.65:
-                                        print(f"{homeName} (L) {homeGoals} vs {awayGoals} (W) {awayName} = {result}")
+                                        print(f"{homeName} {homeGoals} vs {awayGoals} {awayName} = {result}")
                                 except:
                                     None
 
@@ -1093,23 +1099,32 @@ def teamsRoutine():
                                     away = fixturesForGameweek[teamId]
                                     home = teamId
                                                                 
-                                    homeTeamHomeStrength = homeTeamStrength['home']
-                                    homeTeamAwayStrength = homeTeamStrength['away']
+                                    homeTeamStrength = teamStrength[home]
+                                    awayTeamStrength = teamStrength[away]
                                 
-                                    awayTeamHomeStrength = awayTeamStrength['home']
-                                    awayTeamAwayStrength = awayTeamStrength['away']
+                                    homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
+                                    homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
+                                    homeTeamAwayStrengthAttack = homeTeamStrength['awayAttack']
+                                    homeTeamAwayStrengthDefence = homeTeamStrength['awayDefence']
+                                
+                                    awayTeamHomeStrengthAttack = awayTeamStrength['homeAttack']
+                                    awayTeamHomeStrengthDefence = awayTeamStrength['homeDefence']
+                                    awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
+                                    awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
 
-                                    homeTeamFactor = homeTeamHomeStrength / homeTeamAwayStrength
-                                    awayTeamFactor = awayTeamAwayStrength / awayTeamHomeStrength
+                                    homeTeamFactorAttack = homeTeamHomeStrengthAttack / homeTeamAwayStrengthAttack
+                                    homeTeamFactorDefence = homeTeamHomeStrengthDefence / homeTeamAwayStrengthDefence
+                                    awayTeamFactorAttack = awayTeamAwayStrengthAttack / awayTeamHomeStrengthAttack
+                                    awayTeamFactorDefence = awayTeamAwayStrengthDefence / awayTeamHomeStrengthDefence
 
                                     homeName = teamIdList[home].capitalize()
-                                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactor
-                                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactor
+                                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactorAttack
+                                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactorDefence
 
                                     awayName = teamIdList[away].capitalize()
-                                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactor
-                                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactor
-                                                                       
+                                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactorAttack
+                                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactorDefence
+                                                                 
                                     awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
                                     homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
 
