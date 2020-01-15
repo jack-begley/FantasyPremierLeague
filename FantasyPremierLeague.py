@@ -4,6 +4,7 @@ import genericMethods
 import Teams
 import operator
 import requests
+import sys, traceback
 from collections import OrderedDict
 
 
@@ -880,32 +881,31 @@ def teamsRoutine():
                             try:
                                 away = fixturesForGameweek[teamId]
                                 home = teamId
-                                
+
                                 homeTeamStrength = teamStrength[home]
                                 awayTeamStrength = teamStrength[away]
                                 
+                                homeTeamHomeStrength = homeTeamStrength['homeOverall']
                                 homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
                                 homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
-                                homeTeamAwayStrengthAttack = homeTeamStrength['awayAttack']
-                                homeTeamAwayStrengthDefence = homeTeamStrength['awayDefence']
+
+                                homeTeamAttackFactor = homeTeamHomeStrengthAttack / homeTeamHomeStrength
+                                homeTeamDefenceFactor = homeTeamHomeStrengthDefence / homeTeamHomeStrength
                                 
-                                awayTeamHomeStrengthAttack = awayTeamStrength['homeAttack']
-                                awayTeamHomeStrengthDefence = awayTeamStrength['homeDefence']
+                                awayTeamAwayStrength = awayTeamStrength['awayOverall']
                                 awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
                                 awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
 
-                                homeTeamFactorAttack = homeTeamHomeStrengthAttack / homeTeamAwayStrengthAttack
-                                homeTeamFactorDefence = homeTeamHomeStrengthDefence / homeTeamAwayStrengthDefence
-                                awayTeamFactorAttack = awayTeamAwayStrengthAttack / awayTeamHomeStrengthAttack
-                                awayTeamFactorDefence = awayTeamAwayStrengthDefence / awayTeamHomeStrengthDefence
+                                awayTeamAttackFactor = awayTeamHomeStrengthAttack / awayTeamAwayStrength
+                                awayTeamDefenceFactor = awayTeamHomeStrengthDefence / awayTeamAwayStrength
 
                                 homeName = teamIdList[home].capitalize()
-                                homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactorAttack
-                                homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactorDefence
+                                homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor
+                                homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamDefenceFactor
 
                                 awayName = teamIdList[away].capitalize()
-                                awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactorAttack
-                                awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactorDefence
+                                awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamAttackFactor
+                                awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamDefenceFactor
                                     
                                 awayGoals = (awayScore + homeConceed) / 2
                                 homeGoals = (homeScore + awayConceed) / 2
@@ -1102,28 +1102,27 @@ def teamsRoutine():
                                     homeTeamStrength = teamStrength[home]
                                     awayTeamStrength = teamStrength[away]
                                 
+                                    homeTeamHomeStrength = homeTeamStrength['homeOverall']
                                     homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
                                     homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
-                                    homeTeamAwayStrengthAttack = homeTeamStrength['awayAttack']
-                                    homeTeamAwayStrengthDefence = homeTeamStrength['awayDefence']
+
+                                    homeTeamAttackFactor = homeTeamHomeStrengthAttack / homeTeamHomeStrength
+                                    homeTeamDefenceFactor = homeTeamHomeStrengthDefence / homeTeamHomeStrength
                                 
-                                    awayTeamHomeStrengthAttack = awayTeamStrength['homeAttack']
-                                    awayTeamHomeStrengthDefence = awayTeamStrength['homeDefence']
+                                    awayTeamAwayStrength = awayTeamStrength['awayOverall']
                                     awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
                                     awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
 
-                                    homeTeamFactorAttack = homeTeamHomeStrengthAttack / homeTeamAwayStrengthAttack
-                                    homeTeamFactorDefence = homeTeamHomeStrengthDefence / homeTeamAwayStrengthDefence
-                                    awayTeamFactorAttack = awayTeamAwayStrengthAttack / awayTeamHomeStrengthAttack
-                                    awayTeamFactorDefence = awayTeamAwayStrengthDefence / awayTeamHomeStrengthDefence
+                                    awayTeamAttackFactor = awayTeamHomeStrengthAttack / awayTeamAwayStrength
+                                    awayTeamDefenceFactor = awayTeamHomeStrengthDefence / awayTeamAwayStrength
 
                                     homeName = teamIdList[home].capitalize()
-                                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamFactorAttack
-                                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamFactorDefence
+                                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor
+                                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamDefenceFactor
 
                                     awayName = teamIdList[away].capitalize()
-                                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamFactorAttack
-                                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamFactorDefence
+                                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamAttackFactor
+                                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamDefenceFactor
                                                                  
                                     awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
                                     homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
@@ -1400,7 +1399,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.2.0")
+print("V.0.5.1")
 print("")
 print("==============================")
 print("")
