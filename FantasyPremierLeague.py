@@ -1113,8 +1113,8 @@ def teamsRoutine():
                                     awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
                                     awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
 
-                                    awayTeamAttackFactor = awayTeamHomeStrengthAttack / awayTeamAwayStrength
-                                    awayTeamDefenceFactor = awayTeamHomeStrengthDefence / awayTeamAwayStrength
+                                    awayTeamAttackFactor = awayTeamAwayStrengthAttack / awayTeamAwayStrength
+                                    awayTeamDefenceFactor = awayTeamAwayStrengthDefence / awayTeamAwayStrength
 
                                     homeName = teamIdList[home].capitalize()
                                     homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor

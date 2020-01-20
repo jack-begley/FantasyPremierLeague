@@ -143,6 +143,8 @@ def playerInfoBySurname(playerSurname):
     gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
     gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
 
+    gameweekNumber = genericMethods.generateCurrentGameweek()
+
     for y in gameweekSummaryDataReadable['elements']:
         dumpsY = json.dumps(y)
         playerInApi = False
@@ -156,7 +158,7 @@ def playerInfoBySurname(playerSurname):
                 # Create format for printing the title
                 firstName = formattedY["first_name"]
                 secondName = formattedY["second_name"]
-                gameweekSummaryTitle = f"// Player summary: {firstName} {secondName}"
+                gameweekSummaryTitle = f"/ Player profile: {firstName} {secondName}"
                 underline = "-" * len(gameweekSummaryTitle)
 
                 # Print the data with the title
@@ -164,17 +166,24 @@ def playerInfoBySurname(playerSurname):
                 # TODO: Add in other metrics including ones we want to calculate
                 
                 print("")
-                print(underline)
                 print(gameweekSummaryTitle)
-                print(underline)
-                print("Total points: " + str(formattedY["total_points"]))
-                print("Transfers in: " + str(formattedY["transfers_in"]))
-                print("Transfers out: " + str(formattedY["transfers_out"]))
-                print("// Net Transfers: " + str(int(formattedY["transfers_in"] - formattedY["transfers_out"])))
-                print("Transfers in for gameweek: " + str(formattedY["transfers_in_event"]))
-                print("Transfers out for gameweek: " + str(formattedY["transfers_out_event"]))
-                print("// Net Transfers for gameweek: " + str(int(formattedY["transfers_in_event"] - formattedY["transfers_out_event"])))
                 print("")
+                print("Selected %: " + str(formattedY["selected_by_percent"]) + "%")
+                print("Form: " + str(formattedY["form"]))
+                print("Avg. minutes played: " + str(round((formattedY["minutes"] / gameweekNumber), 0)))
+                print("Influence: " + str(formattedY["influence"]))
+                print("")
+                print("/ Points:")
+                print("")
+                print("Total points: " + str(formattedY["total_points"]))
+                print("")
+                print("Goals scored: " + str(formattedY["goals_scored"]))
+                print("Assists: " + str(formattedY["assists"]))
+                print("Red cards: " + str(formattedY["red_cards"]))
+                print("Yellow cards: " + str(formattedY["yellow_cards"]))
+                print("Bonus points: " + str(formattedY["bonus"]))
+                print("")
+                print("Points per game: " + str(formattedY["points_per_game"]))
                 playerInApi = True
                 break
 
