@@ -89,13 +89,13 @@ def teamIDsAsKeysAndNamesAsData():
 # Returns all team ids ask keys, with their historic gameweek difficulty as a comma seperated list for each team
 def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
     urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-    teamsPlayingInCurrentPeriod =  Teams.allTeamsPlayingForAGameweek(startGameweek, endGameweek)
+    teamNames = Teams.teamIDsAsKeysAndNamesAsData()
     teams = dict()
-    for teamID in teamsPlayingInCurrentPeriod:
+    for teamID in teamNames:
+        teamName = str.capitalize(teamNames[teamID])
         difficultyOfUpcomingGamesForTeam = list()
         currentGameweek = startGameweek
         while currentGameweek <= endGameweek:
-            teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(currentGameweek, currentGameweek)
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
             for gameweekData in currentDumps:
                     if gameweekData['team_a'] == teamID:
@@ -107,8 +107,11 @@ def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
                         currentGameweek += 1
                         break
             else:
+                difficultyOfUpcomingGamesForTeam.append('-')
                 currentGameweek += 1
-
+        
+            genericMethods.runPercentage(endGameweek, currentGameweek, f"Gathering difficulty for {teamName} for gameweek {currentGameweek} of {endGameweek}", f"All gameweek difficulty gathered and stored successfully for {teamName}")
+        
         teams[teamID] = difficultyOfUpcomingGamesForTeam
 
     return teams
@@ -171,7 +174,7 @@ def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
                         if data == 'stats':
                             for gameweekStats in gameweekData[data]:
                                 dataToAddToList = dict()
-                                for stat in gameweekStats['h']:
+                                for stat in gameweekelement['h']:
                                     currentStat = gameweekStats['identifier']
                                     currentPlayer = stat['element']
                                     dataToAddToList[currentPlayer] = stat['value']
@@ -187,7 +190,7 @@ def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
                         if data == 'stats':
                             for gameweekStats in gameweekData[data]:
                                 dataToAddToList = dict()
-                                for stat in gameweekStats['a']:
+                                for stat in gameweekelement['a']:
                                     currentStat = gameweekStats['identifier']
                                     currentPlayer = stat['element']
                                     dataToAddToList[currentPlayer] = stat['value']
@@ -561,3 +564,194 @@ def strengthHomeAndAwayByTeam():
            teams[id] = strength
 
     return teams
+
+def goalEconomyByTeamForGameweek(gameweek):
+
+    gameweekSummaryJSON = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gameweek}')
+    shotsOnTargetByTeam = dict()
+    goalEconomyByTeam = dict()
+    teamIDs = Teams.teamIDsAsKeysAndNamesAsData()
+
+    # Initialise the data
+
+    penaltiesSaved = 0
+    penaltiesMissed = 0
+    goalsScored = 0
+    saves = 0
+
+    for fixture in gameweekSummaryJSON:
+        stats = fixture['stats']
+        for teamID in teamIDs:
+            if teamID == fixture['team_a'] or teamID == fixture['team_h']:
+                if teamID == fixture['team_a']:
+                    teamStatus = 'home'
+                else:
+                    teamStatus = 'away'
+                for element in stats:
+                    if element['identifier'] =="goals_scored":
+                        statsHome = element['h']
+                        homeLen = len(statsHome)
+                        statsAway = element['a']
+                        awayLen = len(statsAway)
+                        if awayLen > 0 and teamStatus == 'away':
+                            goalsScoredList = list()
+                            for result in statsAway:
+                                goalsScoredList.append(result['value'])
+                            goalsScored = sum(goalsScoredList)
+                        if homeLen > 0 and teamStatus == 'home':
+                            goalsScoredList = list()
+                            for result in statsHome:
+                                goalsScoredList.append(result['value'])
+                            goalsScored = sum(goalsScoredList)
+                    if element['identifier'] =="penalties_saved":
+                        statsHome = element['h']
+                        homeLen = len(statsHome)
+                        statsAway = element['a']
+                        awayLen = len(statsAway)
+                        if awayLen > 0  and teamStatus == 'home':
+                            penaltiesSavedList = list()
+                            for result in statsAway:
+                                penaltiesSavedList.append(result['value'])
+                            penaltiesSaved = sum(penaltiesSavedList)
+                        if homeLen > 0  and teamStatus == 'away':
+                            penaltiesSavedList = list()
+                            for result in statsHome:
+                                penaltiesSavedList.append(result['value'])
+                            penaltiesSaved = sum(penaltiesSavedList)
+                    if element['identifier'] =="saves":
+                        statsHome = element['h']
+                        homeLen = len(statsHome)
+                        statsAway = element['a']
+                        awayLen = len(statsAway)
+                        if awayLen > 0  and teamStatus == 'home':
+                            savesList = list()
+                            for result in statsAway:
+                                savesList.append(result['value'])
+                            saves = sum(savesList)
+                        if homeLen > 0 and teamStatus == 'away' :
+                            savesList = list()
+                            for result in statsHome:
+                                savesList.append(result['value'])
+                            saves = sum(savesList)
+                     
+                shotsOnTarget = saves + penaltiesSaved + goalsScored
+                shotsOnTargetByTeam[teamID] = shotsOnTarget	
+
+                if shotsOnTarget != 0:
+                    goalEconomy = round(((goalsScored / shotsOnTarget)*100), 2)
+                else: 
+                    goalEconomy = 0
+                goalEconomyByTeam[teamID] = goalEconomy
+
+
+    return goalEconomyByTeam
+
+def goalEconomyByGameweekDifficultyByTeam():
+    currentWeek = 1
+    lastWeek = genericMethods.generateCurrentGameweek()
+    goalEconomyByGameweek = dict()
+    while currentWeek <= lastWeek:
+        # Team ref list: TODO: Delete when adding as full method
+        teamIDs = Teams.teamIDsAsKeysAndNamesAsData()
+        goalEconomyThisWeek = Teams.goalEconomyByTeamForGameweek(currentWeek)
+        goalEconomyByGameweek[currentWeek] = goalEconomyThisWeek
+        genericMethods.runPercentage(lastWeek,currentWeek,f"Running week {currentWeek} of {lastWeek}", "All of the weeks have now been run successfully")
+        currentWeek += 1
+
+    teamIDs = Teams.teamIDsAsKeysAndNamesAsData()
+    gameweekDifficulty = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(1, lastWeek)
+
+    goalEconomyByGameweekDifficultyByTeam = dict()
+
+    for team in teamIDs:
+        difficulty2 = list()
+        difficulty3 = list()
+        difficulty4 = list()
+        difficulty5 = list()
+        goalEconomyByGameweekDifficulty = dict()
+        currentWeek = 0
+        lastWeek = genericMethods.generateCurrentGameweek() - 1
+        teamList = gameweekDifficulty[team]
+        genericMethods.runPercentage(20, team, f"Running team {team} of 20", "All of the teams have now been run successfully")
+        gameweekDifficultyForTeam = gameweekDifficulty[team]
+        while currentWeek <= lastWeek:
+            weekDifficulty = gameweekDifficultyForTeam[currentWeek]
+            weekGoalEconomy = goalEconomyByGameweek[currentWeek + 1]
+            
+            try:
+                teamWeekGoalEconomy = weekGoalEconomy[team]
+                if weekDifficulty == 2:
+                        difficulty2.append(teamWeekGoalEconomy)
+                if weekDifficulty == 3:
+                        difficulty3.append(teamWeekGoalEconomy)
+                if weekDifficulty == 4:
+                        difficulty4.append(teamWeekGoalEconomy)
+                if weekDifficulty == 5:
+                        difficulty5.append(teamWeekGoalEconomy)
+
+                currentWeek += 1
+
+            except:
+                currentWeek += 1
+        
+        if len(difficulty2) > 0:
+                goalEconomyByGameweekDifficulty[2] = genericMethods.listAverage(difficulty2)
+        else:
+            goalEconomyByGameweekDifficulty[2] = 0
+        if len(difficulty3) > 0:
+            goalEconomyByGameweekDifficulty[3] = genericMethods.listAverage(difficulty3)
+        else: 
+            goalEconomyByGameweekDifficulty[3] = 0
+        if len(difficulty4) > 0:
+            goalEconomyByGameweekDifficulty[4] = genericMethods.listAverage(difficulty4)
+        else:
+            goalEconomyByGameweekDifficulty[4] = 0
+        if len(difficulty5) > 0:
+            goalEconomyByGameweekDifficulty[5] = genericMethods.listAverage(difficulty5)
+        else:
+            goalEconomyByGameweekDifficulty[5] = 0
+
+        goalEconomyByGameweekDifficultyByTeam[team] = goalEconomyByGameweekDifficulty
+
+    return goalEconomyByGameweekDifficultyByTeam
+
+
+def goalEconomyByTeam():
+    currentWeek = 1
+    lastWeek = genericMethods.generateCurrentGameweek()
+    goalEconomyByGameweek = dict()
+    while currentWeek <= lastWeek:
+        # Team ref list: TODO: Delete when adding as full method
+        teamIDs = Teams.teamIDsAsKeysAndNamesAsData()
+        goalEconomyThisWeek = Teams.goalEconomyByTeamForGameweek(currentWeek)
+        goalEconomyByGameweek[currentWeek] = goalEconomyThisWeek
+        genericMethods.runPercentage(lastWeek,currentWeek,f"Running week {currentWeek} of {lastWeek}", "All of the weeks have now been run successfully")
+        currentWeek += 1
+
+    teamIDs = Teams.teamIDsAsKeysAndNamesAsData()
+    gameweekDifficulty = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(1, lastWeek)
+
+    goalEconomyByTeam = dict()
+
+    for team in teamIDs:
+        economy = list()
+        currentWeek = 0
+        lastWeek = genericMethods.generateCurrentGameweek() - 1
+        teamList = gameweekDifficulty[team]
+        genericMethods.runPercentage(20, team, f"Running team {team} of 20", "All of the teams have now been run successfully")
+        gameweekDifficultyForTeam = gameweekDifficulty[team]
+        while currentWeek <= lastWeek:
+            weekDifficulty = gameweekDifficultyForTeam[currentWeek]
+            weekGoalEconomy = goalEconomyByGameweek[currentWeek + 1]
+            
+            try:
+                teamWeekGoalEconomy = weekGoalEconomy[team]
+                economy.append(teamWeekGoalEconomy)
+                currentWeek += 1
+
+            except:
+                currentWeek += 1
+        
+        goalEconomyByTeam[team] = genericMethods.listAverage(economy)
+
+    return goalEconomyByTeam

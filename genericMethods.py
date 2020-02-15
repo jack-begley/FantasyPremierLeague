@@ -280,13 +280,12 @@ def indexValue(valueToIndex, max, min):
 def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):
     runPercentageComplete = str(round((currentIndex/maxLen)*100,1))
     if runPercentageComplete != "100.0":
-        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%"),
+        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%                      "),
         sys.stdout.flush()
     else:
         sys.stdout.write('\r'"")
-        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%")
+        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%                           ")
         sys.stdout.flush()
-        print("")
         print("")
 
 def reformattedSortedTupleAsDict(listOfTuples):

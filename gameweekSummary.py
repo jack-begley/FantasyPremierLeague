@@ -213,7 +213,7 @@ def generatePlayerIDs():
     gameweekSummarySub = "bootstrap-static/"
 
     url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
     
     # Get all of the player id's
     for ids in gameweekSummaryDataReadable['elements']:
