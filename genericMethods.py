@@ -15,9 +15,9 @@ from tkinter import Tk
 import tkinter 
 import csv 
 import sys, traceback
-from gameweekSummary import *
-from playerData import *
-from Teams import *
+import gameweekSummary
+import playerData
+import Teams
 
 
 # URL set up and league codes
@@ -36,17 +36,6 @@ def generateJSONDumpsReadable(url):
         Readable = json.loads(Dumps)
 
         return Readable
-
-# Generates a comma seperated list of the gameweek numbers (currently with 'gameweek' in position 0)
-def generateCommaSeperatedGameweekNumberList():
-    currentGameweek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    gameweekList = list()
-    gameweekList.append('gameweek')
-    x = 1
-    while x < currentGameweek:
-        gameweekList.append(x)
-        x = x + 1
-    return gameweekList
 
 # Try and parse text as an int. Returns integer or text
 def parse(userInput):
@@ -246,6 +235,19 @@ def generateCurrentGameweek():
 # Print data in a clean format where it has been indexed
 def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, appendAfterData):
     x = 1
+    for item in indexedSetOfData:
+        if isinstance(item, tuple) == True:
+            tuple1 = item[0]
+            tuple2 = item[1]
+            tuple1Cleaned = str(tuple1).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
+            tuple2Cleaned = str(tuple2).replace('(', '').replace(')', '').replace('[', '').replace(']', '').replace("'", '').replace('"', '')
+            print(f'{tuple1Cleaned}: {appendBeforeData}{tuple2Cleaned}{appendAfterData}')
+        else:
+            break
+    
+    if isinstance(item, tuple) == True:
+        return
+
     keys = list(indexedSetOfData.keys())
     firstKey = keys[0]
     if indexedSetOfData[firstKey] is tuple:
@@ -257,8 +259,12 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, ap
         if currentIndex <= numberOfRecordsToShow:
             cleanedName = str(data).replace('(', '').replace(')', '').replace(",", ': ').replace("'", '').replace('"', '')
             cleanedData = str(formattedSet[data]).replace('(', '').replace(')', '').replace('[', '').replace(']', '').replace("'", '').replace('"', '')
+            try:
+                cleanedDataFormatted = thousandFormatting(int(cleanedData))
+            except:
+                cleanedDataFormatted = cleanedData
                 
-            print(f'{cleanedName}: {appendBeforeData}{cleanedData}{appendAfterData}')
+            print(f'{cleanedName}: {appendBeforeData}{cleanedDataFormatted}{appendAfterData}')
         else:
             return
 
@@ -274,13 +280,12 @@ def indexValue(valueToIndex, max, min):
 def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):
     runPercentageComplete = str(round((currentIndex/maxLen)*100,1))
     if runPercentageComplete != "100.0":
-        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%"),
+        sys.stdout.write('\r'f"{messageToDisplay}: {runPercentageComplete}%                      "),
         sys.stdout.flush()
     else:
         sys.stdout.write('\r'"")
-        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%")
+        sys.stdout.write(f"{completeMessage}: {runPercentageComplete}%                           ")
         sys.stdout.flush()
-        print("")
         print("")
 
 def reformattedSortedTupleAsDict(listOfTuples):
@@ -291,3 +296,11 @@ def reformattedSortedTupleAsDict(listOfTuples):
         reformattedDict[item0] = item1
 
     return reformattedDict
+
+# Repeat length of string
+def repeatStringToLength(stringToRepeat, length):
+    return (stringToRepeat * (int(length/len(stringToRepeat))+1))[:length]
+
+# Thousand seperator
+def thousandFormatting(number): 
+    return f"{number:,}"

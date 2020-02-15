@@ -22,9 +22,10 @@ from tkinter import Tk
 import sys, traceback
 import re
 import io
-from playerData import *
-from genericMethods import *
-from Teams import *
+import playerData
+import gameweekSummary
+import genericMethods
+import Teams
 
 # URL set up and league codes
 from datetime import date
@@ -46,7 +47,7 @@ def exportToExcelPlayers():
 
     gameweekSummarySub = "bootstrap-static/"
 
-    url = mergeURL(gameweekSummarySub)
+    url = genericMethods.mergeURL(gameweekSummarySub)
     gameweekSummaryJSON = requests.get(url)
     gameweekSummaryData = gameweekSummaryJSON.json()
     gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
@@ -101,7 +102,7 @@ def exportToExcelPlayers():
 # Print all of the player data in the console
 def printAllData(urlAddOn, fileName):
 
-    url = mergeURL(urlAddOn)
+    url = genericMethods.mergeURL(urlAddOn)
 
     # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
     fileNameJSON = requests.get(url)
@@ -136,11 +137,13 @@ def playerInfoBySurname(playerSurname):
     gameweekSummarySub = "bootstrap-static/"
 
     # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
-    url = mergeURL(gameweekSummarySub)
+    url = genericMethods.mergeURL(gameweekSummarySub)
     gameweekSummaryJSON = requests.get(url)
     gameweekSummaryData = gameweekSummaryJSON.json()
     gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
     gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+
+    gameweekNumber = genericMethods.generateCurrentGameweek()
 
     for y in gameweekSummaryDataReadable['elements']:
         dumpsY = json.dumps(y)
@@ -155,7 +158,7 @@ def playerInfoBySurname(playerSurname):
                 # Create format for printing the title
                 firstName = formattedY["first_name"]
                 secondName = formattedY["second_name"]
-                gameweekSummaryTitle = f"// Player summary: {firstName} {secondName}"
+                gameweekSummaryTitle = f"/ Player profile: {firstName} {secondName}"
                 underline = "-" * len(gameweekSummaryTitle)
 
                 # Print the data with the title
@@ -163,17 +166,24 @@ def playerInfoBySurname(playerSurname):
                 # TODO: Add in other metrics including ones we want to calculate
                 
                 print("")
-                print(underline)
                 print(gameweekSummaryTitle)
-                print(underline)
-                print("Total points: " + str(formattedY["total_points"]))
-                print("Transfers in: " + str(formattedY["transfers_in"]))
-                print("Transfers out: " + str(formattedY["transfers_out"]))
-                print("// Net Transfers: " + str(int(formattedY["transfers_in"] - formattedY["transfers_out"])))
-                print("Transfers in for gameweek: " + str(formattedY["transfers_in_event"]))
-                print("Transfers out for gameweek: " + str(formattedY["transfers_out_event"]))
-                print("// Net Transfers for gameweek: " + str(int(formattedY["transfers_in_event"] - formattedY["transfers_out_event"])))
                 print("")
+                print("Selected %: " + str(formattedY["selected_by_percent"]) + "%")
+                print("Form: " + str(formattedY["form"]))
+                print("Avg. minutes played: " + str(round((formattedY["minutes"] / gameweekNumber), 0)))
+                print("Influence: " + str(formattedY["influence"]))
+                print("")
+                print("/ Points:")
+                print("")
+                print("Total points: " + str(formattedY["total_points"]))
+                print("")
+                print("Goals scored: " + str(formattedY["goals_scored"]))
+                print("Assists: " + str(formattedY["assists"]))
+                print("Red cards: " + str(formattedY["red_cards"]))
+                print("Yellow cards: " + str(formattedY["yellow_cards"]))
+                print("Bonus points: " + str(formattedY["bonus"]))
+                print("")
+                print("Points per game: " + str(formattedY["points_per_game"]))
                 playerInApi = True
                 break
 
@@ -183,7 +193,7 @@ def playerInfoBySurname(playerSurname):
                 print("!! ERROR: No input won't work - you need a gameweekSummary surname:")
                 print("============================================================================")
                 playerSurname = str.lower(input("Try again:"))
-                playerInfoBySurname(playerSurname)
+                gameweekSummary.playerInfoBySurname(playerSurname)
 
     if playerInApi == False:
         print("")
@@ -193,7 +203,7 @@ def playerInfoBySurname(playerSurname):
         print("")
         playerInApi = True
         playerSurname = str.lower(input("Try again:"))
-        playerInfoBySurname(playerSurname)
+        gameweekSummary.playerInfoBySurname(playerSurname)
 
 # Generates a list of player ID's and the associated player name as the key
 def generatePlayerIDs():
@@ -202,8 +212,8 @@ def generatePlayerIDs():
     
     gameweekSummarySub = "bootstrap-static/"
 
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
     
     # Get all of the player id's
     for ids in gameweekSummaryDataReadable['elements']:
@@ -222,8 +232,8 @@ def mostNetTransfersIn(numberToDisplayUpTo):
 
     gameweekSummarySub = "bootstrap-static/"
 
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     for data in gameweekSummaryDataReadable['elements']:
         dumpsIds = json.dumps(data)
@@ -255,8 +265,8 @@ def mostNetTransfersOut(numberToDisplayUpTo):
 
     gameweekSummarySub = "bootstrap-static/"
 
-    url = mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = generateJSONDumpsReadable(url)
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
     for data in gameweekSummaryDataReadable['elements']:
         dumpsIds = json.dumps(data)
@@ -284,7 +294,7 @@ def mostNetTransfersOut(numberToDisplayUpTo):
 
 # Creates all data for a given gameweek: 
 def generateDataForGameWeek(gameweekNumber):
-    playerIDs = generatePlayerIDs()
+    playerIDs = gameweekSummary.generatePlayerIDs()
     # create url's for the current player and extract data from the "History" file where the game week is the current game week
     length = len(playerIDs) - 1
     elementsList = dict()
@@ -302,7 +312,7 @@ def generateDataForGameWeek(gameweekNumber):
             sys.stdout.flush()
             print("")
 
-        allPlayerDataReadable = generateJSONDumpsReadable(mergeURL('element-summary/')+str(playerID)+'/')
+        allPlayerDataReadable = generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
         currentList = dict()
 
