@@ -312,7 +312,7 @@ def generateDataForGameWeek(gameweekNumber):
             sys.stdout.flush()
             print("")
 
-        allPlayerDataReadable = generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
         currentList = dict()
 

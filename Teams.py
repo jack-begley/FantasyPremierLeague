@@ -255,10 +255,13 @@ def allTeamsPlayingForAGameweek(gameweekNumber, maxGameweekNumber):
      teamsPlayed = list()
      while gameweekNumber <= maxGameweekNumber:
          currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweekNumber}')
-         for match in currentDumps:
-             teamsPlayed.append(match['team_a'])
-             teamsPlayed.append(match['team_h'])
+         if not currentDumps:
              gameweekNumber += 1
+         else:
+             for match in currentDumps:
+                 teamsPlayed.append(match['team_a'])
+                 teamsPlayed.append(match['team_h'])
+                 gameweekNumber += 1
     
      return teamsPlayed
 
@@ -358,6 +361,7 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficultyOfGamesWithGoalsScoredListed = dict()
         while gameweek <= maxGameweek:
             teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
+            genericMethods.runPercentage(maxGameweek,gameweek, "Gathering goals scored by difficulty", "Completed: Goals scored by difficulty")
             if teamID in teamsPlayingInCurrentPeriod:
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
                 for gameweekData in currentDumps:
