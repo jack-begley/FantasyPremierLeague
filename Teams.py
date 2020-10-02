@@ -692,10 +692,10 @@ def teamInfluence(gameweekOfInterest):
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
             for player in playersInTeam:
                 for gameweekData in currentDumps['elements']:
-                    influence = gameweekData['influence']
+                    influence = float(gameweekData['influence'])
                     playerID = gameweekData['id']
                     if player == playerID:
-                        playerDict[playerID] = float(influence)
+                        playerDict[playerID] = influence
 
             teamDict[team] = playerDict
 

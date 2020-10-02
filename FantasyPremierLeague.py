@@ -505,17 +505,24 @@ def teamsRoutine():
                 teamInfluence = sum(influenceByTeam[team].values())
                 playerDict = dict()
                 for player in playersByTeam[team]:
-                    percentageInfluence = (influenceByPlayer[player]/teamInfluence) * 100
-                    playerName = playerNames[player].capitalize()
-                    playerDict[playerName] = percentageInfluence
-                    sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
-                teamDict[teamName] = playerDict
+                    try:
+                        percentageInfluence = (influenceByPlayer[player]/teamInfluence) * 100
+                        playerName = playerNames[player].capitalize()
+                        playerDict[playerName] = percentageInfluence
+                    except:
+                        None
+                playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+                playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+                teamDict[teamName] = playersToPrint
 
             for team in teamDict:
-                print(f"{team} players by influence:")
+                teamName = team.capitalize()
+                print(f"{teamName} players by influence:")
+                print("")
                 for player in teamDict[team]:
-                    playerInfluence = teamDict[team][player]
-                    print(f"{player}: {playerInfluence}")
+                    playerName = player.capitalize()
+                    playerInfluence = round(teamDict[team][player],1)
+                    print(f"{playerName}: {playerInfluence}%")
                 print("-----------------------------------")
                 print("")
 
