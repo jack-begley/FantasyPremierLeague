@@ -51,16 +51,6 @@ def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
         x += 1
 
     return teamIDs
-    
-# Pull the data for a single users fantasy team
-def getTeamDetails(teamID, username, password):
-    gameweekNumber = genericMethods.generateCurrentGameweek()
-    url = f'https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/'
-    Response = Teams.loginToSecureURL(url, username, password)  
-    Data = Response.json()
-    Dumps = json.dumps(Data)
-    readableData = json.loads(Dumps)
-    return readableData
 
 # Returns all team names ask keys, with their associated team ID's
 def teamNamesAsKeysAndIDsAsData():
@@ -131,80 +121,6 @@ def teamIDsAsKeysAndPlayerIDsAsList():
            teams[id] = playerIDs
 
     return teams
-
-# Print current data for team to console
-def printTeamDataToConsole(teamID):
-    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
-    readable = genericMethods.generateJSONDumpsReadable(url)
-    teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-            teamName = keys['name']
-            if keys['id'] == teamID:
-                print('================================')
-                print(f'Team: {teamName}')
-                print('--------------------------------')
-                for currentKey in keys:
-                    currentValue = keys[currentKey]
-                    print(f'{currentKey}: {currentValue}')
-            if keys['id'] == teamID:
-                net_strength_home = keys["strength_attack_home"] - keys["strength_defence_home"]
-                net_strength_away = keys["strength_attack_away"] - keys["strength_defence_away"]
-                print(f'net_strength_away: {net_strength_away}')
-                print(f'net_strength_home: {net_strength_home}')
-                print('================================')
-                return
-
-# Get all data for a gameweek for a team
-# TODO: Finish this method off to print the data for a single team sensibly
-
-def performanceSummaryForTeam(idOfTheTeamWeWantToLookAt):
-        teamID = idOfTheTeamWeWantToLookAt
-        urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
-        maxGameweek = genericMethods.generateCurrentGameweek() + 1
-        currentGameweek = 1
-        totalDict = dict()
-        homeDict = dict()
-        awayDict = dict()
-        while currentGameweek <= maxGameweek:
-            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
-            for gameweekData in currentDumps:
-                if gameweekData['team_h'] == teamID:
-                    for data in gameweekData:
-                        if data == 'stats':
-                            for gameweekStats in gameweekData[data]:
-                                dataToAddToList = dict()
-                                for stat in gameweekelement['h']:
-                                    currentStat = gameweekStats['identifier']
-                                    currentPlayer = stat['element']
-                                    dataToAddToList[currentPlayer] = stat['value']
-                                awayDict[currentStat] = dataToAddToList
-                        else:
-                            homeDict[data] = gameweekData[data]
-                    homeDict['was_away'] = False
-                    homeDict['was_home'] = True
-                    totalDict[currentGameweek] = homeDict
-
-                if gameweekData['team_a'] == teamID:
-                    for data in gameweekData:
-                        if data == 'stats':
-                            for gameweekStats in gameweekData[data]:
-                                dataToAddToList = dict()
-                                for stat in gameweekelement['a']:
-                                    currentStat = gameweekStats['identifier']
-                                    currentPlayer = stat['element']
-                                    dataToAddToList[currentPlayer] = stat['value']
-                                homeDict[currentStat] = dataToAddToList
-
-                        else:
-                            awayDict[data] = gameweekData[data]
-                    awayDict['was_away'] = True
-                    awayDict['was_home'] = False
-                    totalDict[currentGameweek] = awayDict
-            
-            currentGameweek += 1
-
-        return totalDict
 
 # input is a team ID & the output is the game stats for last week for that team
 def generateGameweekStats(idOfTheTeamWeWantToLookAt):
@@ -285,6 +201,7 @@ def generateListOfPlayerIDsAsKeysForTeam(teamID):
                 playerIDMatchList[id] = cleanedFullName
 
     return playerIDMatchList
+
 
 # A method to pull the average goals conceeded by gameweek difficulty for a particular team
 
@@ -759,3 +676,27 @@ def goalEconomyByTeam():
         goalEconomyByTeam[team] = genericMethods.listAverage(economy)
 
     return goalEconomyByTeam
+
+
+# Returns the influence of each player in order for a given gameweek
+def teamInfluence(gameweekOfInterest):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        teams = teamIDsAsKeysAndNamesAsData()
+        maxLen = len(teams)
+        for team in teams:
+            currentLen = list(teams.keys()).index(team)
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+            playerDict = dict()
+            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
+            for player in playersInTeam:
+                for gameweekData in currentDumps['elements']:
+                    influence = gameweekData['influence']
+                    playerID = gameweekData['id']
+                    if player == playerID:
+                        playerDict[playerID] = float(influence)
+
+            teamDict[team] = playerDict
+
+        return teamDict

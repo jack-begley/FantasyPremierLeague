@@ -29,35 +29,6 @@ import playerData
 from datetime import date
 today = date.today()
 
-# All gameweek data for a player (by gameweek)
-def allPlayerDataBySurname(playerSurname):
-    playerID = matchUserInputToList(playerSurname,playerData.generatePlayerIDToSurnameMatching())
-    currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    elementsList = dict()
-    tempList = list()
-    allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(('element-summary/')+str(playerID)+'/'))
-    PlayerList = dict()
-
-    for data in allPlayerDataReadable['history']:        
-        dumpsData = json.dumps(data)
-        formattedData = json.loads(dumpsData)
-        gameweek = formattedData['round']
-        id = formattedData['element']
-        for record in formattedData:
-            elementName = record
-        # Create data list for current player assigning to each key
-        for record in formattedData:
-            currentRound = formattedData['round']
-            PlayerList[record] = formattedData[record]
-        for element in PlayerList:
-            if element not in elementsList:
-                elementsList[element] = (PlayerList[element])
-            else:
-                elementsList[element] = str(elementsList[element]) + ',' + str(PlayerList[element])
-        PlayerList = dict()
-
-    return elementsList
-
 # Create player first & last name list (and associated dictionary)
 def generatePlayersFullNameList():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -349,8 +320,8 @@ def exportPlayerDataByGameweek(playerIDs):
             print("")
         for element in gameweekSummaryDataReadable['elements']:
             if playerID == element['id']:
-                firstName = element['first_name']
-                secondName = element['second_name']
+                firstName = genericMethods.unicodeReplace(element['first_name'])
+                secondName = genericMethods.unicodeReplace(element['second_name'])
                 fullName = f'{firstName} {secondName}'
                 currentPlayerURL = genericMethods.mergeURL('element-summary/')+str(playerID)+'/'
                 allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(currentPlayerURL)
@@ -431,6 +402,125 @@ def exportPlayerDataByGameweek(playerIDs):
                 exportablePlayerData = playerExportListAsString.replace('[','').replace(']','').replace('"',"")
                 csv_out_tab_seperator.writerow([f'{playerClean},{exportablePlayerData}'])
     print("Done")
+
+
+# Export the player data by gameweek where the playerID's have been gathered
+def generateAllDataForAllYears(playerIDs):
+    allDataByPlayer = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    summaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+    positions = playerData.generatePlayerListwithPlayerCodeAsKey()
+
+    for playerID in playerIDs:
+        currentPlayerURL = genericMethods.mergeURL('element-summary/')+str(playerID)+'/'
+        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(currentPlayerURL)
+        
+        currentPlayerList = dict()
+        
+        currentIndex = list(playerIDs).index(playerID)
+        length = len(playerIDs) - 1
+        runPercentageComplete = str(round((currentIndex/length)*100,1))
+        if runPercentageComplete != "100.0":
+            sys.stdout.write('\r'f"Gathering data by player: {runPercentageComplete}%"),
+            sys.stdout.flush()
+        else:
+            sys.stdout.write('\r'"")
+            sys.stdout.write(f"Data by player name gathered: 100%")
+            sys.stdout.flush()
+            print("")
+        for element in summaryDataReadable['elements']:
+            if playerID == element['id']:
+                firstName = genericMethods.unicodeReplace(element['first_name'])
+                secondName = genericMethods.unicodeReplace(element['second_name'])
+                position = element['element_type']
+                fullName = f'{firstName} {secondName}'
+                currentPlayerURL = genericMethods.mergeURL('element-summary/')+str(playerID)+'/'
+                allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(currentPlayerURL)
+                currentPlayerList = dict()                
+                seasonDict = dict()
+                for data in allPlayerDataReadable['history_past']:
+                    dumpsData = json.dumps(data)
+                    formattedData = json.loads(dumpsData)
+                    currentDict = dict()
+                    season = formattedData['season_name']
+                    formattedData['position'] = position
+                    for element in formattedData:
+                        currentDict[element] = formattedData[element]
+                    seasonDict[season] = currentDict
+                    seasonDict['position'] = position
+                if seasonDict:
+                    allDataByPlayer[fullName] = seasonDict
+
+               
+    return allDataByPlayer
+
+def exportDictionaryOfDataToExcel(dictionary):
+    # Open a window allowing the user to specify the file save path using a File Explorer
+    root = tkinter.Tk()
+    savePath =tkinter.filedialog.askdirectory()
+    root.destroy()
+    # Get the file path
+    fileName = input("What do you want to call the file? > ")
+    filePath = f"{savePath}/{today} - {fileName}.csv"
+    # Create the dictionaries for the data that we are going to print into csv
+    exportList = dict()
+    headerList = list()
+    headerList.append('Full_name')
+    headerList.append('gameweek')
+    printed = 0
+
+    # Open the csv with our file name and path so we can write in the data
+    with open(filePath, 'w', newline='', encoding='utf-8') as out:
+        # Create the csv writers with the settings we want (e.g. the different delimiters)
+        csv_out_tab_seperator = csv.writer(out, delimiter="\t")
+        csv_out_comma_seperator = csv.writer(out, delimiter=",")
+
+        for key in dictionary:
+            length = len(dictionary)-1
+            #playerDumps = json.dumps(dictionary)
+            #formattedPlayer = json.loads(dictionary)
+            currentIndex = list(dictionary).index(key)
+            keyClean = key.strip().replace("'","`")
+            runPercentageComplete = str(round((currentIndex/length)*100,1))
+            if runPercentageComplete != "100.0":
+                sys.stdout.write('\r'f"Compiling exportable data file: {runPercentageComplete}%"),
+                sys.stdout.flush()
+            else:
+                sys.stdout.write('\r'"")
+                sys.stdout.write(f"Exportable data file ready for use: {runPercentageComplete}%")
+                sys.stdout.flush()
+                print("")
+                print("")
+
+            for season in dictionary[key]:
+                seasonData = dictionary[key][season]
+                #gameweekDumps = json.dumps(gameweekData)
+                #formattedGameweek = json.loads(gameweekDumps)
+                for data in seasonData:
+                    if data not in headerList:
+                        headerList.append(data)
+                    else:
+                        if printed != 1:
+                            csv_out_comma_seperator.writerow(headerList)
+                            printed = 1
+
+            for season in dictionary[key]:
+                seasonData = dictionary[key][season]
+                #gameweekDumps = json.dumps(gameweekData)
+                #formattedGameweek = json.loads(gameweekDumps)
+                currentList = list()
+                currentList.append(season)
+                for data in seasonData:
+                    currentAddition = str(seasonData[data]).strip()
+                    currentList.append(currentAddition)
+                exportList[key] = currentList
+                exportListAsString = str(exportList[key]).replace("'","")
+                exportableData = exportListAsString.replace('[','').replace(']','').replace('"',"")
+                csv_out_tab_seperator.writerow([f'{keyClean},{exportableData}'])
+    print("Done")
+
+
 
 # Creates a list for the r value of each attribute in a correlation list
 def rValuesPerField(correlationDictByAttribute):
@@ -552,6 +642,35 @@ def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
 
     return playerCosts
 
+
+# Generate a list of historical results by player position:
+def generateHistoricalDataByPositionByPlayer():
+    playerIDs = gameweekSummary.generatePlayerIDs()
+    allDataByYear = generateAllDataForAllYears(playerIDs)
+    positions = generatePositionReferenceIDAsKey()
+    playerDataByPosition = dict()
+    for position in positions:
+        playersForPosition = dict()
+        for player in allDataByYear:
+            if allDataByYear[player]['position'] == position:
+                currentPlayerData = dict()
+                for data in allDataByYear[player]:
+                    if data != 'position':
+                        currentPlayerData[data] = allDataByYear[player][data]
+                playersForPosition[player] = currentPlayerData
+        playerDataByPosition[position] = playersForPosition
+
+    return playerDataByPosition
+
+# Generate position list with player code as key
+def generatePlayerListwithPlayerCodeAsKey():
+    playerKeys = dict()
+    bootstrapDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
+    for player in bootstrapDumps['elements']:
+        playerKeys[player['code']] = player['element_type']
+
+    return playerKeys
+
 # Creates a list of the players points
 def generateListOfPlayersPointsInTeamByPosition(positionOfPlayers, idOfTeam):
     currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
@@ -640,7 +759,6 @@ def sortPlayerDataByPosition(arrayToSort):
     return pointsByPosition
 
 # Creates a list of the players and metrics related to their performance
-#TODO: Pull player by player (for a team)?
 def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek):
         urlBase = 'https://fantasy.premierleague.com/api/'
         playerDict = dict()
@@ -682,3 +800,4 @@ def playerInfluence(gameweekOfInterest):
         playerInfluence = genericMethods.reformattedSortedTupleAsDict(sortedInfluence)
 
         return playerInfluence
+
