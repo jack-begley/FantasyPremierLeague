@@ -685,7 +685,7 @@ def teamInfluence(gameweekOfInterest):
         teams = teamIDsAsKeysAndNamesAsData()
         maxLen = len(teams)
         for team in teams:
-            currentLen = list(teams.keys()).index(team)
+            currentLen = list(teams.keys()).index(team) + 1
             genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
             playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
             playerDict = dict()

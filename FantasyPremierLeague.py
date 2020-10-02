@@ -8,7 +8,6 @@ import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
 
-
 """
 The FPL module.
 
@@ -87,22 +86,8 @@ h2hStandings = "leagues-h2h-standings/"
 teams = "entry/"
 gameweekSummarySub = "bootstrap-static/"
 playersInfoSub = "allPlayersInfo.json"
-myTeamString = "2923192/1/live"
-myTeam = 2923192
 userInput = ""
 playersFileName = "players"
-
-# League Codes:
-
-tygwyn = 'wo7rlj'
-brooks = 'sgvzsa'
-savanta = 'op3f9m'
-mrsbaines = 'yanfqi'
-
-tygwynID = 856255
-brooksID = 699088
-savantaID = 806190
-mrsbainesID = 1164443
 
 # Quit the program if the user decides they want to leave
 def endRoutine():
@@ -454,6 +439,7 @@ def teamsRoutine():
     print("!! PLEASE SELECT A NUMBER")
     print("------------------------------------------------------------------------")
     print(" Print to console:")
+    print(" [1] Top 10 influencers (not those influencers)")
     print(" [2] Percentage influence of each player by team (messy maybe pick top 5 performers)")
     print(" [3] Net attack and defence for each team for next gameweek")
     print(" [4] Performance stats for a gameweek for a given team (TODO: add stats for players that week too)")
@@ -491,6 +477,41 @@ def teamsRoutine():
 
     if genericMethods.isInt(playerUserInputInitial) == True:
         playerUserInputInitialInt = int(playerUserInputInitial)
+
+        if playerUserInputInitialInt == 1:
+            currentGameweek = genericMethods.generateCurrentGameweek()
+            playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            influenceByPlayer = playerData.playerInfluence(currentGameweek)
+            influenceByTeam = Teams.teamInfluence(currentGameweek)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerDict = dict()
+            for team in teams:
+                teamName = teams[team]
+                teamInfluence = sum(influenceByTeam[team].values())
+                for player in playersByTeam[team]:
+                    try:
+                        percentageInfluence = (influenceByPlayer[player]/teamInfluence) * 100
+                        playerName = playerNames[player].capitalize()
+                        playerDict[playerName] = percentageInfluence
+                    except:
+                        None
+            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            x = 1
+            #top10Players = dict()
+            top10Players = {k: playersToPrint[k] for k in list(playersToPrint)[:10]}
+
+            print("Top 10 Players that are most likely to influence team performance (% contribution to team success):")
+            print("")
+            for player in top10Players:
+                playerName = player.capitalize()
+                playerInfluence = round(top10Players[player],1)
+                print(f"{playerName}: {playerInfluence}%")
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
 
         if playerUserInputInitialInt == 2:
             currentGameweek = genericMethods.generateCurrentGameweek()
