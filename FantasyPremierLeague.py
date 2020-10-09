@@ -96,7 +96,7 @@ def endRoutine():
 
     finalDecision = str.lower(input("> "))
 
-    if finalDecision == "y":
+    if "y" in finalDecision:
         print("------------------------------------------------------")
         print("")
         introRoutine()

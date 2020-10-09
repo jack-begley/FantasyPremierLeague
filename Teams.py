@@ -677,6 +677,15 @@ def goalEconomyByTeam():
 
     return goalEconomyByTeam
 
+# Pull the data for a single users fantasy team
+def getTeamDetails(teamID, username, password):
+    gameweekNumber = genericMethods.generateCurrentGameweek()
+    url = f'https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/'
+    Response = Teams.loginToSecureURL(url, username, password)  
+    Data = Response.json()
+    Dumps = json.dumps(Data)
+    readableData = json.loads(Dumps)
+    return readableData
 
 # Returns the influence of each player in order for a given gameweek
 def teamInfluence(gameweekOfInterest):
