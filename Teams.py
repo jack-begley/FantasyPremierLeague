@@ -709,3 +709,35 @@ def teamInfluence(gameweekOfInterest):
             teamDict[team] = playerDict
 
         return teamDict
+
+
+# Returns the factor of each player in order for a given gameweek
+def teamFactor(gameweekOfInterest):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        nextGameweek = gameweekOfInterest + 1
+        teams = teamIDsAsKeysAndNamesAsData()
+        teamGamweekDifficulty = teamIDsAsKeysAndGameweekDifficultyAsList(nextGameweek, nextGameweek)
+        maxLen = len(teams)
+        for team in teams:
+            currentLen = list(teams.keys()).index(team) + 1
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+            playerDict = dict()
+            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
+            for player in playersInTeam:
+                for gameweekData in currentDumps['elements']:
+                    playerID = gameweekData['id']
+                    if player == playerID:
+                        teamId = gameweekData['team']
+                        gameweekFactor = 6 - teamGamweekDifficulty[teamId][0]
+                        ict = float(gameweekData['ict_index'])
+                        totalPoints = int(gameweekData['total_points'])
+                        minutes = int(gameweekData['minutes'])
+                        pointsPerMinute = totalPoints / minutes if minutes else 0
+                        factor = ict * pointsPerMinute * gameweekFactor
+                        playerDict[playerID] = factor
+
+            teamDict[team] = playerDict
+
+        return teamDict
