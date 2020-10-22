@@ -270,7 +270,11 @@ def printDataClean(indexedSetOfData, numberOfRecordsToShow, appendBeforeData, ap
 
 # Returns the average of the values in a list
 def listAverage(list):
-    return sum(list)/len(list)
+    return sum(list)/len(list) if len(list) else 0
+
+# Returns the average of the values in a dict
+def dictAverage(dict):
+    return sum(dict.values())/len(dict)
 
 # Returns the index value of the input
 def indexValue(valueToIndex, max, min):

@@ -7,6 +7,7 @@ import requests
 import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
+import operator
 
 """
 The FPL module.
@@ -164,11 +165,16 @@ def playerRoutine():
     print(" Print to console:")
     print(" [1] Single player data for current gameweek (by surname)")
     print(" [2] Create predictions of performance for next gameweek")
-    print(" [4] Create prediction constants for all player fields based on historical data from all seasons available")
+    print(" [3] Create prediction constants for all player fields based on historical data from all seasons available")
+    print(' [4] Top performers by position for last N gameweeks with gameweek difficulty (and next gameweek difficulty?)')
+    print(' [5] Players by Influence')
+    print(' [6] Players by Factor for teams')
+    print(' [7] Players by Factors for whole game')
+    print(' [8] Players ICT - print change over time')
     print("")
     print(" Data Exports: ")
-    print(" [5] All player data for all gameweeks (to excel)")
-    print(" [6] All player data for all gameweeks for all years (to excel)")
+    print(" [9] All player data for all gameweeks (to excel)")
+    print(" [10] All player data for all gameweeks for all years (to excel)")
     print("")
     print(" TEST:")
     print(" [99] Test: Rank player performance")
@@ -196,7 +202,6 @@ def playerRoutine():
         # Create predictions of performance for next gameweek
         elif playerUserInputInitialInt == 2:
             gameweekNumber = genericMethods.generateCurrentGameweek()
-            week()
             currentGameweek = gameweekNumber - 6
             if currentGameweek < 0 :
                 currentGameweek = 1
@@ -246,7 +251,7 @@ def playerRoutine():
             endRoutine()
 
         # Create prediction constants for all player fields based on historical data from all seasons available
-        elif playerUserInputInitialInt == 4:
+        elif playerUserInputInitialInt == 3:
             playersByPosition = playerData.generateHistoricalDataByPositionByPlayer()
             firstPlayerKey = list(playersByPosition[1].keys())[0]
             firstDateKey = list(playersByPosition[1][firstPlayerKey].keys())[0]
@@ -290,15 +295,269 @@ def playerRoutine():
                         
             endRoutine()
 
+        # Print out the top 5 performers for the last N weeks 
+        if playerUserInputInitialInt == 4:                        
+            print("----------------------------------------------------------------------------------------------")
+            print("How many gameweeks do you want to see?")
+            print("")
+            userInput = int(input("> "))
+            print("-----------------------------------------------------------------------------------------------")
+            print("Initialising method...")
+            nowGameweek = genericMethods.generateCurrentGameweek()
+            fromGameweek = nowGameweek - userInput
+            count = fromGameweek
+            currentGameweek = nowGameweek - userInput
+            playerIDs = playerData.generatePlayersIdsList()
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerIDsToNames = playerData.generatePlayerIDToSurnameMatching()
+            positions = playerData.generatePositionReferenceIDAsKey()
+            teamIDandPlayerID = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            gameweekDifficultyByTeam = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(fromGameweek, nowGameweek)
+            sumOfPlayerScores = dict()
+            allGameweekData = dict()
+            gameweekList = list()
+
+            while count <= nowGameweek:
+                gameweekList.append(count)
+                count += 1
+
+            gameweekListClean = "/ "
+            for week in gameweekList:
+                gameweekListClean += f"{week} / "
+
+            length = len(playerIDs) - 1
+            for playerID in playerIDs:
+                playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                sumOfPlayerScores[playerID] = sum(playerDataList)
+                allGameweekData[playerID] = playerDataList
+
+                currentIndex = list(playerIDs).index(playerID)
+                genericMethods.runPercentage(length, currentIndex, 'Gathering player scores', 'Player score data gathered')                           
+                            
+            sortedByPosition = playerData.sortPlayerDataByPosition(allGameweekData)
+            sortedSumByPosition = playerData.sortPlayerDataByPosition(sumOfPlayerScores)
+
+
+            playerNameTeamID = dict()
+
+            for position in sortedByPosition:
+                positionName = positions[position]
+                currentPositionData = sortedByPosition[position]
+                sortedSumPoints = sorted(sortedByPosition[position].items(), key=lambda x: sum(x[1]), reverse=True)
+                top5Players = sortedSumPoints[:5]
+                finalSumPoints = genericMethods.reformattedSortedTupleAsDict(top5Players)
+                top5PlayersPreviousGameweeks = dict()
+
+                for player in finalSumPoints:
+                    for teamID in teamIDandPlayerID:
+                        if player in teamIDandPlayerID[teamID]: 
+                            playerNameTeamID[player] = teamID
+                    playerName = playerNames[player].capitalize()
+                    top5PlayersPreviousGameweeks[playerName] = currentPositionData[player]
+
+                numberOfGames = userInput + 1
+
+                print("-----------------------------------------------------------------------------------------------------------")
+                print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
+                print("")
+                print(f"Gameweek: {gameweekListClean}")
+                print("-------------------------------------------------------")
+                for player in top5PlayersPreviousGameweeks:
+                    playerID = playerIDsToNames[str.lower(player)]
+                    remainingLength = 15 - len(player)
+                    gameDifficulty = "Game difficulty"
+                    playerName = player + genericMethods.repeatStringToLength(" ", remainingLength) 
+                    if remainingLength < 0 :
+                        supplementLength = len(player) - 15
+                        gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
+                        playerName = player
+                    teamID = playerNameTeamID[playerID]
+                    difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
+                    playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
+                    print(f"{playerName}: {playerDataTop5}")
+                    print(f"{gameDifficulty}: {difficultyList}")
+                    print("")
+                print("-----------------------------------------------------------------------------------------------------------")
+                print("")
+            endRoutine()
+                    
+        if playerUserInputInitialInt == 5:
+            currentGameweek = genericMethods.generateCurrentGameweek()
+            print("Gathering player influence scores...")
+            playersByInfluence = playerData.playerInfluence(currentGameweek)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Top ranked players for points for GW{currentGameweek}:')
+            print("")
+            print("-------------------------------------------------------")
+            for player in playersByInfluence:
+                playerName = str(playerNames[player]).capitalize()
+                playerInfluence = playersByInfluence[player]
+                print(f"{playerName}: {playerInfluence}")
+
+            endRoutine()
+
+        # Top contributers to team influence
+        if playerUserInputInitialInt == 6:
+            gameweek = genericMethods.generateCurrentGameweek()
+            currentGameweek = int(input(f"Which gameweek do you want to see data for (current gameweek = {gameweek}? > "))
+            print("")
+            n = int(input("How many players would you like to see? > "))
+            playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
+            factorByTeam = Teams.teamFactor(currentGameweek)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerDict = dict()
+            for team in teams:
+                teamName = teams[team]
+                teamFactor = sum(factorByTeam[team].values())
+                for player in playersByTeam[team]:
+                    try:
+                        percentageFactor = (factorByPlayer[player]/teamFactor) * 100
+                        playerName = playerNames[player].capitalize()
+                        playerDict[playerName] = percentageFactor
+                    except:
+                        None
+            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
+            
+            print(f"Top {n} Players that are most likely to be top performers for their team (% likelihood):")
+            print("")
+            for player in topPlayers:
+                playerName = player.capitalize()
+                playerInfluence = round(topPlayers[player],1)
+                print(f"{playerName}: {playerInfluence}%")
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
+
+        # Top contributors to team performance
+        if playerUserInputInitialInt == 7:
+            gameweek = genericMethods.generateCurrentGameweek()
+            currentGameweek = int(input(f"Which gameweek do you want to see data for (current gameweek = {gameweek}? > "))
+            print("")
+            numberOfGameweeks = int(input("How many players would you like to see? > "))
+            playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
+            factorByTeam = Teams.teamFactor(currentGameweek)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerDict = dict()
+            for team in teams:
+                teamName = teams[team]
+                allValues = sum(factorByPlayer.values())
+                for player in playersByTeam[team]:
+                    try:
+                        percentageFactor = (factorByPlayer[player]/allValues) * 100
+                        playerName = playerNames[player].capitalize()
+                        playerDict[playerName] = percentageFactor
+                    except:
+                        None
+            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:numberOfGameweeks]}
+            
+            print(f"Top {n} Players that are most likely to be top performers overall (% contribution to total league peformance next week):")
+            print("")
+            for player in topPlayers:
+                playerName = player.capitalize()
+                playerInfluence = round(topPlayers[player],1)
+                print(f"{playerName}: {playerInfluence}%")
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
+
+        # Print ICT history to the console
+        if playerUserInputInitialInt == 8:
+            numberOfGameweeks = int(input("How many weeks would you like to see? > "))
+            currentGameweek = genericMethods.generateCurrentGameweek()
+            count = currentGameweek - numberOfGameweeks
+            playerList = playerData.generatePlayerNameToIDMatching() 
+            gameweekList = list()
+
+            while count <= currentGameweek:
+                gameweekList.append(count)
+                count += 1
+
+            gameweekListClean = "/ "
+            for week in gameweekList:
+                gameweekListClean += f"{week} / "
+
+            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks)
+            playerICTList = dict()
+            playerDifficultyList = dict()
+            maxLen = len(playerICTHistory)
+            for player in playerICTHistory:
+                currentPlayerICTList = list()
+                currentPlayerDifficulty = list()
+                currentIndex = list(playerICTHistory.keys()).index(player)
+                genericMethods.runPercentage(maxLen, currentIndex, "Generating players ICT shortlist", "Final shortlist of top ICT players created")
+                for ICTHistory in playerICTHistory[player]:
+                    currentPlayerICTList.append(playerICTHistory[player][ICTHistory][ICTHistory])
+                    currentPlayerDifficulty.append(str(playerICTHistory[player][ICTHistory]['difficulty']) + "   ")
+                
+                playerICTList[player] = currentPlayerICTList
+                playerDifficultyList[player] = currentPlayerDifficulty
+
+            averageICTByPlayer = dict()
+            maxLen = len(playerICTList)
+            for player in playerICTList:
+                currentIndex = list(playerICTList.keys()).index(player)
+                genericMethods.runPercentage(maxLen, currentIndex, "Generating Average ICT for player", "Average ICT for players created")
+                averageICT = round(genericMethods.listAverage(playerICTList[player]),1)
+                averageICTByPlayer[player] = averageICT 
+
+            fromGameweek = currentGameweek - numberOfGameweeks
+
+            sortedSumICT = sorted(averageICTByPlayer.items(), key=operator.itemgetter(1), reverse=True)
+            top5Players = sortedSumICT[:5]
+            finalSumICT = genericMethods.reformattedSortedTupleAsDict(top5Players)
+
+            ICTShortlist = dict()
+            for player in finalSumICT:
+                playerName = playerList[player]
+                ICTShortlist[playerName] =  playerICTList[player]
+
+            gamespan = numberOfGameweeks + 1
+
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Top ranked players for ICT Index growth over the last {gamespan} games (GW {fromGameweek} to {currentGameweek}):')
+            print("")
+            print(f"Gameweek: {gameweekListClean}")
+            print("-------------------------------------------------------")
+            for player in finalSumICT:
+                playerName = str(playerList[player]).capitalize()
+                average = round(genericMethods.listAverage(ICTShortlist[playerList[player]]),1)
+                remainingLength = 15 - len(playerName)
+                gameDifficulty = "Game difficulty"
+                playerName = str(playerName + genericMethods.repeatStringToLength(" ", remainingLength)).capitalize()
+                if remainingLength < 0 :
+                    supplementLength = len(playerName) - 15
+                    gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
+                    playerName = str(playerList[player]).capitalize()
+                playerDataTop5 = str(ICTShortlist[playerList[player]]).replace("[","").replace("]","")
+                difficultyList = str(playerDifficultyList[player]).replace("[","").replace("]","").replace("'","")
+                print(f"{playerName}: {playerDataTop5} - AVG: {average}")
+                print(f"{gameDifficulty}: {difficultyList}")
+                print("")
+
+            endRoutine()        
+
+
         # All player data for all gameweeks (to excel)
-        elif playerUserInputInitialInt == 5:
+        elif playerUserInputInitialInt == 9:
             playerIDs = gameweekSummary.generatePlayerIDs()
             playerData.exportPlayerDataByGameweek(playerIDs)
                         
             endRoutine()        
             
         # All player data for all gameweeks for all years (to excel)
-        elif playerUserInputInitialInt == 6:
+        elif playerUserInputInitialInt == 10:
             playerIDs = gameweekSummary.generatePlayerIDs()
             allDataByYear = playerData.generateAllDataForAllYears(playerIDs)
             playerData.exportDictionaryOfDataToExcel(allDataByYear)
@@ -395,12 +654,6 @@ def teamsRoutine():
     print(" [17] Predictions for historical gameweeks based on goals")
     print(" [18] Weighted predictions for historical gameweeks based on goals")
     print("")
-    print(" TEST:")
-    print(" [19] Top performers by position for last N gameweeks with gameweek difficulty (and next gameweek difficulty?)")
-    print(" [20] Players by Influence")
-    print(" [21] Players by Factor for teams")
-    print(" [22] Players by Factors for whole game")
-    print("")
     print("------------------------------------------------------------------------")
     print("")
     print("What would you like to see?:")
@@ -435,78 +688,6 @@ def teamsRoutine():
             topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
 
             print(f"Top {n} Players that are most likely to influence team performance (% contribution to team success):")
-            print("")
-            for player in topPlayers:
-                playerName = player.capitalize()
-                playerInfluence = round(topPlayers[player],1)
-                print(f"{playerName}: {playerInfluence}%")
-            print("-----------------------------------")
-            print("")
-
-            endRoutine()
-
-        if playerUserInputInitialInt == 21:
-            gameweek = genericMethods.generateCurrentGameweek()
-            currentGameweek = int(input(f"Which gameweek do you want to see data for (current gameweek = {gameweek}? > "))
-            print("")
-            n = int(input("How many players would you like to see? > "))
-            playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
-            factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
-            factorByTeam = Teams.teamFactor(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
-            teams = Teams.teamIDsAsKeysAndNamesAsData()
-            playerDict = dict()
-            for team in teams:
-                teamName = teams[team]
-                teamFactor = sum(factorByTeam[team].values())
-                for player in playersByTeam[team]:
-                    try:
-                        percentageFactor = (factorByPlayer[player]/teamFactor) * 100
-                        playerName = playerNames[player].capitalize()
-                        playerDict[playerName] = percentageFactor
-                    except:
-                        None
-            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
-            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
-            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
-            
-            print(f"Top {n} Players that are most likely to be top performers for their team (% likelihood):")
-            print("")
-            for player in topPlayers:
-                playerName = player.capitalize()
-                playerInfluence = round(topPlayers[player],1)
-                print(f"{playerName}: {playerInfluence}%")
-            print("-----------------------------------")
-            print("")
-
-            endRoutine()
-
-        if playerUserInputInitialInt == 22:
-            gameweek = genericMethods.generateCurrentGameweek()
-            currentGameweek = int(input(f"Which gameweek do you want to see data for (current gameweek = {gameweek}? > "))
-            print("")
-            n = int(input("How many players would you like to see? > "))
-            playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
-            factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
-            factorByTeam = Teams.teamFactor(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
-            teams = Teams.teamIDsAsKeysAndNamesAsData()
-            playerDict = dict()
-            for team in teams:
-                teamName = teams[team]
-                allValues = sum(factorByPlayer.values())
-                for player in playersByTeam[team]:
-                    try:
-                        percentageFactor = (factorByPlayer[player]/allValues) * 100
-                        playerName = playerNames[player].capitalize()
-                        playerDict[playerName] = percentageFactor
-                    except:
-                        None
-            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
-            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
-            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
-            
-            print(f"Top {n} Players that are most likely to be top performers overall (% contribution to total league peformance next week):")
             print("")
             for player in topPlayers:
                 playerName = player.capitalize()
@@ -1268,108 +1449,6 @@ def teamsRoutine():
                         None
 
                 currentGameweek += 1
-
-            endRoutine()
-
-        if playerUserInputInitialInt == 19:                        
-            print("----------------------------------------------------------------------------------------------")
-            print("How many gameweeks do you want to see?")
-            print("")
-            userInput = int(input("> "))
-            print("-----------------------------------------------------------------------------------------------")
-            print("Initialising method...")
-            nowGameweek = genericMethods.generateCurrentGameweek()
-            fromGameweek = nowGameweek - userInput
-            count = fromGameweek
-            currentGameweek = nowGameweek - userInput
-            playerIDs = playerData.generatePlayersIdsList()
-            playerNames = playerData.generatePlayerNameToIDMatching()
-            playerIDsToNames = playerData.generatePlayerIDToSurnameMatching()
-            positions = playerData.generatePositionReferenceIDAsKey()
-            teamIDandPlayerID = Teams.teamIDsAsKeysAndPlayerIDsAsList()
-            gameweekDifficultyByTeam = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(fromGameweek, nowGameweek)
-            sumOfPlayerScores = dict()
-            allGameweekData = dict()
-            gameweekList = list()
-
-            while count <= nowGameweek:
-                gameweekList.append(count)
-                count += 1
-
-            gameweekListClean = "/ "
-            for week in gameweekList:
-                gameweekListClean += f"{week} / "
-
-            length = len(playerIDs) - 1
-            for playerID in playerIDs:
-                playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
-                sumOfPlayerScores[playerID] = sum(playerDataList)
-                allGameweekData[playerID] = playerDataList
-
-                currentIndex = list(playerIDs).index(playerID)
-                genericMethods.runPercentage(length, currentIndex, 'Gathering player scores', 'Player score data gathered')                           
-                            
-            sortedByPosition = playerData.sortPlayerDataByPosition(allGameweekData)
-            sortedSumByPosition = playerData.sortPlayerDataByPosition(sumOfPlayerScores)
-
-
-            playerNameTeamID = dict()
-
-            for position in sortedByPosition:
-                positionName = positions[position]
-                currentPositionData = sortedByPosition[position]
-                sortedSumPoints = sorted(sortedByPosition[position].items(), key=lambda x: sum(x[1]), reverse=True)
-                top5Players = sortedSumPoints[:5]
-                finalSumPoints = genericMethods.reformattedSortedTupleAsDict(top5Players)
-                top5PlayersPreviousGameweeks = dict()
-
-                for player in finalSumPoints:
-                    for teamID in teamIDandPlayerID:
-                        if player in teamIDandPlayerID[teamID]: 
-                            playerNameTeamID[player] = teamID
-                    playerName = playerNames[player].capitalize()
-                    top5PlayersPreviousGameweeks[playerName] = currentPositionData[player]
-
-                numberOfGames = userInput + 1
-
-                print("-----------------------------------------------------------------------------------------------------------")
-                print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
-                print("")
-                print(f"Gameweek: {gameweekListClean}")
-                print("-------------------------------------------------------")
-                for player in top5PlayersPreviousGameweeks:
-                    playerID = playerIDsToNames[str.lower(player)]
-                    remainingLength = 15 - len(player)
-                    gameDifficulty = "Game difficulty"
-                    playerName = player + genericMethods.repeatStringToLength(" ", remainingLength) 
-                    if remainingLength < 0 :
-                        supplementLength = len(player) - 15
-                        gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
-                        playerName = player
-                    teamID = playerNameTeamID[playerID]
-                    difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
-                    playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
-                    print(f"{playerName}: {playerDataTop5}")
-                    print(f"{gameDifficulty}: {difficultyList}")
-                    print("")
-                print("-----------------------------------------------------------------------------------------------------------")
-                print("")
-            endRoutine()
-                    
-        if playerUserInputInitialInt == 20:
-            currentGameweek = genericMethods.generateCurrentGameweek()
-            print("Gathering player influence scores...")
-            playersByInfluence = playerData.playerInfluence(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
-
-            print("-----------------------------------------------------------------------------------------------------------")
-            print(f'Top ranked players for points for GW{currentGameweek}:')
-            print("")
-            print("-------------------------------------------------------")
-            for player in playersByInfluence:
-                playerName = str(playerNames[player]).capitalize()
-                playerInfluence = playersByInfluence[player]
-                print(f"{playerName}: {playerInfluence}")
 
             endRoutine()
 

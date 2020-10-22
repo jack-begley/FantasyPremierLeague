@@ -113,6 +113,30 @@ def generatePlayerIDToFullNameMatching():
 
     return playerIDMatchList
 
+# Create Full name list list (and associated player id as the key)
+def generateFullNameToPlayerIDMatching():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            firstName = formattedY['first_name']
+            secondName = formattedY['second_name']
+            fullName = f'{firstName} {secondName}'
+            cleanedFullName = str(genericMethods.unicodeReplace(fullName)).capitalize()
+            id = formattedY['id']
+            playerIDMatchList[id] = cleanedFullName
+
+    return playerIDMatchList
+
+
 # Create player name list (and associated id as key)
 def generatePlayerNameToIDMatching():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -134,6 +158,26 @@ def generatePlayerNameToIDMatching():
 
     return playerIDMatchList
 
+# Create teamId list (and associated player id as key)
+def generateIDAsKeyTeamIdAsValue():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            playerId = formattedY['id']
+            teamID = formattedY['team']
+            playerIDMatchList[playerId] = teamID
+
+    return playerIDMatchList
+
 # Match User input to an array and return the result
 def matchUserInputToList(userInput, listToMatchInputTo):
     result = listToMatchInputTo[userInput]
@@ -150,15 +194,7 @@ def gatherHistoricalPlayerData():
     # Gather the player data
     for playerID in playerIDs:
         currentIndex = list(playerIDs).index(playerID)
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Gather data for regression: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Data for regression gathered: 100%")
-            sys.stdout.flush()
-            print("")
+        genericMethods.runPercentage(length, currentIndex, "Gather data for regression", "Data for regression gathered")
 
         allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
@@ -196,16 +232,8 @@ def gatherGameweekDataByPlayer(gameweekOfInterest):
         playerID = playerNames[playerName]
         currentPlayerData = dict()
         currentIndex = list(playerNames).index(playerName)
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Calculating player index: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Player index calculation completed: 100%")
-            sys.stdout.flush()
-            print("")
-
+        genericMethods.runPercentage(length, currentIndex, "Calculating player index", "Player index calculation completed")
+        
         allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
         currentPlayerList = dict()
@@ -309,15 +337,8 @@ def exportPlayerDataByGameweek(playerIDs):
         
         currentIndex = list(playerIDs).index(playerID)
         length = len(playerIDs) - 1
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Gathering data by player: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Data by player name gathered: 100%")
-            sys.stdout.flush()
-            print("")
+        genericMethods.runPercentage(length, currentIndex, "Gathering data by player", "Data by player name gathered")
+
         for element in gameweekSummaryDataReadable['elements']:
             if playerID == element['id']:
                 firstName = genericMethods.unicodeReplace(element['first_name'])
@@ -365,16 +386,7 @@ def exportPlayerDataByGameweek(playerIDs):
             formattedPlayer = json.loads(playerDumps)
             currentIndex = list(playerName).index(player)
             playerClean = player.strip().replace("'","`")
-            runPercentageComplete = str(round((currentIndex/length)*100,1))
-            if runPercentageComplete != "100.0":
-                sys.stdout.write('\r'f"Compiling exportable data file: {runPercentageComplete}%"),
-                sys.stdout.flush()
-            else:
-                sys.stdout.write('\r'"")
-                sys.stdout.write(f"Exportable data file ready for use: {runPercentageComplete}%")
-                sys.stdout.flush()
-                print("")
-                print("")
+            genericMethods.runPercentage(length, currentIndex, "Compiling exportable data file", "Exportable data file ready for use")
 
             for gameweek in playerName[player]:
                 gameweekData = playerName[player][gameweek]
@@ -420,15 +432,8 @@ def generateAllDataForAllYears(playerIDs):
         
         currentIndex = list(playerIDs).index(playerID)
         length = len(playerIDs) - 1
-        runPercentageComplete = str(round((currentIndex/length)*100,1))
-        if runPercentageComplete != "100.0":
-            sys.stdout.write('\r'f"Gathering data by player: {runPercentageComplete}%"),
-            sys.stdout.flush()
-        else:
-            sys.stdout.write('\r'"")
-            sys.stdout.write(f"Data by player name gathered: 100%")
-            sys.stdout.flush()
-            print("")
+        genericMethods.runPercentage(length, currentIndex, "Gathering data by player", "Data by player name gathered")
+
         for element in summaryDataReadable['elements']:
             if playerID == element['id']:
                 firstName = genericMethods.unicodeReplace(element['first_name'])
@@ -478,25 +483,12 @@ def exportDictionaryOfDataToExcel(dictionary):
 
         for key in dictionary:
             length = len(dictionary)-1
-            #playerDumps = json.dumps(dictionary)
-            #formattedPlayer = json.loads(dictionary)
             currentIndex = list(dictionary).index(key)
             keyClean = key.strip().replace("'","`")
-            runPercentageComplete = str(round((currentIndex/length)*100,1))
-            if runPercentageComplete != "100.0":
-                sys.stdout.write('\r'f"Compiling exportable data file: {runPercentageComplete}%"),
-                sys.stdout.flush()
-            else:
-                sys.stdout.write('\r'"")
-                sys.stdout.write(f"Exportable data file ready for use: {runPercentageComplete}%")
-                sys.stdout.flush()
-                print("")
-                print("")
+            genericMethods.runPercentage(length, currentIndex, "Compiling exportable data file", "Exportable data file ready for use")
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                #gameweekDumps = json.dumps(gameweekData)
-                #formattedGameweek = json.loads(gameweekDumps)
                 for data in seasonData:
                     if data not in headerList:
                         headerList.append(data)
@@ -507,8 +499,6 @@ def exportDictionaryOfDataToExcel(dictionary):
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                #gameweekDumps = json.dumps(gameweekData)
-                #formattedGameweek = json.loads(gameweekDumps)
                 currentList = list()
                 currentList.append(season)
                 for data in seasonData:
@@ -727,6 +717,35 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
                 currentGameweek += 1
                   
     return currentPlayersPoints
+
+# Creates a list of ICT index over a user defined period for all players
+def generateHistoryOfICTForNGameweeks(numberOfGameweeks):
+    players = dict()
+    playerList = generatePlayerIDToFullNameMatching() 
+    playerToTeam = generateIDAsKeyTeamIdAsValue()
+    currentGameweek = genericMethods.generateCurrentGameweek() - 1
+    gameweek = currentGameweek - numberOfGameweeks
+    teamDifficulty = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(gameweek,currentGameweek)
+    maxLen = len(playerList)
+    for playerName in playerList:
+        playerICT = dict()
+        playerID = playerList[playerName]
+        playerDifficulties = teamDifficulty[playerToTeam[playerID]]
+        currentIndex = list(playerList.keys()).index(playerName)
+        genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
+        currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
+        gameweek = currentGameweek - numberOfGameweeks
+        for data in currentDumps['history']:
+            ICTDict = dict()
+            if gameweek <= data['round'] <= currentGameweek:
+                difficulty = playerDifficulties[(data['round'])]
+                ICTDict[data['round']] = float(data['ict_index'])
+                ICTDict['difficulty'] = difficulty
+                playerICT[data['round']] = ICTDict
+                gameweek += 1
+        players[playerID] = playerICT
+                  
+    return players
 
 # Takes a array of player data where the player ID is the Key and sorts it by position
 def sortPlayerDataByPosition(arrayToSort):
