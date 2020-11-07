@@ -18,6 +18,7 @@ import sys, traceback
 import gameweekSummary
 import playerData
 import Teams
+import detailedStats
 
 
 # URL set up and league codes
@@ -279,6 +280,13 @@ def dictAverage(dict):
 # Returns the index value of the input
 def indexValue(valueToIndex, max, min):
     return ((valueToIndex - min) / (max - min))*100
+
+# Returns the index value of the input
+def percentageDifferenceToAverage(value, average):
+    difference = (value) / (average)
+    if difference >= 1:
+        difference = difference - 1
+    return difference
 
 # Run percentage
 def runPercentage(maxLen, currentIndex, messageToDisplay, completeMessage):

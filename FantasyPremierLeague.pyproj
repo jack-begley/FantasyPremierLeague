@@ -21,6 +21,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="detailedStats.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="FantasyPremierLeague.py" />
     <Compile Include="gameweekSummary.py">
       <SubType>Code</SubType>

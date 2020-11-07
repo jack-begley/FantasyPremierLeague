@@ -10,6 +10,7 @@ import genericMethods
 import playerData
 import gameweekSummary
 import Teams
+import detailedStats
 from requests.auth import HTTPBasicAuth
 
 
@@ -203,9 +204,9 @@ def generateListOfPlayerIDsAsKeysForTeam(teamID):
     return playerIDMatchList
 
 
-# A method to pull the average goals conceeded by gameweek difficulty for a particular team
+# A method to pull the average goals conceded by gameweek difficulty for a particular team
 
-def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
+def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         maxGameweek = gameweek
@@ -214,7 +215,7 @@ def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficulty3 = list()
         difficulty4 = list()
         difficulty5 = list()
-        difficultyOfGamesWithGoalsConceededListed = dict()
+        difficultyOfGamesWithGoalsconcededListed = dict()
         while gameweek <= maxGameweek:
             teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
             if teamID in teamsPlayingInCurrentPeriod:
@@ -250,17 +251,17 @@ def goalsConceededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
                 gameweek += 1
 
         
-        difficultyOfGamesWithGoalsConceededListed[2] = difficulty2
-        difficultyOfGamesWithGoalsConceededListed[3] = difficulty3
-        difficultyOfGamesWithGoalsConceededListed[4] = difficulty4
-        difficultyOfGamesWithGoalsConceededListed[5] = difficulty5
+        difficultyOfGamesWithGoalsconcededListed[2] = difficulty2
+        difficultyOfGamesWithGoalsconcededListed[3] = difficulty3
+        difficultyOfGamesWithGoalsconcededListed[4] = difficulty4
+        difficultyOfGamesWithGoalsconcededListed[5] = difficulty5
 
         averageGoalsByDifficulty = dict()
 
-        for difficulty in difficultyOfGamesWithGoalsConceededListed:
-            if len(difficultyOfGamesWithGoalsConceededListed[difficulty]) != 0:
-                averageGoalsConceeded = round(genericMethods.listAverage(difficultyOfGamesWithGoalsConceededListed[difficulty]) , 1)  
-                averageGoalsByDifficulty[difficulty] = averageGoalsConceeded
+        for difficulty in difficultyOfGamesWithGoalsconcededListed:
+            if len(difficultyOfGamesWithGoalsconcededListed[difficulty]) != 0:
+                averageGoalsconceded = round(genericMethods.listAverage(difficultyOfGamesWithGoalsconcededListed[difficulty]) , 1)  
+                averageGoalsByDifficulty[difficulty] = averageGoalsconceded
 
         return averageGoalsByDifficulty
 
@@ -387,11 +388,11 @@ def generateLikelihoodToConceedByTeamForNextGame(gameweek):
 
     for teamID in teamIDsAndNames:
         teamName = teamIDsAndNames[teamID]
-        teamDifficultyReference[teamID] = Teams.goalsConceededByDifficulty(teamID, gameweek)
+        teamDifficultyReference[teamID] = Teams.goalsconcededByDifficulty(teamID, gameweek)
         nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 
         currentIndex = list(teamIDsAndNames.keys()).index(teamID)
-        genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceeded index", "Complete: Gathered team difficulty and goals conceeded index")
+        genericMethods.runPercentage(length, currentIndex, "Gathering team difficulty and goals conceded index", "Complete: Gathered team difficulty and goals conceded index")
 
     nextGameLikelihoodtoConceed = dict()
     print("")
@@ -741,3 +742,28 @@ def teamFactor(gameweekOfInterest):
             teamDict[team] = playerDict
 
         return teamDict
+
+
+# Returns the total goals for team
+def totalTeamGoals():
+    urlBase = 'https://fantasy.premierleague.com/api/'
+    teamDict = dict()
+    teams = teamIDsAsKeysAndNamesAsData()
+    maxLen = len(teams)
+    for team in teams:
+        currentLen = list(teams.keys()).index(team) + 1
+        genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+        playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+        goalsList = list()
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
+        for player in playersInTeam:
+            for gameweekData in currentDumps['elements']:
+                playerID = gameweekData['id']
+                if player == playerID:
+                    teamId = gameweekData['team']
+                    goalsList.append(int(gameweekData['goals_scored']))
+
+        goalsScored = sum(goalsList)
+        teamDict[team] = goalsScored
+
+    return teamDict

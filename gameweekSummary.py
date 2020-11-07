@@ -26,6 +26,7 @@ import playerData
 import gameweekSummary
 import genericMethods
 import Teams
+import detailedStats
 
 # URL set up and league codes
 from datetime import date

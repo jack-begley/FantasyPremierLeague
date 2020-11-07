@@ -25,6 +25,7 @@ import gameweekSummary
 import genericMethods
 import Teams
 import playerData
+import detailedStats
 
 from datetime import date
 today = date.today()
@@ -719,18 +720,26 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
     return currentPlayersPoints
 
 # Creates a list of ICT index over a user defined period for all players
-def generateHistoryOfICTForNGameweeks(numberOfGameweeks):
+def generateHistoryOfICTForNGameweeks(numberOfGameweeks, route):
     players = dict()
     playerList = generatePlayerIDToFullNameMatching() 
     playerToTeam = generateIDAsKeyTeamIdAsValue()
     currentGameweek = genericMethods.generateCurrentGameweek() - 1
     gameweek = currentGameweek - numberOfGameweeks
     teamDifficulty = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(gameweek,currentGameweek)
+    teamDifficulties = dict()
+    for team in teamDifficulty:
+        gameweeks = genericMethods.generateCurrentGameweek() - 1
+        currentTeamDifficulties = dict()
+        for difficulty in teamDifficulty[team]:
+            currentTeamDifficulties[gameweeks] = difficulty
+            gameweeks = gameweeks - 1
+        teamDifficulties[team] = currentTeamDifficulties
     maxLen = len(playerList)
     for playerName in playerList:
         playerICT = dict()
         playerID = playerList[playerName]
-        playerDifficulties = teamDifficulty[playerToTeam[playerID]]
+        playerDifficulties = teamDifficulties[playerToTeam[playerID]]
         currentIndex = list(playerList.keys()).index(playerName)
         genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
         currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
@@ -738,9 +747,13 @@ def generateHistoryOfICTForNGameweeks(numberOfGameweeks):
         for data in currentDumps['history']:
             ICTDict = dict()
             if gameweek <= data['round'] <= currentGameweek:
+                points = data['total_points']
                 difficulty = playerDifficulties[(data['round'])]
                 ICTDict[data['round']] = float(data['ict_index'])
-                ICTDict['difficulty'] = difficulty
+                if route == 1:
+                    ICTDict['comparative'] = difficulty
+                if route == 2:
+                    ICTDict['comparative'] = points
                 playerICT[data['round']] = ICTDict
                 gameweek += 1
         players[playerID] = playerICT
@@ -842,3 +855,67 @@ def playerPerformanceFactor(gameweekOfInterest):
         playerFactor = genericMethods.reformattedSortedTupleAsDict(sortedFactor)
 
         return playerFactor
+
+
+# Time in minutes played divided by (90 * gameweek number) = % time played
+
+def percentageTimePlayedByPlayer():
+        playerDict = dict()
+        playerNames = generatePlayerNameToIDMatching()
+        currentGameweek = genericMethods.generateCurrentGameweek()
+        maxTime = currentGameweek * 90
+        currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
+        for gameweekData in currentDumps['elements']:
+            playerID = gameweekData['id']
+            name = playerNames[playerID].capitalize()
+            minutes = int(gameweekData['minutes'])
+            percentagePlayed = round((minutes / maxTime)*100,1)
+            playerDict[name] = percentagePlayed
+
+        return playerDict
+
+# Total goal involvement by the players
+
+def playerGoalInvolvement():
+    playerDict = dict()
+    playerNames = generatePlayerNameToIDMatching()
+    currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
+    for gameweekData in currentDumps['elements']:
+        tempDict = dict()
+        playerID = gameweekData['id']
+        name = playerNames[playerID].capitalize()
+        goals = int(gameweekData['goals_scored'])
+        assists = int(gameweekData['assists'])
+        involvement = goals + assists
+        tempDict["name"] = name
+        tempDict["involvement"] = involvement
+        tempDict["goals"] = goals
+        tempDict["assists"] = assists
+        playerDict[playerID] = tempDict
+
+    return playerDict
+
+# Points per percentage selected
+
+def pointsPerSelectedPercentage(minimumPercentageSelected):
+    playerDict = dict()
+    playerNames = generatePlayerNameToIDMatching()
+    currentGameweek = genericMethods.generateCurrentGameweek()
+    currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
+    for gameweekData in currentDumps['elements']:
+        tempDict = dict()
+        playerID = gameweekData['id']
+        name = playerNames[playerID].capitalize()
+        points = int(gameweekData['total_points'])
+        selected = float(gameweekData['selected_by_percent'])
+        if selected < minimumPercentageSelected:
+            pointsPerPercentage = 0 
+        else:
+            pointsPerPercentage = points / selected if selected else 0 
+        tempDict["name"] = name
+        tempDict["pointsPerPercent"] = pointsPerPercentage
+        tempDict["points"] = points
+        tempDict["selected"] = selected
+        playerDict[playerID] = tempDict
+
+    return playerDict

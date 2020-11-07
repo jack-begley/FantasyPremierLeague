@@ -1,6 +1,7 @@
 import gameweekSummary
 import playerData
 import genericMethods
+import detailedStats
 import Teams
 import operator
 import requests
@@ -8,6 +9,7 @@ import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
 import operator
+from prettytable import PrettyTable
 
 """
 The FPL module.
@@ -171,14 +173,19 @@ def playerRoutine():
     print(' [6] Players by Factor for teams')
     print(' [7] Players by Factors for whole game')
     print(' [8] Players ICT - print change over time')
+    print(' [9] Top N players - Percentage played')
+    print(' [10] Top involvement in goals')
+    print(' [11] Differentials (Points per % Selected)')
+    print(' [12] Consistency (Deviation from average for top N players)')
     print("")
     print(" Data Exports: ")
-    print(" [9] All player data for all gameweeks (to excel)")
-    print(" [10] All player data for all gameweeks for all years (to excel)")
+    print(" [51] All player data for all gameweeks (to excel)")
+    print(" [52] All player data for all gameweeks for all years (to excel)")
     print("")
     print(" TEST:")
     print(" [99] Test: Rank player performance")
     print(" [100] Test: How previous performance affects future performance")
+    print(" [101] Test: Get players details from detailed site")
     print("------------------------------------------------------------------------")
     print("")
     print("What would you like to see?:")
@@ -475,6 +482,9 @@ def playerRoutine():
         # Print ICT history to the console
         if playerUserInputInitialInt == 8:
             numberOfGameweeks = int(input("How many weeks would you like to see? > "))
+            print(" 1. Vs. Gameweek Difficulty")
+            print(" 2. Vs. Points scored")
+            RouteToTake = int(input("What would you like to compare against? > "))
             currentGameweek = genericMethods.generateCurrentGameweek()
             count = currentGameweek - numberOfGameweeks
             playerList = playerData.generatePlayerNameToIDMatching() 
@@ -488,21 +498,21 @@ def playerRoutine():
             for week in gameweekList:
                 gameweekListClean += f"{week} / "
 
-            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks)
+            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks, RouteToTake)
             playerICTList = dict()
-            playerDifficultyList = dict()
+            playerComparativeList = dict()
             maxLen = len(playerICTHistory)
             for player in playerICTHistory:
                 currentPlayerICTList = list()
-                currentPlayerDifficulty = list()
+                currentPlayerComparative = list()
                 currentIndex = list(playerICTHistory.keys()).index(player)
                 genericMethods.runPercentage(maxLen, currentIndex, "Generating players ICT shortlist", "Final shortlist of top ICT players created")
                 for ICTHistory in playerICTHistory[player]:
                     currentPlayerICTList.append(playerICTHistory[player][ICTHistory][ICTHistory])
-                    currentPlayerDifficulty.append(str(playerICTHistory[player][ICTHistory]['difficulty']) + "   ")
+                    currentPlayerComparative.append(str(playerICTHistory[player][ICTHistory]['comparative']) + "   ")
                 
                 playerICTList[player] = currentPlayerICTList
-                playerDifficultyList[player] = currentPlayerDifficulty
+                playerComparativeList[player] = currentPlayerComparative
 
             averageICTByPlayer = dict()
             maxLen = len(playerICTList)
@@ -534,30 +544,192 @@ def playerRoutine():
                 playerName = str(playerList[player]).capitalize()
                 average = round(genericMethods.listAverage(ICTShortlist[playerList[player]]),1)
                 remainingLength = 15 - len(playerName)
-                gameDifficulty = "Game difficulty"
+                if RouteToTake == 1:
+                    comparative = "Game difficulty"
+                if RouteToTake == 2:
+                    comparative = "Round Points   "
                 playerName = str(playerName + genericMethods.repeatStringToLength(" ", remainingLength)).capitalize()
                 if remainingLength < 0 :
                     supplementLength = len(playerName) - 15
-                    gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
+                    comparative = comparative + genericMethods.repeatStringToLength(" ", supplementLength) 
                     playerName = str(playerList[player]).capitalize()
                 playerDataTop5 = str(ICTShortlist[playerList[player]]).replace("[","").replace("]","")
-                difficultyList = str(playerDifficultyList[player]).replace("[","").replace("]","").replace("'","")
+                comparativeList = str(playerComparativeList[player]).replace("[","").replace("]","").replace("'","")
                 print(f"{playerName}: {playerDataTop5} - AVG: {average}")
-                print(f"{gameDifficulty}: {difficultyList}")
+                print(f"{comparative}: {comparativeList}")
                 print("")
 
             endRoutine()        
 
+        # All players ordered by minutes played so far
+        elif playerUserInputInitialInt == 9:
+            n = int(input("How many players do you want to see? > "))
+            percentageplayer = playerData.percentageTimePlayedByPlayer()
+            sortedPercentagePlayed = sorted(percentageplayer.items(), key=operator.itemgetter(1), reverse=True)
+            topNPlayers = sortedPercentagePlayed[:n]
+            finalPlayers = genericMethods.reformattedSortedTupleAsDict(topNPlayers)
+            print(f"Top {n} players for % of available time played")
+            print("")
+            for player in finalPlayers:
+                value = finalPlayers[player]
+                print(f"{player}: {value}%")
+
+            endRoutine()
+
+        
+        # Top contributors to goals (% goal involvement)
+        elif playerUserInputInitialInt == 10:
+            n = int(input("How many players would you like to see? > "))
+            teamGoals = Teams.totalTeamGoals()
+            playerInvolvement = playerData.playerGoalInvolvement()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerInfo = dict()
+            playerDict = dict()
+            for team in teams:
+                teamName = teams[team]
+                currentTeamGoals = teamGoals[team]
+                playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
+                for player in playersInTeam:
+                    playerList = list()
+                    involvement = float(round((playerInvolvement[player]['involvement'] / currentTeamGoals)*100 , 1))
+                    playerName = playerInvolvement[player]['name']
+                    playerList.append(playerName)
+                    playerList.append(str(involvement)+"%")
+                    playerList.append(teamGoals[team])
+                    playerList.append(playerInvolvement[player]['goals'])
+                    playerList.append(playerInvolvement[player]['assists'])
+                    playerDict[playerName] = involvement
+                    playerInfo[playerName] = playerList
+
+            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
+            
+            print("")
+            print("")
+            print(f"Involvement - Top {n} Players by % involvement in total goals scored:")
+            print("")
+            t = PrettyTable(['Name', 'Involvement (%)', 'Team Goals', 'Goals', 'Assists'])
+            for player in topPlayers:
+                t.add_row(playerInfo[player])
+            print(t)
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
+
+        # Differentials - points per percentage selected
+        elif playerUserInputInitialInt == 11:
+            n = int(input("How many players would you like to see? > "))
+            minPercentage = int(input("What is the LOWEST PERCENTAGE SELECTED you want to include? > "))
+            playerDifferentials = playerData.pointsPerSelectedPercentage(minPercentage)
+            playerInfo = dict()
+            playerDict = dict()
+            for player in playerDifferentials:
+                playerList = list()
+                playerName = playerDifferentials[player]['name']
+                playerList.append(playerName)
+                playerList.append(round(playerDifferentials[player]['pointsPerPercent'], 1))
+                playerList.append(playerDifferentials[player]['points'])
+                playerList.append(str(playerDifferentials[player]['selected'])+'%')
+                playerDict[playerName] = playerDifferentials[player]['pointsPerPercent']
+                playerInfo[playerName] = playerList
+
+            playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
+            
+            print("")
+            print("")
+            print(f"Differentials - Top {n} Players for points per percentage where at least {minPercentage}% of people selected them:")
+            print("")
+            t = PrettyTable(['Name', 'Points per percent selected', 'Points scored', '% Selected'])
+            for player in topPlayers:
+                t.add_row(playerInfo[player])
+            print(t)
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
+
+            
+
+        # Consistency - players that have the highest AND most consistent performance
+        elif playerUserInputInitialInt == 12:
+            n = int(input("How many players would you like to see? > "))
+            players = playerData.generatePlayerIDToSurnameMatching()
+            playerInfo = dict()
+            playerPoints = dict()
+            playerReference = dict()
+            length = len(players)
+            x = int(input(f"How many do you want to include in the cohort of 'best players' (max = {length})? > "))
+            for player in players:  
+                currentIndex = list(players).index(player)
+                genericMethods.runPercentage(length, currentIndex, f"Picking top {x} players by points", f"Top {x} Players by points have been gathered")
+                currentGameweek = genericMethods.generateCurrentGameweek()
+                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(players[player], 1, currentGameweek)
+                playerName = player.capitalize()
+                playerPoints[playerName] = sum(playerPerformance)
+                playerReference[playerName] = players[player]
+
+            playersSorted = sorted(playerPoints.items(), key=lambda x: x[1], reverse=True)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            top100Players = {k: playersToPrint[k] for k in list(playersToPrint)[:x]}
+
+            length = len(top100Players)
+            playerDeviation = dict()
+            for player in top100Players:  
+                currentIndex = list(top100Players).index(player)
+                genericMethods.runPercentage(length, currentIndex, "Finding the top performers", "Top performers for consistency gathered")
+                currentGameweek = genericMethods.generateCurrentGameweek()
+                playerID = playerReference[player]
+                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, 1, currentGameweek)
+                playerList = list()
+                averagePerformance = genericMethods.listAverage(playerPerformance)
+                playerDeviationList = list()
+                for performance in playerPerformance:
+                    if genericMethods.percentageDifferenceToAverage(performance, averagePerformance) >= 0:
+                        playerDeviationList.append(genericMethods.percentageDifferenceToAverage(performance, averagePerformance))
+                    else:
+                        playerDeviationList.append(-genericMethods.percentageDifferenceToAverage(performance, averagePerformance))
+
+                playerName = player.capitalize()
+                playerList.append(playerName)
+                playerInfo[playerName] = playerList
+                deviation = round(genericMethods.listAverage(playerDeviationList)*100, 1)
+                playerList.append(deviation)
+                playerList.append(round(averagePerformance, 1))
+                playerList.append(sum(playerPerformance))
+                playerList.append(max(playerPerformance))
+                playerList.append(min(playerPerformance))
+                playerDeviation[playerName] = deviation
+
+            playersSorted = sorted(playerDeviation.items(), key=lambda x: x[1], reverse=False)
+            playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
+            
+            print("")
+            print("")
+            print(f"Consistency - Top {n} Players for consistency of scoring points for the top {x} performers:")
+            print("")
+            t = PrettyTable(['Name', '% deviation from average', 'Average', 'Total',  'Max', 'Min'])
+            for player in topPlayers:
+                t.add_row(playerInfo[player])
+            print(t)
+            print("-----------------------------------")
+            print("")
+
+            endRoutine()
 
         # All player data for all gameweeks (to excel)
-        elif playerUserInputInitialInt == 9:
+        elif playerUserInputInitialInt == 51:
             playerIDs = gameweekSummary.generatePlayerIDs()
             playerData.exportPlayerDataByGameweek(playerIDs)
                         
             endRoutine()        
             
         # All player data for all gameweeks for all years (to excel)
-        elif playerUserInputInitialInt == 10:
+        elif playerUserInputInitialInt == 52:
             playerIDs = gameweekSummary.generatePlayerIDs()
             allDataByYear = playerData.generateAllDataForAllYears(playerIDs)
             playerData.exportDictionaryOfDataToExcel(allDataByYear)
@@ -606,7 +778,13 @@ def playerRoutine():
                 headersOfData = generateHeadersList()
                 genericMethods.printListToExcel(formattedPlayerPerformance, gameweekHeaders)
             else:
-                endRoutine()                    
+                endRoutine()             
+                
+        elif playerUserInputInitialInt == 101:
+            playerList = detailedStats.getAllPlayers()
+            players = detailedStats.getPlayerIDsWithNamesAsKeys(playerList)
+            print()
+
 
         else:
             print("====================================================================================")
@@ -638,21 +816,22 @@ def teamsRoutine():
     print(" [7] Average game difficulty for the next N games ranked for all teams")
     print(" [8] Top 5 players by position for points per pound")
     print(" [9] Top performers by position for last N gameweeks")
+    print(" [10] Goal economy by team")
     print("")
     print(" Goal and Result predictions")
     print("")
-    print(" [10] Average goals conceeded by team for difficulty this week")
-    print(" [11] Average goals scored by team for difficulty this week")
-    print(" [12] Predicting next gameweek results")
-    print(" [13] Predicting next gameweek results based on goals")
-    print(" [14] Weighted predictions for next gameweek based on goals")
+    print(" [11] Average goals conceded by team for difficulty this week")
+    print(" [12] Average goals scored by team for difficulty this week")
+    print(" [13] Predicting next gameweek results")
+    print(" [14] Predicting next gameweek results based on goals")
+    print(" [15] Weighted predictions for next gameweek based on goals")
     print("")
     print(" Historical Results: ")
     print("")
-    print(" [15] Results by gameweek")
-    print(" [16] Predictions for historical gameweeks")
-    print(" [17] Predictions for historical gameweeks based on goals")
-    print(" [18] Weighted predictions for historical gameweeks based on goals")
+    print(" [16] Results by gameweek")
+    print(" [17] Predictions for historical gameweeks")
+    print(" [18] Predictions for historical gameweeks based on goals")
+    print(" [19] Weighted predictions for historical gameweeks based on goals")
     print("")
     print("------------------------------------------------------------------------")
     print("")
@@ -745,19 +924,19 @@ def teamsRoutine():
                 awayTeam = fixtures[homeTeam]
                 homeName = teamNames[homeTeam].capitalize()
                 awayName = teamNames[awayTeam].capitalize()
-                homeOverall = strengthByTeam[homeTeam]['homeOverall']
-                awayOverall = strengthByTeam[awayTeam]['awayOverall']
-                netPerformance = homeOverall - awayOverall
+                homeStandard = strengthByTeam[homeTeam]['homeOverall']
+                homeOverall = strengthByTeam[homeTeam]['homeAttack'] - strengthByTeam[awayTeam]['awayDefence']
+                awayStandard = strengthByTeam[awayTeam]['awayOverall']
+                awayOverall = strengthByTeam[homeTeam]['homeDefence'] - strengthByTeam[awayTeam]['awayAttack']
+                flatNetPerformance = homeOverall - awayOverall
+                homePerformance = flatNetPerformance/homeStandard
+                awayPerformance = (flatNetPerformance*-1)/awayStandard
+                netPerformance = round(((homePerformance - awayPerformance) * 100) , 1)
                 if netPerformance > 0:
-                    percentageBetter = int((netPerformance/awayOverall)*100)
-                    if percentageBetter < 0:
-                        percentageBetter = percentageBetter * -1
-                    print(f"{homeName} outperforms {awayName} by {percentageBetter}%")
+                    print(f"{homeName} outperforms {awayName} by {netPerformance}%")
                 elif netPerformance < 0 :
-                    percentageBetter = int((netPerformance/homeOverall)*100)
-                    if percentageBetter < 0:
-                        percentageBetter = percentageBetter * -1
-                    print(f"{awayName} outperforms {homeName} by {percentageBetter}%")
+                    netPerformance = netPerformance * -1
+                    print(f"{awayName} outperforms {homeName} by {netPerformance}%")
                 else:
                     print(f"{awayName} and {homeName} are equally matched")
 
@@ -1008,20 +1187,41 @@ def teamsRoutine():
             endRoutine()
 
         if playerUserInputInitialInt == 10:
-            nextGameweek = genericMethods.generateCurrentGameweek() + 1
-            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+            goalEconomy = Teams.goalEconomyByTeam()
 
-            print("")
-            print(f"Estimate for goals conceeded GW{nextGameweek}")
-            print("")
+            teamNames = Teams.teamIDsAsKeysAndNamesAsData()
 
-            for teamName in nextGameLikelihoodtoConceed:
-                goalsToBeConceeded = nextGameLikelihoodtoConceed[teamName]
-                print(f"{teamName}: {goalsToBeConceeded}")
+            finalGoalEconomy = dict()
+
+            for team in goalEconomy:
+                teamName = str.capitalize(teamNames[team])
+                finalGoalEconomy[teamName] = round(goalEconomy[team], 1)
+
+            orderedGoalEconomy = sorted(finalGoalEconomy.items(), key=lambda x: x[1], reverse=True)
+            cleanGoalEconomy = genericMethods.reformattedSortedTupleAsDict(orderedGoalEconomy)
+
+            print("-----------------------------------------------------")
+            print("Goal Economy by team (% shots on target scored)")
+            print("")
+            genericMethods.printDataClean(cleanGoalEconomy, 20, "", "%")
 
             endRoutine()
 
         if playerUserInputInitialInt == 11:
+            nextGameweek = genericMethods.generateCurrentGameweek() + 1
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+
+            print("")
+            print(f"Estimate for goals conceded GW{nextGameweek}")
+            print("")
+
+            for teamName in nextGameLikelihoodtoConceed:
+                goalsToBeconceded = nextGameLikelihoodtoConceed[teamName]
+                print(f"{teamName}: {goalsToBeconceded}")
+
+            endRoutine()
+
+        if playerUserInputInitialInt == 12:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
             nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
 
@@ -1035,7 +1235,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 12:
+        if playerUserInputInitialInt == 13:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
@@ -1106,7 +1306,7 @@ def teamsRoutine():
                 except:
                     None
 
-        if playerUserInputInitialInt == 13:
+        if playerUserInputInitialInt == 14:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
@@ -1173,7 +1373,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 14:
+        if playerUserInputInitialInt == 15:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             teamStrength = Teams.strengthHomeAndAwayByTeam()
@@ -1216,20 +1416,38 @@ def teamsRoutine():
                                     
                     awayGoals = (awayScore + homeConceed) / 2
                     homeGoals = (homeScore + awayConceed) / 2
-                                    
+    
                     awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
                     homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
+    
+                    awayRoundDiff = awayGoals - awayGoalsRounded
+                    homeRoundDiff = homeGoals - homeGoalsRounded
+
+                    homeConfidenceIndicator = ""
+                    awayConfidenceIndicator = ""
+
+                    if awayRoundDiff < 0:
+                        awayRoundDiff = -awayRoundDiff
+
+                    if homeRoundDiff < 0:
+                        homeRoundDiff = -homeRoundDiff
+
+                    if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
+                        homeConfidenceIndicator = "*"
+                        
+                    if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
+                        awayConfidenceIndicator = "*"
 
                     goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
    
                     if goalDifference >= 1:
-                        print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
+                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
 
                     elif -1 < goalDifference < 1:
-                        print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
+                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
                                     
                     elif goalDifference <= -1:
-                        print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
+                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
 
                     else:
                         print(f"Not enough back data for: {homeName} vs {awayName}")
@@ -1241,7 +1459,7 @@ def teamsRoutine():
 
             endRoutine()
                       
-        if playerUserInputInitialInt == 15:
+        if playerUserInputInitialInt == 16:
             maxGameweek = genericMethods.generateCurrentGameweek() + 1
             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
             currentGameweek = 1
@@ -1298,7 +1516,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 16:
+        if playerUserInputInitialInt == 17:
             currentGameweek = 1
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
@@ -1353,7 +1571,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 17:
+        if playerUserInputInitialInt == 18:
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
@@ -1393,7 +1611,7 @@ def teamsRoutine():
 
             endRoutine()
                     
-        if playerUserInputInitialInt == 18:
+        if playerUserInputInitialInt == 19:
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
@@ -1438,13 +1656,34 @@ def teamsRoutine():
                         awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
                         homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
 
-                        goalDifference = homeGoalsRounded - awayGoalsRounded
+                        homeConfidenceIndicator = ""
+                        awayConfidenceIndicator = ""
 
-                        if goalDifference < 0 :
-                            goalDifference = - goalDifference
-                                
-                        print(f"{homeName} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}")
+                        if awayRoundDiff < 0:
+                            awayRoundDiff = -awayRoundDiff
 
+                        if homeRoundDiff < 0:
+                            homeRoundDiff = -homeRoundDiff
+
+                        if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
+                            homeConfidenceIndicator = "*"
+                        
+                        if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
+                            awayConfidenceIndicator = "*"
+
+                        goalDifference = int(homeGoalsRounded - awayGoalsRounded)
+   
+                        if goalDifference >= 1:
+                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+
+                        elif -1 < goalDifference < 1:
+                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                                    
+                        elif goalDifference <= -1:
+                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+
+                        else:
+                            print(f"Not enough back data for: {homeName} vs {awayName}")
                     except:
                         None
 
@@ -1458,7 +1697,6 @@ def experimentalRoutine():
     print("!! PLEASE SELECT A NUMBER")
     print("-----------------------------------------------------------------------")
     print(" [1] Gather goal economy by team by week")
-    print(" [2] Goal economy by gameweek difficulty")
     print("-----------------------------------------------------------------------")
     print("")
     print("What do you want to see?")
@@ -1477,27 +1715,6 @@ def experimentalRoutine():
 
         endRoutine()
 
-    if playerUserInputInitial == 2:
-        goalEconomy = Teams.goalEconomyByTeam()
-
-        teamNames = Teams.teamIDsAsKeysAndNamesAsData()
-
-        finalGoalEconomy = dict()
-
-        for team in goalEconomy:
-            teamName = str.capitalize(teamNames[team])
-            finalGoalEconomy[teamName] = round(goalEconomy[team], 1)
-
-        orderedGoalEconomy = sorted(finalGoalEconomy.items(), key=lambda x: x[1], reverse=True)
-        cleanGoalEconomy = genericMethods.reformattedSortedTupleAsDict(orderedGoalEconomy)
-
-        print("-----------------------------------------------------")
-        print("Goal Economy by team (goals scored / shots on target)")
-        print("")
-        genericMethods.printDataClean(cleanGoalEconomy, 20, "", "%")
-
-
-        endRoutine()
 
         
 
@@ -1654,7 +1871,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.0.5.101")
+print("V.1.0.1")
 print("")
 print("==============================")
 print("")
