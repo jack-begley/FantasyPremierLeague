@@ -897,16 +897,24 @@ def playerGoalInvolvement():
 
 # Points per percentage selected
 
-def pointsPerSelectedPercentage(minimumPercentageSelected):
+def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumCost):
     playerDict = dict()
     playerNames = generatePlayerNameToIDMatching()
     currentGameweek = genericMethods.generateCurrentGameweek()
     currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
+    length = len(currentDumps['elements'])
     for gameweekData in currentDumps['elements']:
+        currentIndex = currentDumps['elements'].index(gameweekData)    
+        genericMethods.runPercentage(length, currentIndex, "Generating points per percentage selected dictionary", f"Dictionary created for all players up to £{maximumCost}M values and selected by {minimumPercentageSelected}%")
         tempDict = dict()
         playerID = gameweekData['id']
         name = playerNames[playerID].capitalize()
         points = int(gameweekData['total_points'])
+        history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
+        numberOfGames = len(history)
+        for record in history:
+            if int(record['round']) == (currentGameweek - 1):
+                value = record['value'] / 10
         selected = float(gameweekData['selected_by_percent'])
         if selected < minimumPercentageSelected:
             pointsPerPercentage = 0 
@@ -916,6 +924,14 @@ def pointsPerSelectedPercentage(minimumPercentageSelected):
         tempDict["pointsPerPercent"] = pointsPerPercentage
         tempDict["points"] = points
         tempDict["selected"] = selected
-        playerDict[playerID] = tempDict
+        tempDict["value"] = value
+        tempDict["goals"] = int(gameweekData['goals_scored'])
+        tempDict["assists"] = int(gameweekData['assists'])
+        tempDict["bonus"] = int(gameweekData['bonus'])
+        tempDict["ict"] = float(gameweekData['ict_index'])
+        tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
+        tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
+        if minimumCost <= value <= maximumCost:
+            playerDict[playerID] = tempDict
 
     return playerDict
