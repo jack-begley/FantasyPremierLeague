@@ -9,6 +9,7 @@ import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
 import operator
+import prettytable
 from prettytable import PrettyTable
 
 """
@@ -609,11 +610,10 @@ def playerRoutine():
             print("")
             print(f"Involvement - Top {n} Players by % involvement in total goals scored:")
             print("")
-            t = PrettyTable(['Name', 'Involvement (%)', 'Team Goals', 'Goals', 'Assists'])
+            t = PrettyTable(['Name', 'Involvement (%)', 'Team Goals', 'Goals', 'Assists'], hrules = prettytable.ALL)
             for player in topPlayers:
                 t.add_row(playerInfo[player])
             print(t)
-            print("-----------------------------------")
             print("")
 
             endRoutine()
@@ -621,17 +621,30 @@ def playerRoutine():
         # Differentials - points per percentage selected
         elif playerUserInputInitialInt == 11:
             n = int(input("How many players would you like to see? > "))
+            highestValue = int(input("What is the HIGHEST VALUE you want to include? > "))
+            lowestValue = int(input("What is the LOWEST VALUE you want to include? > "))
             minPercentage = int(input("What is the LOWEST PERCENTAGE SELECTED you want to include? > "))
-            playerDifferentials = playerData.pointsPerSelectedPercentage(minPercentage)
+            #TODO: Make the time for this method representative
+            playerDifferentials = playerData.pointsPerSelectedPercentage(minPercentage, highestValue, lowestValue)
             playerInfo = dict()
             playerDict = dict()
+            length = len(playerDifferentials)
             for player in playerDifferentials:
+                currentIndex = list(playerDifferentials.keys()).index(player)
+                genericMethods.runPercentage(length, currentIndex, f"Picking top players by differential", f"Top {n} players under £{highestValue}M in value")
                 playerList = list()
                 playerName = playerDifferentials[player]['name']
                 playerList.append(playerName)
                 playerList.append(round(playerDifferentials[player]['pointsPerPercent'], 1))
                 playerList.append(playerDifferentials[player]['points'])
                 playerList.append(str(playerDifferentials[player]['selected'])+'%')
+                playerList.append('£'+str(playerDifferentials[player]['value'])+'M')
+                playerList.append(playerDifferentials[player]['goals'])
+                playerList.append(playerDifferentials[player]['assists'])
+                playerList.append(playerDifferentials[player]['bonus'])
+                playerList.append(playerDifferentials[player]['ict'])
+                playerList.append(str(round(playerDifferentials[player]['minutesPercentage'],1))+'%')
+                playerList.append(playerDifferentials[player]['pointsPerGame'])
                 playerDict[playerName] = playerDifferentials[player]['pointsPerPercent']
                 playerInfo[playerName] = playerList
 
@@ -643,11 +656,10 @@ def playerRoutine():
             print("")
             print(f"Differentials - Top {n} Players for points per percentage where at least {minPercentage}% of people selected them:")
             print("")
-            t = PrettyTable(['Name', 'Points per percent selected', 'Points scored', '% Selected'])
+            t = PrettyTable(['Name', 'Points per percent selected', 'Points scored', '% Selected', f'Value £{lowestValue} to {highestValue}M', 'Goals scored', 'Assists', 'Bonus Points', 'ICT Index', 'Total game time played (%)', 'Points Per Game'], hrules = prettytable.ALL)
             for player in topPlayers:
                 t.add_row(playerInfo[player])
             print(t)
-            print("-----------------------------------")
             print("")
 
             endRoutine()
@@ -712,11 +724,10 @@ def playerRoutine():
             print("")
             print(f"Consistency - Top {n} Players for consistency of scoring points for the top {x} performers:")
             print("")
-            t = PrettyTable(['Name', '% deviation from average', 'Average', 'Total',  'Max', 'Min'])
+            t = PrettyTable(['Name', '% deviation from average', 'Average', 'Total',  'Max', 'Min'], hrules = prettytable.ALL)
             for player in topPlayers:
                 t.add_row(playerInfo[player])
             print(t)
-            print("-----------------------------------")
             print("")
 
             endRoutine()
