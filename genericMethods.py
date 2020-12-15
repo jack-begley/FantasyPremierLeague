@@ -283,7 +283,7 @@ def indexValue(valueToIndex, max, min):
 
 # Returns the index value of the input
 def percentageDifferenceToAverage(value, average):
-    difference = (value) / (average)
+    difference = (value) / (average) if average != 0 else 0
     if difference >= 1:
         difference = difference - 1
     return difference

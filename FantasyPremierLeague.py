@@ -448,7 +448,7 @@ def playerRoutine():
             gameweek = genericMethods.generateCurrentGameweek()
             currentGameweek = int(input(f"Which gameweek do you want to see data for (current gameweek = {gameweek}? > "))
             print("")
-            numberOfGameweeks = int(input("How many players would you like to see? > "))
+            n = int(input("How many players would you like to see? > "))
             playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
             factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
             factorByTeam = Teams.teamFactor(currentGameweek)
@@ -467,7 +467,7 @@ def playerRoutine():
                         None
             playersSorted = sorted(playerDict.items(), key=lambda x: x[1], reverse=True)
             playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
-            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:numberOfGameweeks]}
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:n]}
             
             print(f"Top {n} Players that are most likely to be top performers overall (% contribution to total league peformance next week):")
             print("")
@@ -793,7 +793,8 @@ def playerRoutine():
                 
         elif playerUserInputInitialInt == 101:
             playerList = detailedStats.getAllPlayers()
-            players = detailedStats.getPlayerIDsWithNamesAsKeys(playerList)
+            players = detailedStats.getPlayerStats(playerList)
+            players = detailedStats.getPlayerStatsDetailed(playerList)
             print()
 
 
@@ -845,6 +846,9 @@ def teamsRoutine():
     print(" [19] Weighted predictions for historical gameweeks based on goals")
     print("")
     print("------------------------------------------------------------------------")
+    print("")
+    print(" [99] Weighted predictions for historical gameweeks based on goals - Outliers Removed")
+    print(" [100] Weighted predictions for historical gameweeks based on goals - Outliers and Inliers weighted (70% and 30% respectively)")
     print("")
     print("What would you like to see?:")
     playerUserInputInitial = input(">")
@@ -1220,7 +1224,7 @@ def teamsRoutine():
 
         if playerUserInputInitialInt == 11:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
-            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek, True)
 
             print("")
             print(f"Estimate for goals conceded GW{nextGameweek}")
@@ -1234,7 +1238,7 @@ def teamsRoutine():
 
         if playerUserInputInitialInt == 12:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
-            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
 
             print("")
             print(f"Estimate for goals scored GW{nextGameweek}")
@@ -1249,8 +1253,8 @@ def teamsRoutine():
         if playerUserInputInitialInt == 13:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
-            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
-            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek, True)
             fixturesForGameweek = Teams.fixturesForGameweekByTeamID(nextGameweek)
             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
 
@@ -1320,8 +1324,8 @@ def teamsRoutine():
         if playerUserInputInitialInt == 14:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
-            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
-            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek, True)
             fixturesForGameweek = Teams.fixturesForGameweekByTeamID(nextGameweek)
             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
 
@@ -1387,13 +1391,26 @@ def teamsRoutine():
         if playerUserInputInitialInt == 15:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
+            try:
+                gameweekOfInterest = int(input(f"> What gameweek are you interested in? (next gameweek = {nextGameweek}) >> "))
+            except:
+                gameweekOfInterest = nextGameweek
+                print(f"No gameweek specified: Running GW {nextGameweek}")
+
+            decimalPlaces = int(input("> How many decimal places do you want the goals to? (0 = whole numbers) >> "))
+            accountForInjuries = input("> Account for injuries? [Y/N] >> ")
+
             teamStrength = Teams.strengthHomeAndAwayByTeam()
-            nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(nextGameweek)
-            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek)
-            fixturesForGameweek = Teams.fixturesForGameweekByTeamID(nextGameweek)
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(gameweekOfInterest, True)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(gameweekOfInterest, True)
+            fixturesForGameweek = Teams.fixturesForGameweekByTeamID(gameweekOfInterest)
             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
-                        
-            print(f"Estimated results based on past performance for GW{nextGameweek}:")
+            
+            # POTENTIALLY REMOVE
+            teamStrengthPercentage = Teams.teamIDsAsKeysAndPercentageStrengthAsData(gameweekOfInterest)
+                                    
+            print(f"Estimated results based on past performance for GW{gameweekOfInterest}:")
+            
 
             for teamId in teamIdList:
                 try:
@@ -1406,16 +1423,28 @@ def teamsRoutine():
                     homeTeamHomeStrength = homeTeamStrength['homeOverall']
                     homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
                     homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
+                    homeStrengthPercentage = teamStrengthPercentage[home]
 
-                    homeTeamAttackFactor = homeTeamHomeStrengthAttack / homeTeamHomeStrength
-                    homeTeamDefenceFactor = homeTeamHomeStrengthDefence / homeTeamHomeStrength
-                                
+                    if accountForInjuries in ["Y", "y"]:
+                        homeTeamAttackFactor = (homeTeamHomeStrengthAttack / homeTeamHomeStrength) * homeStrengthPercentage
+                        homeTeamDefenceFactor = (homeTeamHomeStrengthDefence / homeTeamHomeStrength) * homeStrengthPercentage
+
+                    else:
+                        homeTeamAttackFactor = (homeTeamHomeStrengthAttack / homeTeamHomeStrength)
+                        homeTeamDefenceFactor = (homeTeamHomeStrengthDefence / homeTeamHomeStrength)
+
                     awayTeamAwayStrength = awayTeamStrength['awayOverall']
                     awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
                     awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
+                    awayStrengthPercentage = teamStrengthPercentage[away]
 
-                    awayTeamAttackFactor = awayTeamAwayStrengthAttack / awayTeamAwayStrength
-                    awayTeamDefenceFactor = awayTeamAwayStrengthDefence / awayTeamAwayStrength
+                    if accountForInjuries in ["Y", "y"]:
+                        awayTeamAttackFactor = (awayTeamAwayStrengthAttack / awayTeamAwayStrength) * awayStrengthPercentage
+                        awayTeamDefenceFactor = (awayTeamAwayStrengthDefence / awayTeamAwayStrength) * awayStrengthPercentage
+
+                    else:
+                        awayTeamAttackFactor = (awayTeamAwayStrengthAttack / awayTeamAwayStrength)
+                        awayTeamDefenceFactor = (awayTeamAwayStrengthDefence / awayTeamAwayStrength)
 
                     homeName = teamIdList[home].capitalize()
                     homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor
@@ -1428,14 +1457,18 @@ def teamsRoutine():
                     awayGoals = (awayScore + homeConceed) / 2
                     homeGoals = (homeScore + awayConceed) / 2
     
-                    awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
-                    homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
-    
+                    awayGoalsRounded = float(round((awayScore + homeConceed) / 2, decimalPlaces))
+                    homeGoalsRounded = float(round((homeScore + awayConceed) / 2, decimalPlaces))
+                    
+                    if decimalPlaces == 0:
+                        awayGoalsRounded = int(awayGoalsRounded)
+                        homeGoalsRounded = int(homeGoalsRounded)
+
                     awayRoundDiff = awayGoals - awayGoalsRounded
                     homeRoundDiff = homeGoals - homeGoalsRounded
 
-                    homeConfidenceIndicator = ""
-                    awayConfidenceIndicator = ""
+                    homeConfidencePrint = ""
+                    awayConfidencePrint = ""
 
                     if awayRoundDiff < 0:
                         awayRoundDiff = -awayRoundDiff
@@ -1444,21 +1477,21 @@ def teamsRoutine():
                         homeRoundDiff = -homeRoundDiff
 
                     if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
-                        homeConfidenceIndicator = "*"
+                        homeConfidencePrint = "*"
                         
                     if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
-                        awayConfidenceIndicator = "*"
+                        awayConfidencePrint = "*"
 
                     goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
    
                     if goalDifference >= 1:
-                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
 
                     elif -1 < goalDifference < 1:
-                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
                                     
                     elif goalDifference <= -1:
-                        print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
 
                     else:
                         print(f"Not enough back data for: {homeName} vs {awayName}")
@@ -1531,7 +1564,7 @@ def teamsRoutine():
             currentGameweek = 1
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
-                nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek)
+                nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(currentGameweek)
                 nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek)
                 fixturesForGameweek = Teams.fixturesForGameweekByTeamID(currentGameweek)
                 teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1586,7 +1619,7 @@ def teamsRoutine():
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
-                nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek - 1)
+                nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(currentGameweek - 1)
                 nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek - 1)
                 fixturesForGameweek = Teams.fixturesForGameweekByTeamID(currentGameweek)
                 teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1626,8 +1659,8 @@ def teamsRoutine():
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
-                nextGameLikelihoodtoScore =Teams. generateLikelihoodToScoreByTeamForNextGame(currentGameweek - 1)
-                nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek - 1)
+                nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(currentGameweek)
+                nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(currentGameweek)
                 fixturesForGameweek = Teams.fixturesForGameweekByTeamID(currentGameweek)
                 teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
                 teamStrength = Teams.strengthHomeAndAwayByTeam()
@@ -1638,7 +1671,7 @@ def teamsRoutine():
                     try:
                         away = fixturesForGameweek[teamId]
                         home = teamId
-                                                                
+
                         homeTeamStrength = teamStrength[home]
                         awayTeamStrength = teamStrength[away]
                                 
@@ -1663,12 +1696,18 @@ def teamsRoutine():
                         awayName = teamIdList[away].capitalize()
                         awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamAttackFactor
                         awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamDefenceFactor
-                                                                 
-                        awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0 ))
-                        homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0 ))
+                                    
+                        awayGoals = (awayScore + homeConceed) / 2
+                        homeGoals = (homeScore + awayConceed) / 2
+    
+                        awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
+                        homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
+    
+                        awayRoundDiff = awayGoals - awayGoalsRounded
+                        homeRoundDiff = homeGoals - homeGoalsRounded
 
-                        homeConfidenceIndicator = ""
-                        awayConfidenceIndicator = ""
+                        homeConfidencePrint = ""
+                        awayConfidencePrint = ""
 
                         if awayRoundDiff < 0:
                             awayRoundDiff = -awayRoundDiff
@@ -1677,30 +1716,315 @@ def teamsRoutine():
                             homeRoundDiff = -homeRoundDiff
 
                         if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
-                            homeConfidenceIndicator = "*"
+                            homeConfidencePrint = "*"
                         
                         if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
-                            awayConfidenceIndicator = "*"
+                            awayConfidencePrint = "*"
 
-                        goalDifference = int(homeGoalsRounded - awayGoalsRounded)
+                        goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
    
                         if goalDifference >= 1:
-                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
 
                         elif -1 < goalDifference < 1:
-                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
                                     
                         elif goalDifference <= -1:
-                            print(f"{homeName}{homeConfidenceIndicator} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidenceIndicator}")
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint}")
 
                         else:
                             print(f"Not enough back data for: {homeName} vs {awayName}")
+                        
+
                     except:
                         None
 
                 currentGameweek += 1
 
             endRoutine()
+
+        if playerUserInputInitialInt == 99:
+            nextGameweek = genericMethods.generateCurrentGameweek() + 1
+
+            try:
+                gameweekOfInterest = int(input(f"> What gameweek are you interested in? (next gameweek = {nextGameweek}) >> "))
+            except:
+                gameweekOfInterest = nextGameweek
+                print(f"No gameweek specified: Running GW {nextGameweek}")
+
+            teamStrength = Teams.strengthHomeAndAwayByTeam()
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(gameweekOfInterest, False)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(gameweekOfInterest, False)
+            fixturesForGameweek = Teams.fixturesForGameweekByTeamID(gameweekOfInterest)
+            teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+                        
+            print(f"Estimated results based on past performance for GW{gameweekOfInterest}:")
+
+            for teamId in teamIdList:
+                try:
+                    away = fixturesForGameweek[teamId]
+                    home = teamId
+
+                    homeTeamStrength = teamStrength[home]
+                    awayTeamStrength = teamStrength[away]
+                                
+                    homeTeamHomeStrength = homeTeamStrength['homeOverall']
+                    homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
+                    homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
+
+                    homeTeamAttackFactor = homeTeamHomeStrengthAttack / homeTeamHomeStrength
+                    homeTeamDefenceFactor = homeTeamHomeStrengthDefence / homeTeamHomeStrength
+                                
+                    awayTeamAwayStrength = awayTeamStrength['awayOverall']
+                    awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
+                    awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
+
+                    awayTeamAttackFactor = awayTeamAwayStrengthAttack / awayTeamAwayStrength
+                    awayTeamDefenceFactor = awayTeamAwayStrengthDefence / awayTeamAwayStrength
+
+                    homeName = teamIdList[home].capitalize()
+                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor
+                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamDefenceFactor
+
+                    awayName = teamIdList[away].capitalize()
+                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamAttackFactor
+                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamDefenceFactor
+                                    
+                    awayGoals = (awayScore + homeConceed) / 2
+                    homeGoals = (homeScore + awayConceed) / 2
+    
+                    awayGoalsRounded = int(round((awayScore + homeConceed) / 2, 0))
+                    homeGoalsRounded = int(round((homeScore + awayConceed) / 2, 0))
+    
+                    awayRoundDiff = awayGoals - awayGoalsRounded
+                    homeRoundDiff = homeGoals - homeGoalsRounded
+
+                    homeConfidencePrint = ""
+                    awayConfidencePrint = ""
+
+                    if awayRoundDiff < 0:
+                        awayRoundDiff = -awayRoundDiff
+
+                    if homeRoundDiff < 0:
+                        homeRoundDiff = -homeRoundDiff
+
+                    if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
+                        homeConfidencePrint = "*"
+                        
+                    if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
+                        awayConfidencePrint = "*"
+
+                    netVariance = round(awayRoundDiff + homeRoundDiff, 2)
+
+                    goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
+   
+                    if goalDifference >= 1:
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint} >> {netVariance}")
+
+                    elif -1 < goalDifference < 1:
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint} >> {netVariance}")
+                                    
+                    elif goalDifference <= -1:
+                        print(f"{homeName}{homeConfidencePrint} {homeGoalsRounded} vs {awayGoalsRounded} {awayName}{awayConfidencePrint} >> {netVariance}")
+
+                    else:
+                        print(f"Not enough back data for: {homeName} vs {awayName}")
+                        
+
+                except:
+                    None
+
+
+            endRoutine()
+                      
+
+        if playerUserInputInitialInt == 100:
+                        
+            nextGameweek = genericMethods.generateCurrentGameweek() + 1
+
+            try:
+                gameweekOfInterest = int(input(f"> What gameweek are you interested in? (next gameweek = {nextGameweek}) >> "))
+            except:
+                gameweekOfInterest = nextGameweek
+                print(f"No gameweek specified: Running GW {nextGameweek}")
+
+            teamStrength = Teams.strengthHomeAndAwayByTeam()
+            nextGameLikelihoodtoScoreOutlier = Teams.generateLikelihoodToScoreByTeamForNextGame(gameweekOfInterest, True)
+            nextGameLikelihoodtoConceedOutlier = Teams.generateLikelihoodToConceedByTeamForNextGame(gameweekOfInterest, True)
+            nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(gameweekOfInterest, False)
+            nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(gameweekOfInterest, False)
+            fixturesForGameweek = Teams.fixturesForGameweekByTeamID(gameweekOfInterest)
+            teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
+            teamStrengthPercentage = Teams.teamIDsAsKeysAndPercentageStrengthAsData(gameweekOfInterest)
+
+            decimalPlaces = int(input("> How many decimal places do you want the goals to? (0 = whole numbers) >> "))
+            printType = int(input("Do you want all of the details [1] or ready for twitter [2]? >> (Type 1 or 2) >>"))
+
+            print(f"Estimated results based on past performance for GW{gameweekOfInterest}:")
+            for teamId in teamIdList:
+                try:
+                    away = fixturesForGameweek[teamId]
+                    home = teamId
+
+                    homeTeamStrength = teamStrength[home]
+                    awayTeamStrength = teamStrength[away]
+                                
+                    homeTeamHomeStrength = homeTeamStrength['homeOverall']
+                    homeTeamHomeStrengthAttack = homeTeamStrength['homeAttack']
+                    homeTeamHomeStrengthDefence = homeTeamStrength['homeDefence']
+                    homeStrengthPercentage = teamStrengthPercentage[home]
+
+                    homeTeamAttackFactor = (homeTeamHomeStrengthAttack / homeTeamHomeStrength)
+                    homeTeamDefenceFactor = (homeTeamHomeStrengthDefence / homeTeamHomeStrength)
+                                
+                    awayTeamAwayStrength = awayTeamStrength['awayOverall']
+                    awayTeamAwayStrengthAttack = awayTeamStrength['awayAttack']
+                    awayTeamAwayStrengthDefence = awayTeamStrength['awayDefence']
+                    awayStrengthPercentage = teamStrengthPercentage[away]
+
+                    awayTeamAttackFactor = (awayTeamAwayStrengthAttack / awayTeamAwayStrength)
+                    awayTeamDefenceFactor = (awayTeamAwayStrengthDefence / awayTeamAwayStrength)
+
+                    homeName = teamIdList[home].capitalize()
+                    homeScore = nextGameLikelihoodtoScore[homeName] * homeTeamAttackFactor
+                    homeConceed = nextGameLikelihoodtoConceed[homeName] * homeTeamDefenceFactor
+                    homeScoreOutlier = nextGameLikelihoodtoScoreOutlier[homeName] * homeTeamAttackFactor
+                    homeConceedOutlier = nextGameLikelihoodtoConceedOutlier[homeName] * homeTeamDefenceFactor
+
+                    awayName = teamIdList[away].capitalize()
+                    awayScore = nextGameLikelihoodtoScore[awayName] * awayTeamAttackFactor
+                    awayConceed = nextGameLikelihoodtoConceed[awayName] * awayTeamDefenceFactor
+                    awayScoreOutlier = nextGameLikelihoodtoScoreOutlier[awayName] * awayTeamAttackFactor
+                    awayConceedOutlier = nextGameLikelihoodtoConceedOutlier[awayName] * awayTeamDefenceFactor
+
+                    # Without outliers:
+
+                    awayGoals = (awayScore + homeConceed) / 2
+                    homeGoals = (homeScore + awayConceed) / 2
+
+                    awayGoalsRounded = float(round((awayScore + homeConceed) / 2, decimalPlaces))
+                    homeGoalsRounded = float(round((homeScore + awayConceed) / 2, decimalPlaces))
+    
+                    if decimalPlaces == 0:
+                        awayGoalsRounded = int(awayGoalsRounded)
+                        homeGoalsRounded = int(homeGoalsRounded)
+
+                    awayRoundDiff = awayGoals - round(awayGoals, 0)
+                    homeRoundDiff = homeGoals - round(homeGoals, 0)
+
+                    homeConfidencePrint = ""
+                    awayConfidencePrint = ""
+
+                    if awayRoundDiff < 0:
+                        awayRoundDiff = -awayRoundDiff
+
+                    if homeRoundDiff < 0:
+                        homeRoundDiff = -homeRoundDiff
+
+                    if homeRoundDiff <= 0.25 and homeRoundDiff != 0:
+                        homeConfidencePrint = "*"
+                        
+                    if awayRoundDiff <= 0.25 and awayRoundDiff != 0:
+                        awayConfidencePrint = "*"
+
+                    netVariance = round(awayRoundDiff + homeRoundDiff, 2)
+
+                    # With outliers:
+    
+                    awayGoalsOutlier = (awayScoreOutlier + homeConceedOutlier) / 2
+                    homeGoalsOutlier = (homeScoreOutlier + awayConceedOutlier) / 2
+                    
+                    
+                    awayGoalsRoundedOutlier = float(round((awayScoreOutlier + homeConceedOutlier) / 2, decimalPlaces))
+                    homeGoalsRoundedOutlier = float(round((homeScoreOutlier + awayConceedOutlier) / 2, decimalPlaces))
+
+                    if decimalPlaces == 0:
+                        awayGoalsRoundedOutlier = int(awayGoalsRoundedOutlier)
+                        homeGoalsRoundedOutlier = int(homeGoalsRoundedOutlier)
+
+                    awayRoundDiffOutlier = awayGoalsOutlier - round(awayGoalsOutlier, 0)
+                    homeRoundDiffOutlier = homeGoalsOutlier - round(homeGoalsOutlier, 0)
+
+                    homeConfidencePrintOutlier = ""
+                    awayConfidencePrintOutlier = ""
+
+                    if awayRoundDiffOutlier < 0:
+                        awayRoundDiffOutlier = -awayRoundDiffOutlier
+
+                    if homeRoundDiffOutlier < 0:
+                        homeRoundDiffOutlier = -homeRoundDiffOutlier
+
+                    if homeRoundDiffOutlier <= 0.25 and homeRoundDiffOutlier != 0:
+                        homeConfidencePrintOutlier = "^"
+                        
+                    if awayRoundDiffOutlier <= 0.25 and awayRoundDiffOutlier != 0:
+                        awayConfidencePrintOutlier = "^"
+
+                    netVarianceOutlier = round(awayRoundDiffOutlier + homeRoundDiffOutlier, 2)
+
+                    # If variance larger
+
+                    if netVariance > netVarianceOutlier:
+                        homeGoalsPrint = homeGoalsRounded
+                        awayGoalsPrint = awayGoalsRounded
+                        homeConfidencePrint = homeConfidencePrint
+                        awayConfidencePrint = awayConfidencePrint
+                        netVariancePrint = netVariance
+                        netVarianceDelta = round(netVariance - netVarianceOutlier,2)
+                        indicator = "[X]"
+
+                    elif netVariance < netVarianceOutlier:
+                        homeGoalsPrint = homeGoalsRoundedOutlier
+                        awayGoalsPrint = awayGoalsRoundedOutlier
+                        homeConfidencePrint = homeConfidencePrintOutlier
+                        awayConfidencePrint = awayConfidencePrintOutlier
+                        netVariancePrint = netVarianceOutlier
+                        netVarianceDelta = round(netVarianceOutlier - netVariance,2)
+                        indicator = "[Z]"
+
+                    else:
+                        homeGoalsPrint = homeGoalsRounded
+                        awayGoalsPrint = awayGoalsRounded
+                        homeConfidencePrint = homeConfidencePrint
+                        awayConfidencePrint = awayConfidencePrint
+                        netVariancePrint = netVariance
+                        netVarianceDelta = round(netVariance - netVarianceOutlier,2)
+                        indicator = "[-]"
+
+                    goalDifference = int(round(homeGoals, 0) - round(awayGoals, 0))
+                    
+                    if printType == 1:
+                        if goalDifference >= 1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint} >> {netVariance} // Difference: {netVarianceDelta} - {indicator}")
+
+                        elif -1 < goalDifference < 1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint} >> {netVariance} // Difference: {netVarianceDelta} - {indicator}")
+                                    
+                        elif goalDifference <= -1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint} >> {netVariance} // Difference: {netVarianceDelta} - {indicator}")
+
+                        else:
+                            print(f"Not enough back data for: {homeName} vs {awayName}")
+
+                    else:
+                        if goalDifference >= 1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint}")
+
+                        elif -1 < goalDifference < 1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint}")
+                                    
+                        elif goalDifference <= -1:
+                            print(f"{homeName}{homeConfidencePrint} {homeGoalsPrint} vs {awayGoalsPrint} {awayName}{awayConfidencePrint}")
+
+                        else:
+                            print(f"Not enough back data for: {homeName} vs {awayName}")
+
+                except:
+                    None
+
+
+            endRoutine()
+
 
 def experimentalRoutine():
     print("-----------------------------------------------------------------------")
@@ -1882,7 +2206,7 @@ print("  |  _|     |  ___/   | |   _")
 print(" _| |_     _| |_    _ | |__/ |") 
 print("|_____|   |_____|   |________|")
 print("")
-print("V.1.0.1")
+print("V.2.0.1")
 print("")
 print("==============================")
 print("")
