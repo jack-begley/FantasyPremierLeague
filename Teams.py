@@ -206,7 +206,7 @@ def generateListOfPlayerIDsAsKeysForTeam(teamID):
 
 # A method to pull the average goals conceded by gameweek difficulty for a particular team
 
-def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
+def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek, outliersIncluded):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         maxGameweek = gameweek
@@ -216,7 +216,7 @@ def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficulty4 = list()
         difficulty5 = list()
         difficultyOfGamesWithGoalsconcededListed = dict()
-        while gameweek <= maxGameweek:
+        while gameweek < maxGameweek:
             teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
             if teamID in teamsPlayingInCurrentPeriod:
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={gameweek}')
@@ -226,12 +226,24 @@ def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
                                 if gameweekData['team_h_score'] <= 5:
                                     gameweekDifficulty = gameweekData['team_a_difficulty']
                                     if gameweekDifficulty == 2:
+                                        if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty2.append(gameweekData['team_h_score'])
                                     if gameweekDifficulty == 3:
+                                        if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty3.append(gameweekData['team_h_score'])
                                     if gameweekDifficulty == 4:
+                                        if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty4.append(gameweekData['team_h_score'])
                                     if gameweekDifficulty == 5:
+                                        if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty5.append(gameweekData['team_h_score'])
                             gameweek += 1
                         if gameweekData['team_h'] == teamID:
@@ -239,12 +251,24 @@ def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
                                 if gameweekData['team_a_score'] <= 5:
                                     gameweekDifficulty = gameweekData['team_h_difficulty']
                                     if gameweekDifficulty == 2:
+                                        if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty2.append(gameweekData['team_a_score'])
                                     if gameweekDifficulty == 3:
+                                        if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty3.append(gameweekData['team_a_score'])
                                     if gameweekDifficulty == 4:
+                                        if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty4.append(gameweekData['team_a_score'])
                                     if gameweekDifficulty == 5:
+                                        if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                            None
+                                        else:
                                             difficulty5.append(gameweekData['team_a_score'])
                             gameweek += 1
             else:
@@ -267,7 +291,7 @@ def goalsconcededByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
 
 # A method to pull the average goals scored gameweek difficulty for a particular team
 
-def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
+def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek, outliersIncluded):
         teamID = idOfTheTeamWeWantToLookAt
         urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
         maxGameweek = gameweek
@@ -277,7 +301,7 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
         difficulty4 = list()
         difficulty5 = list()
         difficultyOfGamesWithGoalsScoredListed = dict()
-        while gameweek <= maxGameweek:
+        while gameweek < maxGameweek:
             teamsPlayingInCurrentPeriod = Teams.allTeamsPlayingForAGameweek(gameweek, gameweek)
             genericMethods.runPercentage(maxGameweek,gameweek, "Gathering goals scored by difficulty", "Completed: Goals scored by difficulty")
             if teamID in teamsPlayingInCurrentPeriod:
@@ -287,24 +311,48 @@ def goalsScoredByDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
                             if gameweekData['team_a_score'] != None:
                                 gameweekDifficulty = gameweekData['team_a_difficulty']
                                 if gameweekDifficulty == 2:
+                                    if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty2.append(gameweekData['team_a_score'])
                                 if gameweekDifficulty == 3:
+                                    if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty3.append(gameweekData['team_a_score'])
                                 if gameweekDifficulty == 4:
+                                    if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty4.append(gameweekData['team_a_score'])
                                 if gameweekDifficulty == 5:
+                                    if outliersIncluded == False and gameweekData['team_a_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty5.append(gameweekData['team_a_score'])
                             gameweek += 1
                         if gameweekData['team_h'] == teamID:
                             if gameweekData['team_h_score'] != None:
                                 gameweekDifficulty = gameweekData['team_h_difficulty']
                                 if gameweekDifficulty == 2:
+                                    if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty2.append(gameweekData['team_h_score'])
                                 if gameweekDifficulty == 3:
+                                    if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty3.append(gameweekData['team_h_score'])
                                 if gameweekDifficulty == 4:
+                                    if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty4.append(gameweekData['team_h_score'])
                                 if gameweekDifficulty == 5:
+                                    if outliersIncluded == False and gameweekData['team_h_score'] >= 4:
+                                        None
+                                    else:
                                         difficulty5.append(gameweekData['team_h_score'])
                             gameweek += 1
             else:
@@ -343,7 +391,7 @@ def nextGameDifficulty(idOfTheTeamWeWantToLookAt, gameweek):
 
 # Combined method for pulling the upcoming likelihoood for a team to score for all teams
 
-def generateLikelihoodToScoreByTeamForNextGame(gameweek):
+def generateLikelihoodToScoreByTeamForNextGame(gameweek, outliersIncludedBool):
     teamIDsAndNames = Teams.teamIDsAsKeysAndNamesAsData()
     teamDifficultyReference = dict()
     nextGameDifficultyByTeam = dict()
@@ -351,7 +399,7 @@ def generateLikelihoodToScoreByTeamForNextGame(gameweek):
 
     for teamID in teamIDsAndNames:
         teamName = teamIDsAndNames[teamID]
-        teamDifficultyReference[teamID] = Teams.goalsScoredByDifficulty(teamID, gameweek)
+        teamDifficultyReference[teamID] = Teams.goalsScoredByDifficulty(teamID, gameweek, outliersIncludedBool)
         nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 
         currentIndex = list(teamIDsAndNames.keys()).index(teamID)
@@ -380,7 +428,7 @@ def generateLikelihoodToScoreByTeamForNextGame(gameweek):
 
 # Combined method for pulling the upcoming likelihoood for a team to conceed for all teams
 
-def generateLikelihoodToConceedByTeamForNextGame(gameweek):
+def generateLikelihoodToConceedByTeamForNextGame(gameweek, outliersIncludedBool):
     teamIDsAndNames = Teams.teamIDsAsKeysAndNamesAsData()
     teamDifficultyReference = dict()
     nextGameDifficultyByTeam = dict()
@@ -388,7 +436,7 @@ def generateLikelihoodToConceedByTeamForNextGame(gameweek):
 
     for teamID in teamIDsAndNames:
         teamName = teamIDsAndNames[teamID]
-        teamDifficultyReference[teamID] = Teams.goalsconcededByDifficulty(teamID, gameweek)
+        teamDifficultyReference[teamID] = Teams.goalsconcededByDifficulty(teamID, gameweek, outliersIncludedBool)
         nextGameDifficultyByTeam[teamID] = Teams.nextGameDifficulty(teamID, gameweek)
 
         currentIndex = list(teamIDsAndNames.keys()).index(teamID)
@@ -711,6 +759,62 @@ def teamInfluence(gameweekOfInterest):
 
         return teamDict
 
+# Returns the influence of each player in order for a given gameweek weighted by their average minutes on the pitch
+def weightedTeamInfluence(gameweekOfInterest):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        teams = teamIDsAsKeysAndNamesAsData()
+        maxLen = len(teams)
+        for team in teams:
+            currentLen = list(teams.keys()).index(team) + 1
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+            players = list()
+            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
+            for player in playersInTeam:
+                avgMinutes = playerData.averageMinutesPlayed(player, gameweekOfInterest)
+                percentageMinutes = avgMinutes / 90 if avgMinutes != 0 else 0
+                for gameweekData in currentDumps['elements']:
+                    if gameweekData['id'] == player:
+                        influence = float(gameweekData['influence'])
+                        influenceMinutes = influence * percentageMinutes
+                        players.append(influenceMinutes)
+                        break
+
+            teamInfluence = sum(players)
+            teamDict[team] = teamInfluence
+
+        return teamDict
+
+# TODO: Potentially merge these two methods 
+
+# Returns the influence of each player in order for a given gameweek weighted by their average minutes on the pitch, and adjusted to account for injuries
+def adjustedTeamInfluence(gameweekOfInterest):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        teams = teamIDsAsKeysAndNamesAsData()
+        maxLen = len(teams)
+        for team in teams:
+            currentLen = list(teams.keys()).index(team) + 1
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+            players = list()
+            currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
+            for player in playersInTeam:
+                avgMinutes = playerData.averageMinutesPlayed(player, gameweekOfInterest)
+                percentageMinutes = avgMinutes / 90 if avgMinutes != 0 else 0
+                for gameweekData in currentDumps['elements']:
+                    if gameweekData['id'] == player:
+                        influence = float(gameweekData['influence'])
+                        chanceOfPlaying = float(gameweekData['chance_of_playing_next_round']/100) if gameweekData['chance_of_playing_next_round'] is not None else 1
+                        influenceMinutes = influence * percentageMinutes * chanceOfPlaying
+                        players.append(influenceMinutes)
+                        break
+
+            teamInfluence = sum(players)
+            teamDict[team] = teamInfluence
+
+        return teamDict
 
 # Returns the factor of each player in order for a given gameweek
 def teamFactor(gameweekOfInterest):
@@ -731,7 +835,10 @@ def teamFactor(gameweekOfInterest):
                     playerID = gameweekData['id']
                     if player == playerID:
                         teamId = gameweekData['team']
-                        gameweekFactor = 6 - teamGamweekDifficulty[teamId][0]
+                        if isinstance(teamGamweekDifficulty[teamId][0], int) == True:
+                            gameweekFactor = 6 - int(teamGamweekDifficulty[teamId][0])
+                        else:
+                            gameweekFactor = 0
                         ict = float(gameweekData['ict_index'])
                         totalPoints = int(gameweekData['total_points'])
                         minutes = int(gameweekData['minutes'])
@@ -765,5 +872,22 @@ def totalTeamGoals():
 
         goalsScored = sum(goalsList)
         teamDict[team] = goalsScored
+
+    return teamDict
+
+
+# Returns the total goals for team
+def teamIDsAsKeysAndPercentageStrengthAsData(gameweek):
+    urlBase = 'https://fantasy.premierleague.com/api/'
+    teamDict = dict()
+    teams = teamIDsAsKeysAndNamesAsData()
+    maxLen = len(teams)
+    totalAvailableInfluence = weightedTeamInfluence(gameweek)
+    currentTeamInfluence = adjustedTeamInfluence(gameweek)
+    for team in teams:
+        currentLen = list(teams.keys()).index(team) + 1
+        genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+        percentageStrength = currentTeamInfluence[team] / totalAvailableInfluence[team]
+        teamDict[team] = percentageStrength
 
     return teamDict

@@ -719,6 +719,20 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
                   
     return currentPlayersPoints
 
+# Returns the average minutes played by a player from the start to the gameweek of interest
+def averageMinutesPlayed(playerID, gameweekOfInterest):
+    dumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
+    playerMinutes = list()
+    currentGameweek = 1
+    while currentGameweek <= gameweekOfInterest:
+        for data in dumps['history']:
+            if data["round"] == currentGameweek:
+                playerMinutes.append(data["minutes"])
+
+        currentGameweek += 1
+
+    return genericMethods.listAverage(playerMinutes)
+
 # Creates a list of ICT index over a user defined period for all players
 def generateHistoryOfICTForNGameweeks(numberOfGameweeks, route):
     players = dict()
@@ -841,7 +855,10 @@ def playerPerformanceFactor(gameweekOfInterest):
         maxLen = len(currentDumps['elements'])
         for gameweekData in currentDumps['elements']:
             teamId = gameweekData['team']
-            gameweekFactor = 6 - teamGamweekDifficulty[teamId][0]
+            if isinstance(teamGamweekDifficulty[teamId][0], int) == True:
+                gameweekFactor = 6 - int(teamGamweekDifficulty[teamId][0]) 
+            else:
+                gameweekFactor = 0
             ict = float(gameweekData['ict_index'])
             totalPoints = int(gameweekData['total_points'])
             minutes = int(gameweekData['minutes'])
