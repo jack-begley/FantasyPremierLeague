@@ -178,6 +178,7 @@ def playerRoutine():
     print(' [10] Top involvement in goals')
     print(' [11] Differentials (Points per % Selected)')
     print(' [12] Consistency (Deviation from average for top N players)')
+    print(' [13] Pick me a player')
     print("")
     print(" Data Exports: ")
     print(" [51] All player data for all gameweeks (to excel)")
@@ -679,7 +680,7 @@ def playerRoutine():
                 currentIndex = list(players).index(player)
                 genericMethods.runPercentage(length, currentIndex, f"Picking top {x} players by points", f"Top {x} Players by points have been gathered")
                 currentGameweek = genericMethods.generateCurrentGameweek()
-                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(players[player], 1, currentGameweek)
+                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(players[player], 1, currentGameweek, 100000)
                 playerName = player.capitalize()
                 playerPoints[playerName] = sum(playerPerformance)
                 playerReference[playerName] = players[player]
@@ -729,6 +730,232 @@ def playerRoutine():
                 t.add_row(playerInfo[player])
             print(t)
             print("")
+
+            endRoutine()
+
+
+        # Pick me a player - players that have the highest AND most consistent performance
+        elif playerUserInputInitialInt == 13:
+            players = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")
+            # Price
+            print("---- PRICE ------")
+            price  = float(input("How much money do you have to spend? >> "))
+            print("")
+            
+            # Position
+            print("")
+            print("---- POSITION ------")
+            print("[1] Goalkeeper")
+            print("[2] Defender")
+            print("[3] Midfielder")
+            print("[4] Striker")
+            position = int(input("What position are you interested in? (use the numbers above) >> "))
+            print("")
+            
+            # Teams to Exclude
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            print("")
+            print("---- TEAMS ------")
+            for teamId in teams:
+                team = teams[teamId].capitalize()
+                print(f'[{teamId}] = {team}')
+            teamsExclude = input("What TEAM IDS are you NOT interested in? (use the numbers above) >> ").split(",")
+            teamsExcludeClean = []
+            if teamsExclude[0] != '':
+                for team in teamsExclude:
+                    teamsExcludeClean.append(int(team))
+                teamInclude = list()
+                for teamId in teams:
+                    if teamId not in teamsExcludeClean:
+                        teamInclude.append(int(teamId))
+            if teamsExclude[0] == "":
+                teamInclude = list()
+                for teamId in teams:
+                    teamInclude.append(int(teamId))
+            print("")
+
+            # Filter the IDs
+            positionFilter = playerData.filterBootstrapStaticResults('element_type', int(position), players['elements'], '=')
+            teamFilter = playerData.filterBootstrapStaticResults('team', teamInclude, positionFilter, 'in')
+            filteredData = playerData.filterBootstrapStaticResults('now_cost', int(price*10), teamFilter, '<=')
+
+            # Set up factors
+
+            overallFactors = {
+                'Total minutes played': {
+                    'elements': ['minutes'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                'Percentage Selected by (Higher input = More selected)':{
+                    'elements': ['selected_by_percent'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                'Total points scored':{
+                    'elements': ['total_points'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                'Average points per game': {
+                    'elements': ['points_per_game'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                'ICT index': {
+                    'elements': ['ict_index'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                'Bonus points scored':{
+                    'elements': ['bonus'], 
+                    'lowIsGood': 'n', 
+                    'zeroIsNullOrNone': 'n'
+                    },
+                # TODO: Get momentum in this
+                # 'Momentum (i.e. are they getting better?)':[''],
+                'Set piece player': {
+                    'elements': ["corners_and_indirect_freekicks_order", "direct_freekicks_order", "penalties_order"], 
+                    'lowIsGood': 'y', 
+                    'zeroIsNullOrNone': 'y'
+                    }
+                }      
+
+            if position == 1:
+                positionFactors = {
+                    'Clean Sheets':{
+                        'elements': ['clean_sheets'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Assists':{
+                        'elements': ['assists'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Goals':{
+                        'elements': ['goals_scored'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Penalties saved': {
+                        'elements': ['penalties_saved'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        }
+                    }
+
+            if position in [2,3]:
+                positionFactors = {
+                    'Clean Sheets':{
+                        'elements': ['clean_sheets'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Assists':{
+                        'elements': ['assists'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Goals':{
+                        'elements': ['goals_scored'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        }
+                    }
+
+            if position == 4:
+                positionFactors = {
+                    'Assists':{
+                        'elements': ['assists'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        },
+                    'Goals':{
+                        'elements': ['goals_scored'], 
+                        'lowIsGood': 'n', 
+                        'zeroIsNullOrNone': 'n'
+                        }
+                    }
+
+            factorWeights = dict()
+            print("")
+            print("------ PERFORMANCE FACTORS -------")
+            print("Ranked out of 10, where 10 is 'Incredibly important' and 0 is 'Don't include in the analysis' how important are the following?")
+
+            for factor in overallFactors:
+                currentFactorDict = dict()
+                currentFactor = float(input(f"{factor} >> "))
+                while currentFactor > 10:
+                    print("")
+                    print("NUMBER NOT LESS THAN 10!")
+                    print("")
+                    currentFactor = float(input(f"{factor} >> "))
+                for item in overallFactors[factor]['elements']:
+                    currentFactorDict['weight'] = currentFactor / 10
+                    currentFactorDict['lowIsGood'] = overallFactors[factor]['lowIsGood']
+                    currentFactorDict['zeroIsNullOrNone'] = overallFactors[factor]['zeroIsNullOrNone']
+                factorWeights['weight'] = currentFactorDict
+
+            for factor in positionFactors:
+                currentFactorDict = dict()
+                currentFactor = float(input(f"{factor} >> "))
+                while currentFactor > 10:
+                    print("")
+                    print("NUMBER NOT LESS THAN 10!")
+                    print("")
+                    currentFactor = float(input(f"{factor} >> "))
+                for item in positionFactors[factor]['elements']:
+                    currentFactorDict['weight'] = currentFactor / 10
+                    currentFactorDict['lowIsGood'] = positionFactors[factor]['lowIsGood']
+                    currentFactorDict['zeroIsNullOrNone'] = positionFactors[factor]['zeroIsNullOrNone']
+                factorWeights['weight'] = currentFactorDict
+
+            allData = genericMethods.allDataAllPlayersByElementId()
+            indexDict = dict()
+            
+            maxValues = playerData.calculateMaxNumberInArray(allData)
+            minValues = playerData.calculateMinNumberInArray(allData)
+
+            playerList = dict()
+
+            keys = factorWeights.keys()
+
+            for player in filteredData:
+                playerResults = dict()
+                for element in filteredData[player]:
+                    if element in keys:
+                        max = maxValues[element]
+                        min = minValues[element]
+                        if factorWeights[element]['zeroIsNullOrNone'] == 'y' and min == 0.0:
+                            min = 1.
+                        factor = factorWeights[element]
+                        data = genericMethods.parseFloat(filteredData[player][element])
+                        if factorWeights[element]['lowIsGood'] == 'y':
+                            index = genericMethods.indexValue(data, min, max) * factor
+                        else:
+                            index = genericMethods.indexValue(data, max, min) * factor
+                        playerResults[element] = index
+
+                finalResult = genericMethods.dictAverage(playerResults)
+                playerList[player] = finalResult
+            
+            playersSorted = sorted(playerList.items(), key=lambda x: x[1], reverse=True)
+            playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            playersReady = {k: playersPrepared[k] for k in list(playersPrepared)[:5]}
+            
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
+
+            for player in playersReady:
+                position = list(playersPrepared).index(player) + 1
+                playerSurname = str.lower(playerNames[player])
+                print("")
+                print(f"---------- PLAYER RANKED NO. {position} ----------")
+                print("")
+                gameweekSummary.playerInfoBySurname(playerSurname)
+                print("")
+                print("---------------------------------------------------")
+                print("")
 
             endRoutine()
 
@@ -1139,6 +1366,9 @@ def teamsRoutine():
             print("How many gameweeks do you want to see?")
             print("")
             userInput = int(input("> "))
+            print("What is the max value you want to see?")
+            print("")
+            maxValue = float(input("> "))
             print("-----------------------------------------------------------------------------------------------")
             print("Initialising method...")
             nowGameweek = genericMethods.generateCurrentGameweek()
@@ -1162,7 +1392,7 @@ def teamsRoutine():
 
             length = len(playerIDs) - 1
             for playerID in playerIDs:
-                playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek)
+                playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, currentGameweek, nowGameweek, maxValue)
                 sumOfPlayerScores[playerID] = sum(playerDataList)
                 allGameweekData[playerID] = playerDataList
 
