@@ -91,6 +91,30 @@ def generatePlayerIDToSurnameMatching():
 
     return playerIDMatchList
 
+# Create player id as key and associated surname as the result
+def generatePlayerIDAsKeySurnameAsResult():
+    # Initialise the arrays outside the loop so that they cannot be overriden
+    playerIDMatchList = dict()
+    gameweekSummarySub = "bootstrap-static/"
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
+
+    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        # Only run the below part if "y" is in the format of a dictionary (a list of data)
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            secondName = formattedY['second_name']
+            id = formattedY['id']
+            playerIDMatchList[id] = secondName
+
+    return playerIDMatchList
+
+
+
+
+
 # Create player id list (and associated surname as the key)
 def generatePlayerIDToFullNameMatching():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -183,6 +207,30 @@ def generateIDAsKeyTeamIdAsValue():
 def matchUserInputToList(userInput, listToMatchInputTo):
     result = listToMatchInputTo[userInput]
     return result
+
+# Create a filtered list where the arguments are passed in as a dictionary
+def filterBootstrapStaticResults(filterField, filterValue, dictToFilter, operator):
+    returnDict = dict()
+    length = len(dictToFilter) - 1
+    for player in dictToFilter:
+        currentIndex = list(dictToFilter).index(player)
+        genericMethods.runPercentage(length, currentIndex, "Filtering List", "Player list filtered")
+        if isinstance(dictToFilter, list):
+            if isinstance(filterValue, str) == True:
+                if player[filterField] == filterValue:
+                    returnDict[player['id']] = player
+            else:
+                    if (operator == '<' and player[filterField] < filterValue) or (operator == '=' and player[filterField] == filterValue) or (operator == '>' and player[filterField] > filterValue) or (operator == '>=' and player[filterField] >= filterValue) or (operator == '<=' and player[filterField] <= filterValue) or (operator == 'in' and player[filterField] in filterValue):
+                        returnDict[player['id']] = player
+        else:
+            if isinstance(filterValue, str) == True:
+                if dictToFilter[player][filterField] == filterValue:
+                    returnDict[player] = dictToFilter[player]
+            else:
+                    if (operator == '<' and dictToFilter[player][filterField] < filterValue) or (operator == '=' and dictToFilter[player][filterField] == filterValue) or (operator == '>' and dictToFilter[player][filterField] > filterValue) or (operator == '>=' and dictToFilter[player][filterField] >= filterValue) or (operator == '<=' and dictToFilter[player][filterField] <= filterValue) or (operator == 'in' and dictToFilter[player][filterField] in filterValue):
+                        returnDict[player] = dictToFilter[player]
+
+    return returnDict
 
 # Create player first & last name list (and associated dictionary)
 def gatherHistoricalPlayerData():
@@ -702,13 +750,13 @@ def generateListOfPointsPerPoundPerPlayerPerPosition():
     return pointsByPosition
 
 # Creates a list of points for a given player for a given range of weeks
-def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek):
+def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek, maxValue):
     currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
     currentPlayersPoints = list()
     currentGameweek = gameweekOfInterest
     previousGameweek = currentGameweek
     for data in currentDumps['history']:
-        if gameweekOfInterest <= currentGameweek <= maxGameweek:
+        if gameweekOfInterest <= currentGameweek <= maxGameweek and float(data['value']) <= maxValue * 10:
             if data['round'] == currentGameweek + 1:
                 currentPlayersPoints.append(0)
                 currentGameweek += 1
