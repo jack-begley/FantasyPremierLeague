@@ -177,7 +177,7 @@ def indexDataInADictionary(listOfDataToIndex, listOfCorrespondingMaxValues, list
                         value = float(currentPlayerDataToIterate[secondaryKey])
                         max = float(listOfCorrespondingMaxValues[secondaryKey])
                         min = float(listOfCorrespondingMinValues[secondaryKey])
-                        indexedValue = indexValue(value, max, min)
+                        indexedValue = indexValue(value, max, min, 'n')
                     except:
                         indexedValue = 0.0
                 indexedValues[secondaryKey] = indexedValue
@@ -288,8 +288,11 @@ def dictAverage(dict):
     return sum(dict.values())/len(dict)
 
 # Returns the index value of the input
-def indexValue(valueToIndex, max, min):
-    return ((valueToIndex - min) / (max - min))*100
+def indexValue(valueToIndex, max, min, lowIsGood):
+    if lowIsGood == 'y':
+        return ((max - valueToIndex) / (max - min))*100
+    else:
+        return ((valueToIndex - min) / (max - min))*100
 
 # Returns the index value of the input
 def percentageDifferenceToAverage(value, average):

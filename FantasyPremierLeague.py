@@ -787,10 +787,10 @@ def playerRoutine():
                     'lowIsGood': 'n', 
                     'zeroIsNullOrNone': 'n'
                     },
-                'Percentage Selected by (Higher input = More selected)':{
+                'Percentage Selected by (Higher input = Less selected)':{
                     'elements': ['selected_by_percent'], 
-                    'lowIsGood': 'n', 
-                    'zeroIsNullOrNone': 'n'
+                    'lowIsGood': 'y', 
+                    'zeroIsNullOrNone': 'y'
                     },
                 'Total points scored':{
                     'elements': ['total_points'], 
@@ -884,7 +884,6 @@ def playerRoutine():
             print("Ranked out of 10, where 10 is 'Incredibly important' and 0 is 'Don't include in the analysis' how important are the following?")
 
             for factor in overallFactors:
-                currentFactorDict = dict()
                 currentFactor = float(input(f"{factor} >> "))
                 while currentFactor > 10:
                     print("")
@@ -892,13 +891,13 @@ def playerRoutine():
                     print("")
                     currentFactor = float(input(f"{factor} >> "))
                 for item in overallFactors[factor]['elements']:
+                    currentFactorDict = dict()
                     currentFactorDict['weight'] = currentFactor / 10
                     currentFactorDict['lowIsGood'] = overallFactors[factor]['lowIsGood']
                     currentFactorDict['zeroIsNullOrNone'] = overallFactors[factor]['zeroIsNullOrNone']
-                factorWeights['weight'] = currentFactorDict
+                    factorWeights[item] = currentFactorDict
 
             for factor in positionFactors:
-                currentFactorDict = dict()
                 currentFactor = float(input(f"{factor} >> "))
                 while currentFactor > 10:
                     print("")
@@ -906,10 +905,11 @@ def playerRoutine():
                     print("")
                     currentFactor = float(input(f"{factor} >> "))
                 for item in positionFactors[factor]['elements']:
+                    currentFactorDict = dict()
                     currentFactorDict['weight'] = currentFactor / 10
                     currentFactorDict['lowIsGood'] = positionFactors[factor]['lowIsGood']
                     currentFactorDict['zeroIsNullOrNone'] = positionFactors[factor]['zeroIsNullOrNone']
-                factorWeights['weight'] = currentFactorDict
+                    factorWeights[item] = currentFactorDict
 
             allData = genericMethods.allDataAllPlayersByElementId()
             indexDict = dict()
@@ -929,12 +929,12 @@ def playerRoutine():
                         min = minValues[element]
                         if factorWeights[element]['zeroIsNullOrNone'] == 'y' and min == 0.0:
                             min = 1.
-                        factor = factorWeights[element]
+                        factor = factorWeights[element]['weight']
                         data = genericMethods.parseFloat(filteredData[player][element])
-                        if factorWeights[element]['lowIsGood'] == 'y':
-                            index = genericMethods.indexValue(data, min, max) * factor
+                        if factorWeights[element]['zeroIsNullOrNone'] == 'y' and data == 0.0:
+                            index = 0.0
                         else:
-                            index = genericMethods.indexValue(data, max, min) * factor
+                            index = genericMethods.indexValue(data, max, min, factorWeights[element]['lowIsGood']) * factor
                         playerResults[element] = index
 
                 finalResult = genericMethods.dictAverage(playerResults)
@@ -948,11 +948,10 @@ def playerRoutine():
 
             for player in playersReady:
                 position = list(playersPrepared).index(player) + 1
-                playerSurname = str.lower(playerNames[player])
                 print("")
                 print(f"---------- PLAYER RANKED NO. {position} ----------")
                 print("")
-                gameweekSummary.playerInfoBySurname(playerSurname)
+                gameweekSummary.playerInfoById(player)
                 print("")
                 print("---------------------------------------------------")
                 print("")
