@@ -206,6 +206,61 @@ def playerInfoBySurname(playerSurname):
         playerSurname = str.lower(input("Try again:"))
         gameweekSummary.playerInfoBySurname(playerSurname)
 
+# Getting the information of a player based on their Id
+def playerInfoById(playerId):
+
+    gameweekSummarySub = "bootstrap-static/"
+
+    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryJSON = requests.get(url)
+    gameweekSummaryData = gameweekSummaryJSON.json()
+    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
+    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+
+    gameweekNumber = genericMethods.generateCurrentGameweek()
+
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        playerInApi = False
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            id = formattedY['id']
+
+            #Generate a list for the headers
+            if id == playerId:
+                
+                # Create format for printing the title
+                firstName = formattedY["first_name"]
+                secondName = formattedY["second_name"]
+                gameweekSummaryTitle = f"/ Player profile: {firstName} {secondName}"
+                underline = "-" * len(gameweekSummaryTitle)
+
+                # Print the data with the title
+                
+                # TODO: Add in other metrics including ones we want to calculate
+                
+                print("")
+                print(gameweekSummaryTitle)
+                print("")
+                print("Selected %: " + str(formattedY["selected_by_percent"]) + "%")
+                print("Form: " + str(formattedY["form"]))
+                print("Avg. minutes played: " + str(round((formattedY["minutes"] / gameweekNumber), 0)))
+                print("Influence: " + str(formattedY["influence"]))
+                print("")
+                print("/ Points:")
+                print("")
+                print("Total points: " + str(formattedY["total_points"]))
+                print("")
+                print("Goals scored: " + str(formattedY["goals_scored"]))
+                print("Assists: " + str(formattedY["assists"]))
+                print("Red cards: " + str(formattedY["red_cards"]))
+                print("Yellow cards: " + str(formattedY["yellow_cards"]))
+                print("Bonus points: " + str(formattedY["bonus"]))
+                print("")
+                print("Points per game: " + str(formattedY["points_per_game"]))
+                break
+
 # Generates a list of player ID's and the associated player name as the key
 def generatePlayerIDs():
     # Initialise the arrays outside the loop so that they cannot be overriden
