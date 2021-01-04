@@ -207,7 +207,7 @@ def playerInfoBySurname(playerSurname):
         gameweekSummary.playerInfoBySurname(playerSurname)
 
 # Getting the information of a player based on their Id
-def playerInfoById(playerId):
+def playerInfoById(playerId, position):
 
     gameweekSummarySub = "bootstrap-static/"
 
@@ -240,25 +240,67 @@ def playerInfoById(playerId):
                 
                 # TODO: Add in other metrics including ones we want to calculate
                 
+                performanceStatistics = list()
+
+                if position == 1:
+                    performanceStatistics.append("Clean sheets: " + str(formattedY["clean_sheets"]))
+                    performanceStatistics.append("Penalties saved: " + str(formattedY["penalties_saved"]))
+                    performanceStatistics.append("Total saves: " + str(formattedY["saves"]))
+                    performanceStatistics.append("Total goals conceded: " + str(formattedY["goals_conceded"]))
+
+                if position in [2,3]:
+                    performanceStatistics.append("Clean sheets: " + str(formattedY["clean_sheets"]))
+                    performanceStatistics.append("Goals: " + str(formattedY["goals_scored"]))
+                    performanceStatistics.append("Assists: " + str(formattedY["assists"]))
+                    performanceStatistics.append("Corners and indirect free kick order rank: " + str(formattedY["corners_and_indirect_freekicks_order"]))
+                    performanceStatistics.append("Direct free kick order rank: " + str(formattedY["direct_freekicks_order"]))
+                    performanceStatistics.append("Penalty order rank: " + str(formattedY["penalties_order"]))
+                    performanceStatistics.append("Total goals conceded: " + str(formattedY["goals_conceded"]))
+
+                if position == 4:
+                    performanceStatistics.append("Goals: " + str(formattedY["goals_scored"]))
+                    performanceStatistics.append("Assists: " + str(formattedY["assists"]))
+                    performanceStatistics.append("Corners and indirect free kick order rank: " + str(formattedY["corners_and_indirect_freekicks_order"]))
+                    performanceStatistics.append("Direct free kick order rank: " + str(formattedY["direct_freekicks_order"]))
+                    performanceStatistics.append("Penalty order rank: " + str(formattedY["penalties_order"]))
+
+                performanceStatistics.append("Red cards: " + str(formattedY["red_cards"]))
+                performanceStatistics.append("Yellow cards: " + str(formattedY["yellow_cards"]))
+                performanceStatistics.append("Bonus points: " + str(formattedY["bonus"]))
+
+                teams = Teams.teamIDsAsKeysAndNamesAsData()
+
                 print("")
                 print(gameweekSummaryTitle)
                 print("")
-                print("Selected %: " + str(formattedY["selected_by_percent"]) + "%")
+                print("/ Background:")
+                print("")
+                print("Value (£): " + "£" + str(formattedY["now_cost"]/10) + "M")
+                print("Team: " + str(teams[formattedY["team"]]).capitalize())
+                print("")
+                print("Selected (%): " + str(formattedY["selected_by_percent"]) + "%")
                 print("Form: " + str(formattedY["form"]))
+                print("No. times in dreamteam: " + str(round((formattedY["dreamteam_count"]), 0)))
                 print("Avg. minutes played: " + str(round((formattedY["minutes"] / gameweekNumber), 0)))
-                print("Influence: " + str(formattedY["influence"]))
+                print("ICT Index: " + str(formattedY["ict_index"]))
+                print("ICT Rank overall: " + str(formattedY["ict_index_rank"]))
+                print("ICT for position: " + str(formattedY["ict_index_rank_type"]))
                 print("")
                 print("/ Points:")
                 print("")
                 print("Total points: " + str(formattedY["total_points"]))
                 print("")
-                print("Goals scored: " + str(formattedY["goals_scored"]))
-                print("Assists: " + str(formattedY["assists"]))
-                print("Red cards: " + str(formattedY["red_cards"]))
-                print("Yellow cards: " + str(formattedY["yellow_cards"]))
-                print("Bonus points: " + str(formattedY["bonus"]))
+                for stat in performanceStatistics:
+                    print(stat)
                 print("")
                 print("Points per game: " + str(formattedY["points_per_game"]))
+                print("")
+                print("/ Expected points:")
+                print("")
+                print("Expected point last week: " + str(formattedY["ep_next"]))
+                print("Expected points this week: " + str(formattedY["ep_this"]))
+                print("")
+
                 break
 
 # Generates a list of player ID's and the associated player name as the key
@@ -388,3 +430,40 @@ def generateDataForGameWeek(gameweekNumber):
                 currentList = dict()
 
     return elementsList
+
+
+# Sums all data for a given gameweek range: 
+def generateSumDataForGameWeekRange(startGameweek, endGameweek, playerIDs, fieldsOfInterest):
+    # create url's for the current player and extract data from the "History" file where the game week is the current game week
+    length = len(playerIDs) - 1
+    allPlayerData = dict()
+    # Gather the player data
+    allData = playerData.formatPlayerDataForGameweekRange(startGameweek, endGameweek, playerIDs)
+    gwRange = list()
+    for playerID in playerIDs:
+        interestingWeek = playerData.playedAGameweekOfInterest(startGameweek, endGameweek, playerID)
+        if interestingWeek != False:
+            currentIndex = list(playerIDs).index(playerID)
+            sumFields = dict()
+            n = 1
+            genericMethods.runPercentage(length, currentIndex, f"Gather data for player {currentIndex} of {length}", f"Data for all players has been gathered")
+            for field in fieldsOfInterest:
+                fieldList = list()
+                if field in allData[playerID][interestingWeek]:
+                    currentGameweek = startGameweek
+                    while currentGameweek <= endGameweek:
+                        try:
+                            fieldList.append(float(allData[playerID][currentGameweek][field]))
+                        except:
+                            fieldList.append(0.0)
+                        currentGameweek += 1
+                    
+                sumValue = sum(fieldList)
+                sumFields[field] = sumValue
+
+            allPlayerData[playerID] = sumFields
+
+        else: 
+            break 
+
+    return  allPlayerData

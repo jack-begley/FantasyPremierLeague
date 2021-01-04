@@ -101,8 +101,6 @@ def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
                 difficultyOfUpcomingGamesForTeam.append('-')
                 currentGameweek += 1
         
-            genericMethods.runPercentage(endGameweek, currentGameweek, f"Gathering difficulty for {teamName} for gameweek {currentGameweek} of {endGameweek}", f"All gameweek difficulty gathered and stored successfully for {teamName}")
-        
         teams[teamID] = difficultyOfUpcomingGamesForTeam
 
     return teams
@@ -161,6 +159,7 @@ def upcomingGameDifficultyListed(numberOfGameweeksToPullDataFor, idOfTheTeamWeWa
                             currentGameweek += 1
                             break
             else:
+                difficultyOfUpcomingGamesForTeam.append('-')
                 currentGameweek += 1
 
         return difficultyOfUpcomingGamesForTeam
