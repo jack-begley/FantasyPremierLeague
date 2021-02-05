@@ -30,6 +30,14 @@ import detailedStats
 from datetime import date
 today = date.today()
 
+def gameweeksPlayed(playerID):
+    allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
+    gameweeksPlayed = list()
+    for data in allPlayerDataReadable['history']:
+            gameweeksPlayed.append(int(data['round']))
+    
+    return gameweeksPlayed
+
 # Create player first & last name list (and associated dictionary)
 def generatePlayersFullNameList():
     # Initialise the arrays outside the loop so that they cannot be overriden
@@ -211,10 +219,7 @@ def matchUserInputToList(userInput, listToMatchInputTo):
 # Create a filtered list where the arguments are passed in as a dictionary
 def filterBootstrapStaticResults(filterField, filterValue, dictToFilter, operator):
     returnDict = dict()
-    length = len(dictToFilter) - 1
     for player in dictToFilter:
-        currentIndex = list(dictToFilter).index(player)
-        genericMethods.runPercentage(length, currentIndex, "Filtering List", "Player list filtered")
         if isinstance(dictToFilter, list):
             if isinstance(filterValue, str) == True:
                 if player[filterField] == filterValue:
@@ -750,21 +755,52 @@ def generateListOfPointsPerPoundPerPlayerPerPosition():
     return pointsByPosition
 
 # Creates a list of points for a given player for a given range of weeks
-def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek, maxValue):
+def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, maxGameweek, maxValue, stringOrIntForNull):
     currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL(f'element-summary/{playerID}/'))
+    gamesPlayed = gameweeksPlayed(playerID)
     currentPlayersPoints = list()
-    currentGameweek = gameweekOfInterest
-    previousGameweek = currentGameweek
+    weeksWeCareAbout = list()
+    previousGameweek = 1
+    n = gameweekOfInterest
+    maxReached = False
+    currentGameweek = genericMethods.generateCurrentGameweek()
+    while n <= maxGameweek:
+        weeksWeCareAbout.append(n)
+        n += 1
     for data in currentDumps['history']:
-        if gameweekOfInterest <= currentGameweek <= maxGameweek and float(data['value']) <= maxValue * 10:
-            if data['round'] == currentGameweek + 1:
-                currentPlayersPoints.append(0)
-                currentGameweek += 1
-            if data['round'] == currentGameweek:
-                currentData = data['total_points']
-                currentPlayersPoints.append(currentData)
-                currentGameweek += 1
-                  
+        currentGameweek = int(data['round'])
+        difference = currentGameweek - previousGameweek
+        if int(gameweekOfInterest) <= int(data['round']) <= int(maxGameweek) and float(data['value']) <= maxValue * 10:
+            if difference <= 1:
+                if int(data['round']) in weeksWeCareAbout:
+                    currentPlayersPoints.append(int(data['total_points']))
+                else:
+                    if stringOrIntForNull == 'string':
+                        currentPlayersPoints.append('-')
+                    else:
+                        currentPlayersPoints.append(int(0))
+            elif int(gameweekOfInterest) <= int(data['round']):
+                if stringOrIntForNull == 'string':
+                    currentPlayersPoints.append('-')
+                else:
+                    currentPlayersPoints.append(int(0))
+                currentPlayersPoints.append(int(data['total_points']))
+            else:
+                if stringOrIntForNull == 'string':
+                    currentPlayersPoints.append('-')
+                else:
+                    currentPlayersPoints.append(int(0))
+
+        previousGameweek = int(data['round'])
+        if currentGameweek == maxGameweek:
+            maxReached = True
+
+    if int(gameweekOfInterest) <= int(currentGameweek) <= int(maxGameweek) and float(data['value']) <= maxValue * 10 and maxReached == False:
+        if stringOrIntForNull == 'string':
+            currentPlayersPoints.append('-')
+        else:
+            currentPlayersPoints.append(int(0))
+
     return currentPlayersPoints
 
 # Returns the average minutes played by a player from the start to the gameweek of interest
@@ -1000,3 +1036,38 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
             playerDict[playerID] = tempDict
 
     return playerDict
+
+def formatPlayerDataForGameweekRange(startGameweek, endGameweek, playerIDs):
+    # create url's for the current player and extract data from the "History" file where the game week is the current game week
+    length = len(playerIDs) - 1
+    allPlayerData = dict()
+    # Gather the player data
+    for playerID in playerIDs:
+        currentIndex = list(playerIDs).index(playerID)
+        playerHistory = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')['history']
+        genericMethods.runPercentage(length, currentIndex, f"Formatting data for player {currentIndex} of {length}", f"Data for all players has been formatted")
+        currentGameweek = startGameweek
+        currentPlayerData = dict()
+        while currentGameweek <= endGameweek:
+            allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
+            for data in allPlayerDataReadable['history']:        
+                if currentGameweek == data['round']:
+                    currentPlayerData[int(currentGameweek)] = data
+                    break
+
+            currentGameweek += 1
+        allPlayerData[playerID] = currentPlayerData
+
+    return allPlayerData
+
+def playedAGameweekOfInterest(startGameweek, endGameweek, playerID):
+    n = startGameweek
+    gwRange = list()
+    while n <= endGameweek:
+        gwRange.append(n)
+        n += 1
+    allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
+    for data in allPlayerDataReadable['history']:
+        if data['round'] in gwRange:
+            return data['round']
+    return False

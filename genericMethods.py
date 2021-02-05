@@ -351,3 +351,22 @@ def allDataAllPlayersByElementId():
 
     return allData
 
+def allDataAllPlayersByElementIdForGameweekRange(startDate, endDate):
+    allData = dict()
+    players = gameweekSummary.generatePlayerIDs()
+    for player in players:
+        keys = list(generateJSONDumpsReadable(mergeURL('element-summary/')+str(player)+'/')['history'][0].keys())
+        break
+    for player in players:
+        playerLength = len(players) + 1
+        playerIndex = players.index(player)
+        runPercentage(playerLength, playerIndex, f"Gathering player values {playerIndex} of {playerLength}", "")
+        playersData = generateJSONDumpsReadable(mergeURL('element-summary/')+str(player)+'/')['history']
+        for week in playersData:
+            for value in week:
+                if value in allData:
+                    allData[value].append(parseFloat(week[value]))
+                else:
+                    allData[value] = [parseFloat(week[value])]
+
+    return allData
