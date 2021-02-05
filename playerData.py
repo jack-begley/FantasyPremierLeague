@@ -762,6 +762,8 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
     weeksWeCareAbout = list()
     previousGameweek = 1
     n = gameweekOfInterest
+    maxReached = False
+    currentGameweek = genericMethods.generateCurrentGameweek()
     while n <= maxGameweek:
         weeksWeCareAbout.append(n)
         n += 1
@@ -777,7 +779,7 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
                         currentPlayersPoints.append('-')
                     else:
                         currentPlayersPoints.append(int(0))
-            elif int(gameweekOfInterest) < int(data['round']):
+            elif int(gameweekOfInterest) <= int(data['round']):
                 if stringOrIntForNull == 'string':
                     currentPlayersPoints.append('-')
                 else:
@@ -790,6 +792,14 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
                     currentPlayersPoints.append(int(0))
 
         previousGameweek = int(data['round'])
+        if currentGameweek == maxGameweek:
+            maxReached = True
+
+    if int(gameweekOfInterest) <= int(currentGameweek) <= int(maxGameweek) and float(data['value']) <= maxValue * 10 and maxReached == False:
+        if stringOrIntForNull == 'string':
+            currentPlayersPoints.append('-')
+        else:
+            currentPlayersPoints.append(int(0))
 
     return currentPlayersPoints
 

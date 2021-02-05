@@ -87,19 +87,20 @@ def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
         difficultyOfUpcomingGamesForTeam = list()
         currentGameweek = startGameweek
         while currentGameweek <= endGameweek:
+            matched = False
             currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}/?event={currentGameweek}')
             for gameweekData in currentDumps:
                     if gameweekData['team_a'] == teamID:
                         difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_a_difficulty']))
-                        currentGameweek += 1
-                        break
+                        matched = True
                     if gameweekData['team_h'] == teamID:
                         difficultyOfUpcomingGamesForTeam.append(int(gameweekData['team_h_difficulty']))
-                        currentGameweek += 1
-                        break
-            else:
+                        matched = True
+
+            if matched == False:
                 difficultyOfUpcomingGamesForTeam.append('-')
-                currentGameweek += 1
+
+            currentGameweek += 1
         
         teams[teamID] = difficultyOfUpcomingGamesForTeam
 

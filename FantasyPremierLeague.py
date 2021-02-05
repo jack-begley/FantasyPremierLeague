@@ -691,16 +691,16 @@ def playerRoutine():
 
             playersSorted = sorted(playerPoints.items(), key=lambda x: x[1], reverse=True)
             playersToPrint = genericMethods.reformattedSortedTupleAsDict(playersSorted)
-            top100Players = {k: playersToPrint[k] for k in list(playersToPrint)[:x]}
+            topPlayers = {k: playersToPrint[k] for k in list(playersToPrint)[:x]}
 
-            length = len(top100Players)
+            length = len(topPlayers)
             playerDeviation = dict()
-            for player in top100Players:  
-                currentIndex = list(top100Players).index(player)
+            for player in topPlayers:  
+                currentIndex = list(topPlayers).index(player)
                 genericMethods.runPercentage(length, currentIndex, "Finding the top performers", "Top performers for consistency gathered")
                 currentGameweek = genericMethods.generateCurrentGameweek()
                 playerID = playerReference[player]
-                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, 1, currentGameweek, 'int')
+                playerPerformance = playerData.generateListOfPointsForNGameweeksPerPlayer(playerID, 1, currentGameweek, 100000, 'int')
                 playerList = list()
                 averagePerformance = genericMethods.listAverage(playerPerformance)
                 playerDeviationList = list()
@@ -964,16 +964,16 @@ def playerRoutine():
                 playerResults = dict()
                 for element in finalData[player]:
                     if element in keys:
-                        max = maxValues[element]
-                        min = minValues[element]
-                        if factorWeights[element]['zeroIsNullOrNone'] == 'y' and min == 0.0:
-                            min = 1.
+                        maxValue = maxValues[element]
+                        minValue = minValues[element]
+                        if factorWeights[element]['zeroIsNullOrNone'] == 'y' and minValue == 0.0:
+                            minValue = 1.
                         factor = factorWeights[element]['weight']
                         data = genericMethods.parseFloat(finalData[player][element])
                         if factorWeights[element]['zeroIsNullOrNone'] == 'y' and data == 0.0:
                             index = 0.0
                         else:
-                            index = genericMethods.indexValue(data, max, min, factorWeights[element]['lowIsGood']) * factor
+                            index = genericMethods.indexValue(data, maxValue, minValue, factorWeights[element]['lowIsGood']) * factor
                         playerResults[element] = index
 
                 finalResult = genericMethods.dictAverage(playerResults)
@@ -993,6 +993,8 @@ def playerRoutine():
             for player in playersReady:
                 currentPlayer = dict()
                 teamIDs = playerData.generateIDAsKeyTeamIdAsValue()
+                if player == 271:
+                    print("")
                 playerDifficulty = gameweekDifficultyByTeam[teamIDs[player]]
                 listedGameweekDifficulty = Teams.upcomingGameDifficultyListed(lookback + 1, playerData.generateIDAsKeyTeamIdAsValue()[player])
                 playerDataList = playerData.generateListOfPointsForNGameweeksPerPlayer(player, startGameweek, lastGameweek, price, 'string')
@@ -1002,19 +1004,38 @@ def playerRoutine():
                     points.append(str(item))
                 difficulty = list()
                 difficulty.append("Difficulty")
-                for item in  playerDifficulty:
+                for item in playerDifficulty:
                     difficulty.append(str(item))
                 currentPlayer['points'] = points
                 currentPlayer['difficulty'] = difficulty
                 currentPlayer['future_difficulty'] = listedGameweekDifficulty
+
+                count = startGameweek
+                gameweekList = list()
+                gameweekList.append("Gameweek")
+                playerGameweeksPlayed = playerData.gameweeksPlayed(player)
+                weeksWeCareAbout = list()
+                n = startGameweek
+                maxReached = False
+                while n <= lastGameweek:
+                    weeksWeCareAbout.append(n)
+                    n += 1
+                previousGameweek = startGameweek
+                for gameweek in playerGameweeksPlayed:
+                    currentGameweek = gameweek
+                    difference = currentGameweek - previousGameweek
+                    if gameweek in weeksWeCareAbout:
+                        if str(gameweek) in gameweekList:
+                            gameweekList.append(f"{gameweek}+")
+                        if difference == 2 and str(gameweek) not in gameweekList:
+                            gameweekList.append(str(gameweek - 1))
+                        if  str(gameweek) not in gameweekList:
+                            gameweekList.append(str(gameweek))
+                    previousGameweek = gameweek
+
+                currentPlayer['pastGameweeks'] = gameweekList
                 playerGameweekDifficulty[player] = currentPlayer
 
-            count = startGameweek
-            gameweekList = list()
-            gameweekList.append("Gameweek")
-            while count <= lastGameweek:
-                gameweekList.append(int(count))
-                count += 1
 
             futureGameweeks = list()
             futureGameweeks.append("Gameweek")
@@ -1033,7 +1054,8 @@ def playerRoutine():
                 print("")
                 print("/ Form Card:")
                 print("")
-                t = PrettyTable(gameweekList, hrules = prettytable.ALL)
+                headers = playerGameweekDifficulty[player]['pastGameweeks']
+                t = PrettyTable(headers, hrules = prettytable.ALL)
                 points = playerGameweekDifficulty[player]['points']
                 difficulty = playerGameweekDifficulty[player]['difficulty']
                 t.add_row(difficulty)
