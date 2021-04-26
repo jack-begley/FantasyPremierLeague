@@ -179,6 +179,7 @@ def playerRoutine():
     print(' [11] Differentials (Points per % Selected)')
     print(' [12] Consistency (Deviation from average for top N players)')
     print(' [13] Pick me a player')
+    print(' [14] Pick me a captain')
     print("")
     print(" Data Exports: ")
     print(" [51] All player data for all gameweeks (to excel)")
@@ -1075,6 +1076,27 @@ def playerRoutine():
 
             endRoutine()
 
+        elif playerUserInputInitialInt == 14:
+            gw = genericMethods.generateCurrentGameweek() + 1
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Which Gameweek do you want to see (next gameweek = {gw})?')
+            print("-------------------------------------------------------")
+            print("")
+            gw = int(input("Gameweek >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw)
+            influenceByPlayer = playerData.playerInfluence(gw)
+            influenceByTeam = Teams.teamInfluence(gw)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            # Team ID
+            # myId = input("Team Id > "
+            myId = 2740322
+            user = input("Username > ")
+            password = input("Password > ")
+            myTeam = Teams.getTeamDetails(myId, user, password)
+
+            print("")
+
         # All player data for all gameweeks (to excel)
         elif playerUserInputInitialInt == 51:
             playerIDs = gameweekSummary.generatePlayerIDs()
@@ -1171,22 +1193,23 @@ def teamsRoutine():
     print(" [7] Average game difficulty for the next N games ranked for all teams")
     print(" [8] Top 5 players by position for points per pound")
     print(" [9] Top performers by position for last N gameweeks")
-    print(" [10] Goal economy by team")
+    print(" [10] Fixture ranks by team - which teams have the easiest week")
+    print(" [11] Goal economy by team")
     print("")
     print(" Goal and Result predictions")
     print("")
-    print(" [11] Average goals conceded by team for difficulty this week")
-    print(" [12] Average goals scored by team for difficulty this week")
-    print(" [13] Predicting next gameweek results")
-    print(" [14] Predicting next gameweek results based on goals")
-    print(" [15] Weighted predictions for next gameweek based on goals")
+    print(" [12] Average goals conceded by team for difficulty this week")
+    print(" [13] Average goals scored by team for difficulty this week")
+    print(" [14] Predicting next gameweek results")
+    print(" [15] Predicting next gameweek results based on goals")
+    print(" [16] Weighted predictions for next gameweek based on goals")
     print("")
     print(" Historical Results: ")
     print("")
-    print(" [16] Results by gameweek")
-    print(" [17] Predictions for historical gameweeks")
-    print(" [18] Predictions for historical gameweeks based on goals")
-    print(" [19] Weighted predictions for historical gameweeks based on goals")
+    print(" [17] Results by gameweek")
+    print(" [18] Predictions for historical gameweeks")
+    print(" [19] Predictions for historical gameweeks based on goals")
+    print(" [20] Weighted predictions for historical gameweeks based on goals")
     print("")
     print("------------------------------------------------------------------------")
     print("")
@@ -1400,7 +1423,7 @@ def teamsRoutine():
                 genericMethods.runPercentage(length, currentIndex, "Gathering list of upcoming game difficulty", "Complete: Calculating average game difficulty")
 
                 currentTeamID = teamNames[team]
-                listedGameweekDifficulty = Teams.upcomingGameDifficultyListed(weekNumber, currentTeamID)
+                listedGameweekDifficulty = list(map(lambda x:6 if x=="-" else x,Teams.upcomingGameDifficultyListed(weekNumber, currentTeamID)))
                 readableTeamName = team.capitalize()
                 listedDifficultyByTeam[readableTeamName] = listedGameweekDifficulty
                             
@@ -1416,8 +1439,8 @@ def teamsRoutine():
             for week in gameweekList:
                 gameweekListClean += f"{week} / "
 
-            sortedTeamSumDifficulty = sorted(listedDifficultyByTeam.items(), key=lambda x: sum(x[1]), reverse=False)
-            sortedTeamAverageDifficultyList = OrderedDict()
+            sortedTeamSumDifficultySet = sorted(listedDifficultyByTeam.items(), key=lambda x: sum(x[1]), reverse=False)
+            sortedTeamSumDifficulty = list(map(lambda x:"-" if x==6 else x,sortedTeamSumDifficultySet))
 
             print("----------------------------------------------------------")
             print(f'Match difficulty for the next {weekNumber} games from easy to most difficult run:')
@@ -1548,6 +1571,22 @@ def teamsRoutine():
             endRoutine()
 
         if playerUserInputInitialInt == 10:
+            gw = genericMethods.generateCurrentGameweek() + 1
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Which Gameweek do you want to see (next gameweek = {gw})?')
+            print("-------------------------------------------------------")
+            print("")
+            gw = int(input("Gameweek >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw)
+            print("Indexed fixture difficulty by team where 100 is the easiest fixture:")
+            for fixture in easiestGames:
+                result = easiestGames[fixture]
+                team = str.capitalize(fixture)
+                index = int(round(genericMethods.indexValue(result,max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
+                print(f"{team}: {index}")
+
+
+        if playerUserInputInitialInt == 11:
             goalEconomy = Teams.goalEconomyByTeam()
 
             teamNames = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1568,7 +1607,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 11:
+        if playerUserInputInitialInt == 12:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
             nextGameLikelihoodtoConceed = Teams.generateLikelihoodToConceedByTeamForNextGame(nextGameweek, True)
 
@@ -1582,7 +1621,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 12:
+        if playerUserInputInitialInt == 13:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
             nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
 
@@ -1596,7 +1635,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 13:
+        if playerUserInputInitialInt == 14:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
@@ -1667,7 +1706,7 @@ def teamsRoutine():
                 except:
                     None
 
-        if playerUserInputInitialInt == 14:
+        if playerUserInputInitialInt == 15:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             nextGameLikelihoodtoScore = Teams.generateLikelihoodToScoreByTeamForNextGame(nextGameweek, True)
@@ -1734,7 +1773,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 15:
+        if playerUserInputInitialInt == 16:
             nextGameweek = genericMethods.generateCurrentGameweek() + 1
 
             try:
@@ -1849,7 +1888,7 @@ def teamsRoutine():
 
             endRoutine()
                       
-        if playerUserInputInitialInt == 16:
+        if playerUserInputInitialInt == 17:
             maxGameweek = genericMethods.generateCurrentGameweek() + 1
             teamIdList = Teams.teamIDsAsKeysAndNamesAsData()
             currentGameweek = 1
@@ -1906,7 +1945,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 17:
+        if playerUserInputInitialInt == 18:
             currentGameweek = 1
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
@@ -1961,7 +2000,7 @@ def teamsRoutine():
 
             endRoutine()
 
-        if playerUserInputInitialInt == 18:
+        if playerUserInputInitialInt == 19:
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:
@@ -2001,7 +2040,7 @@ def teamsRoutine():
 
             endRoutine()
                     
-        if playerUserInputInitialInt == 19:
+        if playerUserInputInitialInt == 20:
             currentGameweek = 2
             endGameweek = genericMethods.generateCurrentGameweek() + 1
             while currentGameweek <= endGameweek:

@@ -53,6 +53,151 @@ def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
 
     return teamIDs
 
+# Generate the data for next fixture difficulty ranked
+def gameweekDifficultyRankedForTeams(gw):
+            fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
+            scores = dict()
+            leaderboard = dict()
+            length = len(fixtures)
+            current = 1
+            for fixture in fixtures:
+                n = 1
+                genericMethods.runPercentage(length,current,f"Running {current} fixture of {length}", "All data for all fixtures collected")
+                home = fixture['team_h']
+                away = fixture['team_a']
+                teamNames = Teams.teamIDsAsKeysAndNamesAsData()
+                homeName = teamNames[home]
+                awayName = teamNames[away]
+                homeScores = dict()
+                homeGoals = list()
+                homeWins = list()
+                homeDraws = list()
+                homeLosses = list()
+                homeConceed = list()
+                awayScores = dict()
+                awayGoals = list()
+                awayWins = list()
+                awayDraws = list()
+                awayLosses = list()
+                awayConceed = list()
+
+                while n < gw:
+                    for game in genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={n}'):
+                        if game['team_h'] == home:
+                            homeGoals.append(game['team_h_score'])
+                            homeConceed.append(game['team_a_score'])
+                            if game['team_h_score'] < game['team_a_score']:
+                                homeLosses.append(1)
+                            if game['team_h_score'] == game['team_a_score']:
+                                homeDraws.append(1)
+                            if game['team_h_score'] > game['team_a_score']:
+                                homeWins.append(1)
+
+                        if game['team_a'] == home:
+                            homeGoals.append(game['team_a_score'])
+                            homeConceed.append(game['team_h_score'])
+                            if game['team_h_score'] > game['team_a_score']:
+                                homeLosses.append(1)
+                            if game['team_h_score'] == game['team_a_score']:
+                                homeDraws.append(1)
+                            if game['team_h_score'] < game['team_a_score']:
+                                homeWins.append(1)
+
+                        if game['team_h'] == away:
+                            awayGoals.append(game['team_h_score'])
+                            awayConceed.append(game['team_a_score'])
+                            if game['team_h_score'] < game['team_a_score']:
+                                awayLosses.append(1)
+                            if game['team_h_score'] == game['team_a_score']:
+                                awayDraws.append(1)
+                            if game['team_h_score'] > game['team_a_score']:
+                                awayWins.append(1)
+
+                        if game['team_a'] == away:
+                            awayGoals.append(game['team_a_score'])
+                            awayConceed.append(game['team_h_score'])
+                            if game['team_h_score'] > game['team_a_score']:
+                                awayLosses.append(1)
+                            if game['team_h_score'] == game['team_a_score']:
+                                awayDraws.append(1)
+                            if game['team_h_score'] < game['team_a_score']:
+                                awayWins.append(1)
+
+
+                    n += 1
+                
+
+                awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
+                homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
+
+                homeScores['goals'] = sum(homeGoals)
+                homeScores['conceeded'] = sum(homeConceed)
+                homeScores['wins'] = sum(homeWins)
+                homeScores['draws'] = sum(homeDraws)
+                homeScores['losses'] = sum(homeLosses)
+                homeScores['score'] = homeTeamScore
+                homeScores['id'] = home
+
+                awayScores['goals'] = sum(awayGoals)
+                awayScores['conceeded'] = sum(awayConceed)
+                awayScores['wins'] = sum(awayWins)
+                awayScores['draws'] = sum(awayDraws)
+                awayScores['losses'] = sum(awayLosses)
+                awayScores['score'] = awayTeamScore
+                awayScores['id'] = away
+
+                leaderboard[homeName] = homeTeamScore
+                leaderboard[awayName] = awayTeamScore
+
+                scores[homeName] = homeScores
+                scores[awayName] = awayScores
+
+                current += 1
+
+            rankingsUnclean = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+            rankings = genericMethods.reformattedSortedTupleAsDict(rankingsUnclean)
+
+            winRankings = dict()
+
+            for fixture in fixtures:
+                genericMethods.runPercentage(length,current,f"Running {current} fixture of {length}", "All data for all fixtures collected")
+                home = fixture['team_h']
+                homeName = teamNames[home]
+                away = fixture['team_a']
+                awayName = teamNames[away]
+
+                homeRankDifference = -(list(rankings.keys()).index(teamNames[home]) - list(rankings.keys()).index(teamNames[away]))
+                homeGoalsScoredDifference = scores[teamNames[home]]['goals'] + scores[teamNames[away]]['conceeded']
+                homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
+                homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
+
+                awayRankDifference = homeRankDifference
+                awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
+                awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
+                awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
+
+                win = homeGoalsNet - awayGoalsNet
+                if win > 0:
+                    winner = homeName
+                if win == 0:
+                    winner = "None"
+                if win < 0:
+                    winner = awayName
+
+
+                homePoints = win
+                awayPoints = -win
+
+                winRankings[homeName] = homePoints
+                winRankings[awayName] = awayPoints
+
+                print("")
+            
+            winUnclean = sorted(winRankings.items(), key=lambda x: x[1], reverse=True)
+            easiestGames = genericMethods.reformattedSortedTupleAsDict(winUnclean)
+
+            return easiestGames
+
 # Returns all team names ask keys, with their associated team ID's
 def teamNamesAsKeysAndIDsAsData():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
