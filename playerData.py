@@ -211,6 +211,22 @@ def generateIDAsKeyTeamIdAsValue():
 
     return playerIDMatchList
 
+# Return the chance of a player playing for next week, with the playerId as key
+def generateChanceOfPlaying():
+    players = genericMethods.generateJSONDumpsReadable('https://fantasy.premierleague.com/api/bootstrap-static/')
+    chanceDict = dict()
+    for player in players['elements']:
+        if player['chance_of_playing_next_round'] == 'null':
+            chance = 100
+
+        if player['chance_of_playing_next_round'] == None:
+            chance = 100
+        else:
+            chance = player['chance_of_playing_next_round']
+        chanceDict[player['id']] = chance
+
+    return chanceDict
+
 # Match User input to an array and return the result
 def matchUserInputToList(userInput, listToMatchInputTo):
     result = listToMatchInputTo[userInput]
@@ -928,6 +944,33 @@ def playerInfluence(gameweekOfInterest):
         playerInfluence = genericMethods.reformattedSortedTupleAsDict(sortedInfluence)
 
         return playerInfluence
+
+# Returns the influence of each player with the player ID as a reference for a given timeframe
+def playerInfluenceInAGivenTimeFrameByTeam(endGameweek, numberOfDaysToLookBack):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        teams = Teams.teamIDsAsKeysAndNamesAsData()
+        maxLen = len(teams)
+        for team in teams:
+            currentLen = list(teams.keys()).index(team) + 1
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
+            playerDict = dict() 
+            for player in playersInTeam:
+                playerList = list()
+                gwIndex = endGameweek - 1
+                currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}element-summary/{player}/')
+                for record in currentDumps['history']:
+                    if gwIndex > (endGameweek - numberOfDaysToLookBack - 1) and gwIndex == record['round']:
+                        playerList.append(float(record['influence']))
+                        gwIndex = gwIndex - 1
+
+                playerDict[player] = sum(playerList)
+
+            teamDict[team] =  playerDict
+
+        return teamDict
+
 
 # Returns the influence of each player in order for a given gameweek
 def playerPerformanceFactor(gameweekOfInterest):
