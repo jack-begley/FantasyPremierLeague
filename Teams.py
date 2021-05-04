@@ -872,9 +872,16 @@ def goalEconomyByTeam():
     return goalEconomyByTeam
 
 # Pull the data for a single users fantasy team
-def getTeamDetails(teamID, username, password):
-    gameweekNumber = genericMethods.generateCurrentGameweek()
+def getTeamDetails(teamID, username, password, gameweekNumber, isMyTeam):
     url = f'https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/'
+    Response = Teams.loginToSecureURL(url, username, password)  
+    Data = Response.json()
+    Dumps = json.dumps(Data)
+    readableData = json.loads(Dumps)
+    return readableData
+
+def getCurrentTeamDetails(teamID, username, password):
+    url = f'https://fantasy.premierleague.com/api/my-team/{teamID}'
     Response = Teams.loginToSecureURL(url, username, password)  
     Data = Response.json()
     Dumps = json.dumps(Data)
@@ -901,6 +908,30 @@ def teamInfluence(gameweekOfInterest):
                         playerDict[playerID] = influence
 
             teamDict[team] = playerDict
+
+        return teamDict
+    
+# Returns the influence of each player with the player ID as a reference for a given timeframe
+def teamInfluenceInAGivenTimeFrame(endGameweek, numberOfDaysToLookBack):
+        urlBase = 'https://fantasy.premierleague.com/api/'
+        teamDict = dict()
+        teams = teamIDsAsKeysAndNamesAsData()
+        maxLen = len(teams)
+        for team in teams:
+            teamData = list()
+            currentLen = list(teams.keys()).index(team) + 1
+            genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
+            playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
+            playerDict = dict() 
+            for player in playersInTeam:
+                gwIndex = endGameweek - 1
+                currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}element-summary/{player}/')
+                for record in currentDumps['history']:
+                    if gwIndex > (endGameweek - numberOfDaysToLookBack - 1) and gwIndex == record['round']:
+                        teamData.append(float(record['influence']))
+                        gwIndex = gwIndex - 1
+
+            teamDict[team] = sum(teamData)
 
         return teamDict
 
