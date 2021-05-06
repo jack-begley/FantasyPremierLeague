@@ -188,8 +188,17 @@ def gameweekDifficultyRankedForTeams(gw):
                 homePoints = win
                 awayPoints = -win
 
-                winRankings[homeName] = homePoints
-                winRankings[awayName] = awayPoints
+                if homeName in winRankings:
+                    existingRanking = winRankings[homeName]
+                    winRankings[homeName] = existingRanking + homePoints
+                else:
+                    winRankings[homeName] = homePoints
+
+                if awayName in winRankings:
+                    existingRanking = winRankings[awayName]
+                    winRankings[awayName] = existingRanking + awayPoints
+                else:
+                    winRankings[awayName] = awayPoints
 
                 print("")
             
