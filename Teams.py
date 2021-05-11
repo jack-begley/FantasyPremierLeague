@@ -54,111 +54,124 @@ def generateTeamIdsForTopPlayers(numberOfTeamsToPull, username, password):
     return teamIDs
 
 # Generate the data for next fixture difficulty ranked
-def gameweekDifficultyRankedForTeams(gw):
-            fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
-            scores = dict()
-            leaderboard = dict()
-            length = len(fixtures)
-            current = 1
-            for fixture in fixtures:
-                n = 1
-                genericMethods.runPercentage(length,current,f"Running {current} fixture of {length}", "All data for all fixtures collected")
-                home = fixture['team_h']
-                away = fixture['team_a']
-                teamNames = Teams.teamIDsAsKeysAndNamesAsData()
-                homeName = teamNames[home]
-                awayName = teamNames[away]
-                homeScores = dict()
-                homeGoals = list()
-                homeWins = list()
-                homeDraws = list()
-                homeLosses = list()
-                homeConceed = list()
-                awayScores = dict()
-                awayGoals = list()
-                awayWins = list()
-                awayDraws = list()
-                awayLosses = list()
-                awayConceed = list()
+def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
+        gwNow = genericMethods.generateCurrentGameweek()
+        endGw = gw + numOfGameweeksInFuture
+        fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow}')
+        scores = dict()
+        leaderboard = dict()
+        length = len(fixtures)
+        current = 1
+        for fixture in fixtures:
+            n = 1
+            genericMethods.runPercentage(length,current,f"Running {current} fixture of {length}", "All data for all fixtures collected")
+            home = fixture['team_h']
+            away = fixture['team_a']
+            teamNames = Teams.teamIDsAsKeysAndNamesAsData()
+            homeName = teamNames[home]
+            awayName = teamNames[away]
+            homeScores = dict()
+            homeGoals = list()
+            homeWins = list()
+            homeDraws = list()
+            homeLosses = list()
+            homeConceed = list()
+            awayScores = dict()
+            awayGoals = list()
+            awayWins = list()
+            awayDraws = list()
+            awayLosses = list()
+            awayConceed = list()
 
-                while n < gw:
-                    for game in genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={n}'):
-                        if game['team_h'] == home:
-                            homeGoals.append(game['team_h_score'])
-                            homeConceed.append(game['team_a_score'])
-                            if game['team_h_score'] < game['team_a_score']:
-                                homeLosses.append(1)
-                            if game['team_h_score'] == game['team_a_score']:
-                                homeDraws.append(1)
-                            if game['team_h_score'] > game['team_a_score']:
-                                homeWins.append(1)
+            while n < gw:
+                for game in genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={n}'):
+                    aScore = game['team_a_score']
+                    hScore = game['team_h_score']
+                    if game['team_h_score'] is None:
+                        hScore = 0
+                    if game['team_a_score'] is None:
+                        aScore = 0
+                        
+                    if game['team_h'] == home:
+                        homeGoals.append(hScore)
+                        homeConceed.append(aScore)
+                        if hScore < aScore:
+                            homeLosses.append(1)
+                        if hScore == aScore:
+                            homeDraws.append(1)
+                        if hScore > aScore:
+                            homeWins.append(1)
 
-                        if game['team_a'] == home:
-                            homeGoals.append(game['team_a_score'])
-                            homeConceed.append(game['team_h_score'])
-                            if game['team_h_score'] > game['team_a_score']:
-                                homeLosses.append(1)
-                            if game['team_h_score'] == game['team_a_score']:
-                                homeDraws.append(1)
-                            if game['team_h_score'] < game['team_a_score']:
-                                homeWins.append(1)
+                    if game['team_a'] == home:
+                        homeGoals.append(aScore)
+                        homeConceed.append(hScore)
+                        if hScore > aScore:
+                            homeLosses.append(1)
+                        if hScore == aScore:
+                            homeDraws.append(1)
+                        if hScore < aScore:
+                            homeWins.append(1)
 
-                        if game['team_h'] == away:
-                            awayGoals.append(game['team_h_score'])
-                            awayConceed.append(game['team_a_score'])
-                            if game['team_h_score'] < game['team_a_score']:
-                                awayLosses.append(1)
-                            if game['team_h_score'] == game['team_a_score']:
-                                awayDraws.append(1)
-                            if game['team_h_score'] > game['team_a_score']:
-                                awayWins.append(1)
+                    if game['team_h'] == away:
+                        awayGoals.append(hScore)
+                        awayConceed.append(aScore)
+                        if hScore < aScore:
+                            awayLosses.append(1)
+                        if hScore == aScore:
+                            awayDraws.append(1)
+                        if hScore > aScore:
+                            awayWins.append(1)
 
-                        if game['team_a'] == away:
-                            awayGoals.append(game['team_a_score'])
-                            awayConceed.append(game['team_h_score'])
-                            if game['team_h_score'] > game['team_a_score']:
-                                awayLosses.append(1)
-                            if game['team_h_score'] == game['team_a_score']:
-                                awayDraws.append(1)
-                            if game['team_h_score'] < game['team_a_score']:
-                                awayWins.append(1)
+                    if game['team_a'] == away:
+                        awayGoals.append(aScore)
+                        awayConceed.append(hScore)
+                        if hScore > aScore:
+                            awayLosses.append(1)
+                        if hScore == aScore:
+                            awayDraws.append(1)
+                        if hScore < aScore:
+                            awayWins.append(1)
 
 
-                    n += 1
+                n += 1
                 
 
-                awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
-                homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
+            awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
+            homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
 
-                homeScores['goals'] = sum(homeGoals)
-                homeScores['conceeded'] = sum(homeConceed)
-                homeScores['wins'] = sum(homeWins)
-                homeScores['draws'] = sum(homeDraws)
-                homeScores['losses'] = sum(homeLosses)
-                homeScores['score'] = homeTeamScore
-                homeScores['id'] = home
+            homeScores['goals'] = sum(homeGoals)
+            homeScores['conceeded'] = sum(homeConceed)
+            homeScores['wins'] = sum(homeWins)
+            homeScores['draws'] = sum(homeDraws)
+            homeScores['losses'] = sum(homeLosses)
+            homeScores['score'] = homeTeamScore
+            homeScores['id'] = home
 
-                awayScores['goals'] = sum(awayGoals)
-                awayScores['conceeded'] = sum(awayConceed)
-                awayScores['wins'] = sum(awayWins)
-                awayScores['draws'] = sum(awayDraws)
-                awayScores['losses'] = sum(awayLosses)
-                awayScores['score'] = awayTeamScore
-                awayScores['id'] = away
+            awayScores['goals'] = sum(awayGoals)
+            awayScores['conceeded'] = sum(awayConceed)
+            awayScores['wins'] = sum(awayWins)
+            awayScores['draws'] = sum(awayDraws)
+            awayScores['losses'] = sum(awayLosses)
+            awayScores['score'] = awayTeamScore
+            awayScores['id'] = away
 
-                leaderboard[homeName] = homeTeamScore
-                leaderboard[awayName] = awayTeamScore
+            leaderboard[homeName] = homeTeamScore
+            leaderboard[awayName] = awayTeamScore
 
-                scores[homeName] = homeScores
-                scores[awayName] = awayScores
+            scores[homeName] = homeScores
+            scores[awayName] = awayScores
 
-                current += 1
+            current += 1
 
-            rankingsUnclean = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
-            rankings = genericMethods.reformattedSortedTupleAsDict(rankingsUnclean)
+        rankingsUnclean = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+        rankings = genericMethods.reformattedSortedTupleAsDict(rankingsUnclean)
 
-            winRankings = dict()
+        winRankings = dict()
 
+        while gw < endGw:
+            fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
+            length = len(fixtures)
+            current = 1
             for fixture in fixtures:
                 genericMethods.runPercentage(length,current,f"Running {current} fixture of {length}", "All data for all fixtures collected")
                 home = fixture['team_h']
@@ -200,12 +213,13 @@ def gameweekDifficultyRankedForTeams(gw):
                 else:
                     winRankings[awayName] = awayPoints
 
-                print("")
-            
-            winUnclean = sorted(winRankings.items(), key=lambda x: x[1], reverse=True)
-            easiestGames = genericMethods.reformattedSortedTupleAsDict(winUnclean)
+                current += 1
+            gw += 1
 
-            return easiestGames
+        winUnclean = sorted(winRankings.items(), key=lambda x: x[1], reverse=True)
+        easiestGames = genericMethods.reformattedSortedTupleAsDict(winUnclean)
+
+        return easiestGames
 
 # Returns all team names ask keys, with their associated team ID's
 def teamNamesAsKeysAndIDsAsData():
@@ -933,12 +947,11 @@ def teamInfluenceInAGivenTimeFrame(endGameweek, numberOfDaysToLookBack):
             playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
             playerDict = dict() 
             for player in playersInTeam:
-                gwIndex = endGameweek - 1
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}element-summary/{player}/')
                 for record in currentDumps['history']:
-                    if gwIndex > (endGameweek - numberOfDaysToLookBack - 1) and gwIndex == record['round']:
+                    round = record['round']
+                    if record['round'] > (endGameweek - numberOfDaysToLookBack):
                         teamData.append(float(record['influence']))
-                        gwIndex = gwIndex - 1
 
             teamDict[team] = sum(teamData)
 

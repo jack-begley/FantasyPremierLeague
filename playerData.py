@@ -958,12 +958,10 @@ def playerInfluenceInAGivenTimeFrameByTeam(endGameweek, numberOfDaysToLookBack):
             playerDict = dict() 
             for player in playersInTeam:
                 playerList = list()
-                gwIndex = endGameweek - 1
                 currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}element-summary/{player}/')
                 for record in currentDumps['history']:
-                    if gwIndex > (endGameweek - numberOfDaysToLookBack - 1) and gwIndex == record['round']:
+                    if record['round'] > (endGameweek - numberOfDaysToLookBack):
                         playerList.append(float(record['influence']))
-                        gwIndex = gwIndex - 1
 
                 playerDict[player] = sum(playerList)
 

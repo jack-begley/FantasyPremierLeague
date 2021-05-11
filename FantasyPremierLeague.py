@@ -180,6 +180,7 @@ def playerRoutine():
     print(' [12] Consistency (Deviation from average for top N players)')
     print(' [13] Pick me a player')
     print(' [14] Pick me a captain')
+    print(' [15] Pick me a transfer')
     print("")
     print(" Data Exports: ")
     print(" [51] All player data for all gameweeks (to excel)")
@@ -1082,7 +1083,7 @@ def playerRoutine():
             print("-------------------------------------------------------")
             print("")
             gw = int(input("Gameweek >> "))
-            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw)
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw, 0)
             fixtureIndex = dict()
             for fixture in easiestGames:
                 fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
@@ -1151,7 +1152,10 @@ def playerRoutine():
                 playerID = playerNamesToId[player.lower()]
                 teamInfluence = influenceByTeam[playerToTeam[playerID ]]
                 playerInfluence = influenceByPlayer[playerToTeam[playerID]][playerID ]
-                influenceFactor = playerInfluence/teamInfluence
+                if playerInfluence == 0 or teamInfluence == 0:
+                    influenceFactor = 0
+                else:
+                    influenceFactor = playerInfluence/teamInfluence
                 playerChanceOfPlaying = chanceConverter[chanceOfPlaying[playerID]]/100
                 expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
                 expectedCaptains[player.capitalize()] = int(expectedPerformance)
@@ -1164,8 +1168,77 @@ def playerRoutine():
                 print(f'{n}. {captain}: {captainsPrepared[captain]}')
                 n += 1
 
-            # Add influence into it, maybe look at last 3 weeks played form and focus on performance by position e.g. Clean sheets / Assists / Goals / Bonus for Defenders?
-            endRoutine()   
+            endRoutine()
+            
+        elif playerUserInputInitialInt == 15:
+            gw = genericMethods.generateCurrentGameweek() + 1
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Which Gameweek do you want to see (next gameweek = {gw})?')
+            print("-------------------------------------------------------")
+            print("")
+            gw = int(input("Gameweek >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw, 3)
+            fixtureIndex = dict()
+            for fixture in easiestGames:
+                fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
+            top5FixtureTeams = list(fixtureIndex.keys())[:5]
+            teamNames = Teams.teamNamesAsKeysAndIDsAsData()
+            top5Fixtures = dict()
+            for fixture in top5FixtureTeams:
+                top5Fixtures[teamNames[fixture]] = easiestGames[fixture]
+
+            influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 3)
+            influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 3)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerToTeam = playerData.generateIDAsKeyTeamIdAsValue()
+            chanceOfPlaying = playerData.generateChanceOfPlaying()
+            playerDumps = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")['elements']
+
+            chanceConverter = {100:100, 75:50, 50:25, 25:0, 0:0}
+
+            playersPerformance = dict()
+            playerPerformance = dict()
+
+            length = len(playerNames) - 1
+            for player in playerNames:
+                currentIndex = list(playerNames).index(player)
+                genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
+                performance = list()
+                n = gw - 3
+                while n < gw:
+                    playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n)
+                    if len(list(playerHistory.values())) == 0:
+                        playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n - 3)
+                        if len(list(playerHistory.values())) > 0:
+                            totalPoints = playerHistory['total_points']
+                            performance.append(totalPoints)
+                        else:
+                            totalPoints = 0
+                    else:
+                        totalPoints = playerHistory['total_points']
+                        expectedPlay = playerHistory
+                        performance.append(totalPoints)
+
+                    n += 1
+                playerPerformance[player] = sum(performance)
+
+                playerName = playerNames[player]
+                teamInfluence = influenceByTeam[playerToTeam[player]]
+                playerInfluence = influenceByPlayer[playerToTeam[player]][player]
+                if playerInfluence == 0 or teamInfluence == 0:
+                    influenceFactor = 0
+                else:
+                    influenceFactor = playerInfluence/teamInfluence
+                playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
+                expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                playersPerformance[playerName.capitalize()] = int(expectedPerformance)
+
+            
+            playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
+            playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+
+            print("")
 
         # All player data for all gameweeks (to excel)
         elif playerUserInputInitialInt == 51:
