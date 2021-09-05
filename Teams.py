@@ -250,6 +250,8 @@ def teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, endGameweek):
     urlBase = 'https://fantasy.premierleague.com/api/fixtures/'
     teamNames = Teams.teamIDsAsKeysAndNamesAsData()
     teams = dict()
+    if startGameweek < 1:
+        startGameweek = 1
     for teamID in teamNames:
         teamName = str.capitalize(teamNames[teamID])
         difficultyOfUpcomingGamesForTeam = list()
@@ -1051,28 +1053,31 @@ def teamFactor(gameweekOfInterest):
 
 # Returns the total goals for team
 def totalTeamGoals():
-    urlBase = 'https://fantasy.premierleague.com/api/'
     teamDict = dict()
     teams = teamIDsAsKeysAndNamesAsData()
     maxLen = len(teams)
+    currentGameweek = genericMethods.generateCurrentGameweek()
     for team in teams:
         currentLen = list(teams.keys()).index(team) + 1
+        gw = 1
         genericMethods.runPercentage(maxLen, currentLen, f"Running team {currentLen} of {maxLen}", "Data collected for all of the teams")
-        playersInTeam = generateListOfPlayerIDsAsKeysForTeam(team)
         goalsList = list()
-        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}bootstrap-static/')     
-        for player in playersInTeam:
-            for gameweekData in currentDumps['elements']:
-                playerID = gameweekData['id']
-                if player == playerID:
-                    teamId = gameweekData['team']
-                    goalsList.append(int(gameweekData['goals_scored']))
+        while gw <= currentGameweek:
+            gameweekData = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
+            for fixture in gameweekData:
+                if team == fixture['team_a']:
+                    goalsList.append(int(fixture['team_a_score']))
+                    gw += 1
+                    break
+                if team == fixture['team_h']:
+                    goalsList.append(int(fixture['team_h_score']))
+                    gw += 1
+                    break
 
         goalsScored = sum(goalsList)
         teamDict[team] = goalsScored
 
     return teamDict
-
 
 # Returns the total goals for team
 def teamIDsAsKeysAndPercentageStrengthAsData(gameweek):

@@ -559,25 +559,27 @@ def exportDictionaryOfDataToExcel(dictionary):
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                for data in seasonData:
-                    if data not in headerList:
-                        headerList.append(data)
-                    else:
-                        if printed != 1:
-                            csv_out_comma_seperator.writerow(headerList)
-                            printed = 1
+                if isinstance(seasonData, dict):
+                    for data in seasonData:
+                            if data not in headerList:
+                                headerList.append(data)
+                            else:
+                                if printed != 1:
+                                    csv_out_comma_seperator.writerow(headerList)
+                                    printed = 1
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                currentList = list()
-                currentList.append(season)
-                for data in seasonData:
-                    currentAddition = str(seasonData[data]).strip()
-                    currentList.append(currentAddition)
-                exportList[key] = currentList
-                exportListAsString = str(exportList[key]).replace("'","")
-                exportableData = exportListAsString.replace('[','').replace(']','').replace('"',"")
-                csv_out_tab_seperator.writerow([f'{keyClean},{exportableData}'])
+                if isinstance(seasonData, dict):
+                    currentList = list()
+                    currentList.append(season)
+                    for data in seasonData:
+                        currentAddition = str(seasonData[data]).strip()
+                        currentList.append(currentAddition)
+                    exportList[key] = currentList
+                    exportListAsString = str(exportList[key]).replace("'","")
+                    exportableData = exportListAsString.replace('[','').replace(']','').replace('"',"")
+                    csv_out_tab_seperator.writerow([f'{keyClean},{exportableData}'])
     print("Done")
 
 
@@ -1054,8 +1056,9 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         points = int(gameweekData['total_points'])
         history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
         numberOfGames = len(history)
+        value = float()
         for record in history:
-            if int(record['round']) == (currentGameweek - 1):
+            if int(record['round']) == currentGameweek:
                 value = record['value'] / 10
         selected = float(gameweekData['selected_by_percent'])
         if selected < minimumPercentageSelected:
@@ -1071,7 +1074,10 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         tempDict["assists"] = int(gameweekData['assists'])
         tempDict["bonus"] = int(gameweekData['bonus'])
         tempDict["ict"] = float(gameweekData['ict_index'])
-        tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
+        if numberOfGames > 0:
+            tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
+        else:
+            tempDict["minutesPercentage"] = 0
         tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
         if minimumCost <= value <= maximumCost:
             playerDict[playerID] = tempDict

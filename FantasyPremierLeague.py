@@ -9,7 +9,7 @@ import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
 import operator
-import prettytable
+import  prettytable
 from prettytable import PrettyTable
 
 """
@@ -599,7 +599,10 @@ def playerRoutine():
                 playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
                 for player in playersInTeam:
                     playerList = list()
-                    involvement = float(round((playerInvolvement[player]['involvement'] / currentTeamGoals)*100 , 1))
+                    try:
+                        involvement = float(round((playerInvolvement[player]['involvement'] / currentTeamGoals)*100 , 1))
+                    except:
+                        involvement = 0.0
                     playerName = playerInvolvement[player]['name']
                     playerList.append(playerName)
                     playerList.append(str(involvement)+"%")
@@ -1092,9 +1095,15 @@ def playerRoutine():
             top5Fixtures = dict()
             for fixture in top5FixtureTeams:
                 top5Fixtures[teamNames[fixture]] = easiestGames[fixture]
-
-            influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 3)
-            influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 3)
+            n = 3
+            if gw - 3 <= 0:
+                n = 2
+            if gw - 2 <= 0:
+                n = 1
+            if gw - 1 <= 0:
+                n = 0
+            influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, n)
+            influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, n)
             playerNames = playerData.generatePlayerNameToIDMatching()
             playerNamesToId = playerData.generatePlayerIDToSurnameMatching()  
             teams = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1102,6 +1111,7 @@ def playerRoutine():
             chanceOfPlaying = playerData.generateChanceOfPlaying()
             playerDumps = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")['elements']
 
+<<<<<<< Updated upstream
             myTeam = input("Is this your team (y/n) > ")
             myId = input("Team Id (mine is: 2740322) > ")
 
@@ -1161,12 +1171,80 @@ def playerRoutine():
                 expectedCaptains[player.capitalize()] = int(expectedPerformance)
                 captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                 captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
+=======
+            def captainRoutine(gw, influenceByTeam, influenceByPlayer,playerNamesToId, playerNames, teams, playerToTeam, chanceOfPlaying, playerDumps):
+                myTeam = input("Is this your team (y/n) > ")
+                myId = input("Team Id (mine is: 804531 / bot: 2301441 ) > ")
+
+                #TODO: DELETE ONCE TESTED
+                currentGW = genericMethods.generateCurrentGameweek()
+                if gw < currentGW:
+                    myTeam = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/entry/{myId}/event/{gw}/picks/')
+                # -----------------------
+                elif 'y' in myTeam:
+                    user = input("Username > ")
+                    password = input("Password > ")
+                    myTeam = Teams.getCurrentTeamDetails(myId, user, password)
+                elif 'n' in myTeam:
+                    if gw >= currentGW:
+                        gw = gw - 1
+                    myTeam = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/entry/{myId}/event/{gw}/picks/')
+                else:
+                    if gw > currentGW:
+                        gw = gw - 1
+                    myTeam = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/entry/{myId}/event/{gw}/picks/')
+                potentialCaptains = list()
+                playerPerformance = dict()
+
+                for player in myTeam['picks']:
+                    performance = list()
+                    if playerToTeam[player['element']] in list(top5Fixtures.keys()):
+                        potentialCaptains.append(str(playerNames[player['element']]).capitalize())
+                        n = gw - 3
+                        if n <= 0:
+                            n = 1
+                        while n < gw:
+                            playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player['element'], n)
+                            if len(list(playerHistory.values())) == 0:
+                                playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player['element'], n - 3)
+                                totalPoints = playerHistory['total_points']
+                                performance.append(totalPoints)
+                            else:
+                                totalPoints = playerHistory['total_points']
+                                expectedPlay = playerHistory
+                                performance.append(totalPoints)
+                            n += 1
+
+                        playerPerformance[str(playerNames[player['element']]).capitalize()] = sum(performance)
+
+                expectedCaptains = dict()
+
+                chanceConverter = {100:100, 75:50, 50:25, 25:0, 0:0}
+
+                for player in playerPerformance:
+                    playerID = playerNamesToId[player.lower()]
+                    teamInfluence = influenceByTeam[playerToTeam[playerID ]]
+                    playerInfluence = influenceByPlayer[playerToTeam[playerID]][playerID ]
+                    influenceFactor = playerInfluence/teamInfluence
+                    playerChanceOfPlaying = chanceConverter[chanceOfPlaying[playerID]]/100
+                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
+                    expectedCaptains[player.capitalize()] = int(expectedPerformance)
+                    captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
+                    captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
+>>>>>>> Stashed changes
                 
-            print("Top captain picks:")
-            n = 1
-            for captain in captainsPrepared:
-                print(f'{n}. {captain}: {captainsPrepared[captain]}')
-                n += 1
+                print("Top captain picks:")
+                n = 1
+                for captain in captainsPrepared:
+                    print(f'{n}. {captain}: {captainsPrepared[captain]}')
+                    n += 1
+
+            captainRoutine(gw, influenceByTeam, influenceByPlayer,playerNamesToId, playerNames, teams, playerToTeam, chanceOfPlaying, playerDumps)
+
+            goAgain = str(input("Would you like to run another team? (Y/N) > ")).lower()
+            
+            if goAgain == 'y':
+                captainRoutine(gw, influenceByTeam, influenceByPlayer,playerNamesToId, playerNames, teams, playerToTeam, chanceOfPlaying, playerDumps)
 
             endRoutine()
             
@@ -1492,7 +1570,7 @@ def teamsRoutine():
             for teamName in teamIDs:
                 id = teamIDs[teamName]
                 session = requests.session()
-                currentTeamData = Teams.getTeamDetails(id, username, password, genericMethods.generateCurrentGameweek())
+                currentTeamData = Teams.getTeamDetails(id, username, password, genericMethods.generateCurrentGameweek(), 'N')
                 dataOfInterest = currentTeamData['picks']
                 for data in dataOfInterest:
                     if data['element'] in playersSelectedCount:
