@@ -559,27 +559,25 @@ def exportDictionaryOfDataToExcel(dictionary):
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                if isinstance(seasonData, dict):
-                    for data in seasonData:
-                            if data not in headerList:
-                                headerList.append(data)
-                            else:
-                                if printed != 1:
-                                    csv_out_comma_seperator.writerow(headerList)
-                                    printed = 1
+                for data in seasonData:
+                    if data not in headerList:
+                        headerList.append(data)
+                    else:
+                        if printed != 1:
+                            csv_out_comma_seperator.writerow(headerList)
+                            printed = 1
 
             for season in dictionary[key]:
                 seasonData = dictionary[key][season]
-                if isinstance(seasonData, dict):
-                    currentList = list()
-                    currentList.append(season)
-                    for data in seasonData:
-                        currentAddition = str(seasonData[data]).strip()
-                        currentList.append(currentAddition)
-                    exportList[key] = currentList
-                    exportListAsString = str(exportList[key]).replace("'","")
-                    exportableData = exportListAsString.replace('[','').replace(']','').replace('"',"")
-                    csv_out_tab_seperator.writerow([f'{keyClean},{exportableData}'])
+                currentList = list()
+                currentList.append(season)
+                for data in seasonData:
+                    currentAddition = str(seasonData[data]).strip()
+                    currentList.append(currentAddition)
+                exportList[key] = currentList
+                exportListAsString = str(exportList[key]).replace("'","")
+                exportableData = exportListAsString.replace('[','').replace(']','').replace('"',"")
+                csv_out_tab_seperator.writerow([f'{keyClean},{exportableData}'])
     print("Done")
 
 
@@ -912,7 +910,8 @@ def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGamewee
         playerDict = dict()
         statsDict = dict()
         playerDataForWeek = dict() 
-        currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}event/{currentGameweek}/live')
+        urlToUse = str(f'{urlBase}event/{currentGameweek}/live')
+        currentDumps = genericMethods.generateJSONDumpsReadable(urlToUse)
         for gameweekData in currentDumps['elements']:
             if gameweekData['id'] == playerID:
                 for data in gameweekData:
@@ -1056,9 +1055,8 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         points = int(gameweekData['total_points'])
         history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
         numberOfGames = len(history)
-        value = float()
         for record in history:
-            if int(record['round']) == currentGameweek:
+            if int(record['round']) == (currentGameweek - 1):
                 value = record['value'] / 10
         selected = float(gameweekData['selected_by_percent'])
         if selected < minimumPercentageSelected:
@@ -1074,10 +1072,7 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         tempDict["assists"] = int(gameweekData['assists'])
         tempDict["bonus"] = int(gameweekData['bonus'])
         tempDict["ict"] = float(gameweekData['ict_index'])
-        if numberOfGames > 0:
-            tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
-        else:
-            tempDict["minutesPercentage"] = 0
+        tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
         tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
         if minimumCost <= value <= maximumCost:
             playerDict[playerID] = tempDict

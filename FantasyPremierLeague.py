@@ -9,7 +9,7 @@ import tkinter as Tk
 import sys, traceback
 from collections import OrderedDict
 import operator
-import  prettytable
+import prettytable
 from prettytable import PrettyTable
 
 """
@@ -1111,7 +1111,6 @@ def playerRoutine():
             chanceOfPlaying = playerData.generateChanceOfPlaying()
             playerDumps = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")['elements']
 
-<<<<<<< Updated upstream
             myTeam = input("Is this your team (y/n) > ")
             myId = input("Team Id (mine is: 2740322) > ")
 
@@ -1171,7 +1170,7 @@ def playerRoutine():
                 expectedCaptains[player.capitalize()] = int(expectedPerformance)
                 captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                 captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
-=======
+
             def captainRoutine(gw, influenceByTeam, influenceByPlayer,playerNamesToId, playerNames, teams, playerToTeam, chanceOfPlaying, playerDumps):
                 myTeam = input("Is this your team (y/n) > ")
                 myId = input("Team Id (mine is: 804531 / bot: 2301441 ) > ")
@@ -1231,7 +1230,6 @@ def playerRoutine():
                     expectedCaptains[player.capitalize()] = int(expectedPerformance)
                     captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                     captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
->>>>>>> Stashed changes
                 
                 print("Top captain picks:")
                 n = 1
@@ -1286,7 +1284,7 @@ def playerRoutine():
                 n = gw - 3
                 while n < gw:
                     playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n)
-                    if len(list(playerHistory.values())) == 0:
+                    if len(list(playerHistory.values())) == 0 and n > 3:
                         playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n - 3)
                         if len(list(playerHistory.values())) > 0:
                             totalPoints = playerHistory['total_points']
@@ -1294,7 +1292,10 @@ def playerRoutine():
                         else:
                             totalPoints = 0
                     else:
-                        totalPoints = playerHistory['total_points']
+                        if 'total_points' in playerHistory: 
+                            totalPoints = playerHistory['total_points']
+                        else:
+                            totalPoints = 0
                         expectedPlay = playerHistory
                         performance.append(totalPoints)
 

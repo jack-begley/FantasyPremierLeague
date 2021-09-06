@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\chromeDrivers",
+    "\\__pycache__"
   ],
+  "SelectedNode": "\\__pycache__",
   "PreviewInSolutionExplorer": false
 }
