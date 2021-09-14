@@ -168,7 +168,7 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
 
         winRankings = dict()
 
-        while gw < endGw:
+        while gw <= endGw:
             fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
             length = len(fixtures)
             current = 1
@@ -1094,3 +1094,24 @@ def teamIDsAsKeysAndPercentageStrengthAsData(gameweek):
         teamDict[team] = percentageStrength
 
     return teamDict
+
+# Input if it's your team or not and get an up to date dict of your team make up
+
+def getMyTeam():
+    myTeam = input("Is this your team (y/n) > ")
+    myId = input("Team Id (mine is: 804531 / bot: 2301441 ) > ")
+
+    if 'y' in myTeam:
+        user = input("Username > ")
+        password = input("Password > ")
+        myTeam = getCurrentTeamDetails(myId, user, password)
+    elif 'n' in myTeam:
+        if gw >= currentGW:
+            gw = gw - 1
+        myTeam = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/entry/{myId}/event/{gw}/picks/')
+    else:
+        if gw > currentGW:
+            gw = gw - 1
+        myTeam = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/entry/{myId}/event/{gw}/picks/')
+
+    return myTeam
