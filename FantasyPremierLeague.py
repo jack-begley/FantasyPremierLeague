@@ -1113,7 +1113,7 @@ def playerRoutine():
 
             def captainRoutine(gw, influenceByTeam, influenceByPlayer,playerNamesToId, playerNames, teams, playerToTeam, chanceOfPlaying, playerDumps):
                 
-                myTeam = Teams.getMyTeam()
+                myTeam = Teams.getMyTeam(gw)
 
                 potentialCaptains = list()
                 playerPerformance = dict()
@@ -1245,9 +1245,11 @@ def playerRoutine():
 
             # Gather my players and sort by position
             teamPerformance = dict()
-            myTeam = Teams.getMyTeam()['picks']
+            elements = list()
+            myTeam = Teams.getMyTeam(gw)['picks']
             for elementSummary in myTeam:
                 player = elementSummary['element']
+                elements.append(player)
                 teamPerformance[player] = playersPrepared[player]
             myTeamSortedByPosition = playerData.sortPlayerDataByPosition(teamPerformance)
 
@@ -1255,59 +1257,48 @@ def playerRoutine():
             for position in myTeamSortedByPosition:
                 myPlayersSorted[position] = genericMethods.reformattedSortedTupleAsDict(sorted(myTeamSortedByPosition[position].items(), key=lambda x: x[1], reverse=True))
             
-            playerPrices = playerData.generateListOfPlayersPrices
-
+            playerPrices = playerData.generateListOfPlayersPrices()
 
             # Worst per position
-            worstValue = dict()
-            worstPlayer = dict()
+            worst = dict()
 
-            worstPlayer[1] = playerNames[list(myPlayersSorted[1].keys())[-1]]
-            worstValue[1] = myPlayersSorted[1][list(myPlayersSorted[1].keys())[-1]]
-            worstPlayer[2] = playerNames[list(myPlayersSorted[2].keys())[-1]]
-            worstValue[2] = myPlayersSorted[2][list(myPlayersSorted[2].keys())[-1]]
-            worstPlayer[3] = playerNames[list(myPlayersSorted[3].keys())[-1]]
-            worstValue[3] = myPlayersSorted[3][list(myPlayersSorted[3].keys())[-1]]
-            worstPlayer[4] = playerNames[list(myPlayersSorted[4].keys())[-1]]
-            worstValue[4] = myPlayersSorted[4][list(myPlayersSorted[4].keys())[-1]]
-
+            worst[1] = {"id": list(myPlayersSorted[1].keys())[-1], "score": myPlayersSorted[1][list(myPlayersSorted[1].keys())[-1]], "value": playerPrices[list(myPlayersSorted[1].keys())[-1]]}
+            worst[2] = {"id": list(myPlayersSorted[2].keys())[-1], "score": myPlayersSorted[2][list(myPlayersSorted[2].keys())[-1]], "value": playerPrices[list(myPlayersSorted[2].keys())[-1]]}
+            worst[3] = {"id": list(myPlayersSorted[3].keys())[-1], "score": myPlayersSorted[3][list(myPlayersSorted[3].keys())[-1]], "value": playerPrices[list(myPlayersSorted[3].keys())[-1]]}
+            worst[4] = {"id": list(myPlayersSorted[4].keys())[-1], "score": myPlayersSorted[4][list(myPlayersSorted[4].keys())[-1]], "value": playerPrices[list(myPlayersSorted[4].keys())[-1]]}
 
             # Work out which of the same price I should transfer in
 
-            playerPrices = playerData.generateListOfPlayersByPositionAndPrice()
+            playerPrices = playerData.generateListOfPlayersByPositionByCost()
             filteredPriceByPosition = dict()
 
             for position in playerPrices:
-                filteredPrice = dict()
-                for player in playerPrices[position]:
-                    if playerPrices[player] <= worstValue[position]:
-                        filteredPrice[player] = playerPrices[position][player]
-                    filteredPriceByPosition[position] = filteredPrice 
-
-            for position in filteredPriceByPosition:
-                playerDifference = dict()
                 playerReference = dict()
-                for player in filteredPriceByPosition[position]:
-                    if playersPrepared[player] - playersPrepared[worstPlayer] > 0:
-                        playerDifference[player] = {"value": playersPrepared[player] - playersPrepared[worstPlayer], "position": position}
-                        playerReference[player] = playersPrepared[player] - playersPrepared[worstPlayer]
+                playerDifference = dict()
+                for player in playerPrices[position]:
+                    if playerPrices[position][player] <= worst[position]['value'] and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
+                        playerDifference[player] = {"id": player, "difference": playersPrepared[player] - worst[position]['score'], "position": position}
+                        playerReference[player] = playersPrepared[player] - worst[position]['score']
 
             playersSorted = sorted(playerReference.items(), key=lambda x: x[1], reverse=True)
             playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
 
             top5Transfers = list(playersPrepared.keys())[:5]
 
+            print("")
             print(" ----- TOP 5 TRANSFERS ------")
+            print("")
             n = 1
             for player in top5Transfers:
-                playerOut = playerNames[worstPlayer[playerDifference[player]["position"]]]
+                position = playerDifference[player]['position']
+                playerOut = playerNames[worst[position]['id']]
                 playerName = playerNames[player]
-                playerValue = playerDifference[player]["value"]
+                playerValue = playerDifference[player]["difference"]
                 print(f"{n}. {playerOut} out for {playerName} - {playerValue}")
                 n += 1
-
-
             print("")
+
+            endRoutine()        
 
         # All player data for all gameweeks (to excel)
         elif playerUserInputInitialInt == 51:

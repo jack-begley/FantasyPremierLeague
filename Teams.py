@@ -1097,9 +1097,10 @@ def teamIDsAsKeysAndPercentageStrengthAsData(gameweek):
 
 # Input if it's your team or not and get an up to date dict of your team make up
 
-def getMyTeam():
+def getMyTeam(gw):
     myTeam = input("Is this your team (y/n) > ")
     myId = input("Team Id (mine is: 804531 / bot: 2301441 ) > ")
+    currentGW = genericMethods.generateCurrentGameweek()
 
     if 'y' in myTeam:
         user = input("Username > ")
