@@ -702,6 +702,39 @@ def generateListOfPlayersPricesInTeamByPosition(positionOfPlayers, idOfTeam):
 
     return playerCosts
 
+# Creates a list of the players and filter by price
+def generateListOfPlayersByPositionByCost():
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
+    allPlayers = dict()
+    GK = dict()
+    DF = dict()
+    MID = dict()
+    FW = dict()
+    for key in currentDumps['elements']:
+        if key['element_type'] == 1:
+            GK[key['id']] = key['now_cost']
+        if key['element_type'] == 2:
+            DF[key['id']] = key['now_cost']
+        if key['element_type'] == 3:
+            MID[key['id']] = key['now_cost']
+        if key['element_type'] == 4:
+            FW[key['id']] = key['now_cost']
+
+    allPlayers[1] = GK
+    allPlayers[2] = DF
+    allPlayers[3] = MID
+    allPlayers[4] = FW
+
+    return allPlayers
+
+# Creates a list of the players and their price
+def generateListOfPlayersPrices():
+    currentDumps = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('bootstrap-static/'))
+    playerCosts = dict()
+    for key in currentDumps['elements']:
+        playerCosts[key['id']] = key['now_cost']
+
+    return playerCosts
 
 # Generate a list of historical results by player position:
 def generateHistoricalDataByPositionByPlayer():
@@ -784,38 +817,47 @@ def generateListOfPointsForNGameweeksPerPlayer(playerID, gameweekOfInterest, max
         weeksWeCareAbout.append(n)
         n += 1
     for data in currentDumps['history']:
+        successful = False
         currentGameweek = int(data['round'])
         difference = currentGameweek - previousGameweek
         if int(gameweekOfInterest) <= int(data['round']) <= int(maxGameweek) and float(data['value']) <= maxValue * 10:
             if difference <= 1:
                 if int(data['round']) in weeksWeCareAbout:
                     currentPlayersPoints.append(int(data['total_points']))
+                    successful = True
                 else:
                     if stringOrIntForNull == 'string':
                         currentPlayersPoints.append('-')
+                        successful = True
                     else:
                         currentPlayersPoints.append(int(0))
+                        successful = True
             elif int(gameweekOfInterest) <= int(data['round']):
                 if stringOrIntForNull == 'string':
                     currentPlayersPoints.append('-')
+                    successful = True
                 else:
                     currentPlayersPoints.append(int(0))
+                    successful = True
                 currentPlayersPoints.append(int(data['total_points']))
+                successful = True
             else:
                 if stringOrIntForNull == 'string':
                     currentPlayersPoints.append('-')
+                    successful = True
                 else:
                     currentPlayersPoints.append(int(0))
+                    successful = True
 
         previousGameweek = int(data['round'])
         if currentGameweek == maxGameweek:
             maxReached = True
 
-    if int(gameweekOfInterest) <= int(currentGameweek) <= int(maxGameweek) and float(data['value']) <= maxValue * 10 and maxReached == False:
-        if stringOrIntForNull == 'string':
-            currentPlayersPoints.append('-')
-        else:
-            currentPlayersPoints.append(int(0))
+        if int(gameweekOfInterest) <= int(currentGameweek) <= int(maxGameweek) and float(data['value']) <= maxValue * 10 and maxReached == False and successful == False:
+            if stringOrIntForNull == 'string':
+                currentPlayersPoints.append('-')
+            else:
+                currentPlayersPoints.append(int(0))
 
     return currentPlayersPoints
 
