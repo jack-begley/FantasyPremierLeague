@@ -1272,18 +1272,31 @@ def playerRoutine():
             playerPrices = playerData.generateListOfPlayersByPositionByCost()
             filteredPriceByPosition = dict()
 
+            
+            playerReference = dict()
+            playerDifference = dict()
             for position in playerPrices:
-                playerReference = dict()
-                playerDifference = dict()
                 for player in playerPrices[position]:
                     if playerPrices[position][player] <= worst[position]['value'] and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
                         playerDifference[player] = {"id": player, "difference": playersPrepared[player] - worst[position]['score'], "position": position}
                         playerReference[player] = playersPrepared[player] - worst[position]['score']
 
             playersSorted = sorted(playerReference.items(), key=lambda x: x[1], reverse=True)
-            playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            playersReady = genericMethods.reformattedSortedTupleAsDict(playersSorted)
 
-            top5Transfers = list(playersPrepared.keys())[:5]
+            top5Transfers = list(playersReady.keys())[:5]
+
+            positionRef = list()
+            topByPosition = list()
+
+            for player in playersReady:
+                if playerDifference[player]['position'] not in positionRef:
+                    topByPosition.append(player)
+                    positionRef.append(playerDifference[player]['position'])
+                if len(positionRef) == 4:
+                    break
+
+            positionRef = {1: "Goalkeeper", 2: "Defender", 3: "Midfielder", 4: "Forward"}
 
             print("")
             print(" ----- TOP 5 TRANSFERS ------")
@@ -1295,6 +1308,20 @@ def playerRoutine():
                 playerName = playerNames[player]
                 playerValue = playerDifference[player]["difference"]
                 print(f"{n}. {playerOut} out for {playerName} - {playerValue}")
+                n += 1
+            print("")
+
+            print("")
+            print(" ----- TOP TRANSFERS PER POSITION------")
+            print("")
+            n = 1
+            for player in topByPosition:
+                positionName = positionRef[playerDifference[player]['position']]
+                position = playerDifference[player]['position']
+                playerOut = playerNames[worst[position]['id']]
+                playerName = playerNames[player]
+                playerValue = playerDifference[player]["difference"]
+                print(f"{positionName}: {playerOut} out for {playerName} - {playerValue}")
                 n += 1
             print("")
 
