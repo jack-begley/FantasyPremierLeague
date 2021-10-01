@@ -1246,7 +1246,8 @@ def playerRoutine():
             # Gather my players and sort by position
             teamPerformance = dict()
             elements = list()
-            myTeam = Teams.getMyTeam(gw)['picks']
+            myTeamSource = Teams.getMyTeam(gw)
+            myTeam = myTeamSource['picks']
             for elementSummary in myTeam:
                 player = elementSummary['element']
                 elements.append(player)
@@ -1272,12 +1273,21 @@ def playerRoutine():
             playerPrices = playerData.generateListOfPlayersByPositionByCost()
             filteredPriceByPosition = dict()
 
+            try:
+                bank = myTeamSource['transfers']['bank']
+            except:
+                try:
+                    bank = myTeamSource['entry_history']['bank']
+                except:
+                    bank = 0
+
             
             playerReference = dict()
             playerDifference = dict()
             for position in playerPrices:
                 for player in playerPrices[position]:
-                    if playerPrices[position][player] <= worst[position]['value'] and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
+                    availableMoney = worst[position]['value'] + bank
+                    if playerPrices[position][player] <= availableMoney and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
                         playerDifference[player] = {"id": player, "difference": playersPrepared[player] - worst[position]['score'], "position": position}
                         playerReference[player] = playersPrepared[player] - worst[position]['score']
 
@@ -1807,7 +1817,8 @@ def teamsRoutine():
             print("-------------------------------------------------------")
             print("")
             gw = int(input("Gameweek >> "))
-            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw)
+            nw = int(input("How many weeks to look in the future? >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw, nw)
             print("Indexed fixture difficulty by team where 100 is the easiest fixture:")
             for fixture in easiestGames:
                 result = easiestGames[fixture]
