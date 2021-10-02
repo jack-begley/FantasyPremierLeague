@@ -494,7 +494,7 @@ def playerRoutine():
             print(" 2. Vs. Points scored")
             RouteToTake = int(input("What would you like to compare against? > "))
             currentGameweek = genericMethods.generateCurrentGameweek()
-            count = currentGameweek - numberOfGameweeks
+            count = currentGameweek + 1 - numberOfGameweeks
             playerList = playerData.generatePlayerNameToIDMatching() 
             gameweekList = list()
 
@@ -502,9 +502,11 @@ def playerRoutine():
                 gameweekList.append(count)
                 count += 1
 
-            gameweekListClean = "/ "
+            gameweekListHeaders = ['Name']
             for week in gameweekList:
-                gameweekListClean += f"{week} / "
+                gameweekListHeaders.append(f'GW{week}')
+            gameweekListHeaders.append('*AVG*')
+
 
             playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks, RouteToTake)
             playerICTList = dict()
@@ -517,7 +519,7 @@ def playerRoutine():
                 genericMethods.runPercentage(maxLen, currentIndex, "Generating players ICT shortlist", "Final shortlist of top ICT players created")
                 for ICTHistory in playerICTHistory[player]:
                     currentPlayerICTList.append(playerICTHistory[player][ICTHistory][ICTHistory])
-                    currentPlayerComparative.append(str(playerICTHistory[player][ICTHistory]['comparative']) + "   ")
+                    currentPlayerComparative.append(str(playerICTHistory[player][ICTHistory]['comparative']))
                 
                 playerICTList[player] = currentPlayerICTList
                 playerComparativeList[player] = currentPlayerComparative
@@ -535,37 +537,42 @@ def playerRoutine():
             sortedSumICT = sorted(averageICTByPlayer.items(), key=operator.itemgetter(1), reverse=True)
             top5Players = sortedSumICT[:5]
             finalSumICT = genericMethods.reformattedSortedTupleAsDict(top5Players)
+            
+            if RouteToTake == 1:
+                comparative = "game difficulty"
+            if RouteToTake == 2:
+                comparative = "round points"
 
-            ICTShortlist = dict()
+            totalICTPlayers = dict()
+            topICTPlayers = dict()
+            playerComparativeFinal = dict()
             for player in finalSumICT:
-                playerName = playerList[player]
-                ICTShortlist[playerName] =  playerICTList[player]
-
-            gamespan = numberOfGameweeks + 1
+                playerComparativeListPrint = [f"{comparative.capitalize()}"]
+                playerName = playerList[player].upper()
+                averageComparative = genericMethods.listAverage(list(0 if x == '-' else int(x) for x in playerComparativeList[player]))
+                if len(playerICTList[player]) < numberOfGameweeks:
+                    numberOfZeros = numberOfGameweeks - len(playerICTList[player])
+                    ICTUse = (["-"] * numberOfZeros) + playerICTList[player] + [averageICTByPlayer[player]]
+                    playerComparativeList[player] = (['-'] * numberOfZeros) + playerComparativeList[player]
+                    playerComparativeListPrint.extend(playerComparativeList[player])
+                else:
+                    ICTUse = playerICTList[player] + [averageICTByPlayer[player]]
+                    playerComparativeListPrint.extend(playerComparativeList[player])
+                formattedICT = [playerName]
+                formattedICT.extend(ICTUse)
+                topICTPlayers[player] = formattedICT
+                playerComparativeFinal[player] = playerComparativeListPrint + [averageComparative]
 
             print("-----------------------------------------------------------------------------------------------------------")
-            print(f'Top ranked players for ICT Index growth over the last {gamespan} games (GW {fromGameweek} to {currentGameweek}):')
+            print(f'Top ranked players for ICT Index growth over the last {numberOfGameweeks} games (GW {fromGameweek + 1} to {currentGameweek}) compared to {comparative}:')
             print("")
-            print(f"Gameweek: {gameweekListClean}")
+
+            t = PrettyTable(gameweekListHeaders, hrules = prettytable.ALL)
+            for player in topICTPlayers:
+                t.add_row(topICTPlayers[player])
+                t.add_row(playerComparativeFinal[player])
+            print(t)
             print("")
-            for player in finalSumICT:
-                playerName = str(playerList[player]).capitalize()
-                average = round(genericMethods.listAverage(ICTShortlist[playerList[player]]),1)
-                remainingLength = 15 - len(playerName)
-                if RouteToTake == 1:
-                    comparative = "Game difficulty"
-                if RouteToTake == 2:
-                    comparative = "Round Points   "
-                playerName = str(playerName + genericMethods.repeatStringToLength(" ", remainingLength)).capitalize()
-                if remainingLength < 0 :
-                    supplementLength = len(playerName) - 15
-                    comparative = comparative + genericMethods.repeatStringToLength(" ", supplementLength) 
-                    playerName = str(playerList[player]).capitalize()
-                playerDataTop5 = str(ICTShortlist[playerList[player]]).replace("[","").replace("]","")
-                comparativeList = str(playerComparativeList[player]).replace("[","").replace("]","").replace("'","")
-                print(f"{playerName}: {playerDataTop5} - AVG: {average}")
-                print(f"{comparative}: {comparativeList}")
-                print("")
 
             endRoutine()        
 
