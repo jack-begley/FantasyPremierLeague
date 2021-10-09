@@ -3,6 +3,7 @@ import playerData
 import genericMethods
 import detailedStats
 import Teams
+import sqlFunction
 import operator
 import requests
 import tkinter as Tk
