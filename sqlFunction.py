@@ -12,9 +12,6 @@ import requests
 #jackbegley
 #thenoise360
 
-#If using pyodbc
-#https://docs.microsoft.com/en-us/sql/connect/python/pyodbc/step-3-proof-of-concept-connecting-to-sql-using-pyodbc?view=sql-server-ver15
-
 def connect(user, password):
     mydb = mysql.connector.connect(
         host="localhost",
@@ -40,10 +37,33 @@ def create(user, password, databaseName):
     mydb = connect(user, password)
 
     mycursor = mydb.cursor()
+    try:
+        mycursor.execute(f"CREATE DATABASE {databaseName}")
+        print(f"Database \"{databaseName}\" created.")
 
-    mycursor.execute(f"CREATE DATABASE {databaseName}")
+    except:
+        print("ERROR: database already exists")
 
-    print(f"Database \"{databaseName}\" created.")
+  
+def createTable(user, password, tableName, database, columnSpec):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user=user,
+        password=password,
+        database=database
+    )
+
+    mycursor = mydb.cursor()
+
+    columnSpecFormatted = columnSpec.replace("'","").replace('"','')
+
+    try:
+        ready = str(f"CREATE TABLE {tableName} ({columnSpec})").replace("'","")
+        mycursor.execute(ready)
+        print(f"Table \"{tableName}\" created.")
+
+    except:
+        print("ERROR: table already exists")
 
 def read(db, databaseName):
     print("")
@@ -60,7 +80,12 @@ def delete(user, password, databaseName):
 
     print(f"Database \"{databaseName}\" deleted.")
 
-
+conversions = {
+    'int': 'INT',
+    'bool': 'TINYINT',
+    'str': 'VARCHAR(255)'
+    'NoneType'
+    }
 
 #user = input("Username: ")
 user = "jackbegley"
@@ -70,13 +95,52 @@ db = "GameweekSummary"
 
 checkDatabases(user, password)
 
-#create(user, password, "GameweekSummary")
+create(user, password, "GameweekSummary")
 
 checkDatabases(user, password)
 
 JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
 Data = JSON.json()
-Dumps = json.dumps(Data)
+
+specification = dict()
+
+# === TODO: Get working for all of bootstrap static ====================================================================================================
+
+#for section in Data:
+#    tableName = section
+#    for element in Data[section]:
+#        if isinstance(element, dict) == True:
+#            for values in element:
+#                # MAKE THIS PART WORK WITHOUT EXCEPTIONS
+#                if isinstance(element[values], list) == False and isinstance(element[values], dict) == False:
+#                    valueType = str(type(element[values])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+#                    valueTypeConversion = conversions[valueType]
+#                    specification[values] = valueTypeConversion
+#            convertedColumns = ','.join("'"+str(x).replace('/','_') + " " + str(specification[x]) + "'" for x in specification.keys())
+#            createTable(user, password, tableName, 'gameweeksummary', convertedColumns)
+#            break
+
+# ========================================================================================================================================================
+
+# ============= FOR TESTING, MAKE FORMAL ===================================
+for element in Data['events']:
+    columns = ','.join("'"+str(x).replace('/','_')+"'" for x in element.keys())
+    # TODO: FOR NOW NEED TO REMOVE LIST OR DICT, AND CONVER BOOL to 1/0
+    values = ','.join("'"+str(x).replace('/','_')+"'" for x in element.values())
+    sql = "INSERT INTO %s (%s) VALUES (%s);" % ('events', columns, values)
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user=user,
+        password=password,
+        database='gameweeksummary'
+    )
+
+    mycursor = mydb.cursor()
+    mycursor.execute(sql)
+
+#=================================================================================
+
+# REMOVE ===============================================
 result = json.loads(Dumps["elements"])
 
 df = pandas.DataFrame(result)
@@ -86,6 +150,7 @@ delete(user, password, "GameweekSummary")
 checkDatabases(user, password)
 
 print("")
+# ===============================================
 
 
 #Now we need to create a connection to our sql database. We will be using sqlite for that.
