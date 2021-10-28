@@ -1,8 +1,10 @@
+# TODO: -- FIX CYCLICAL IMPORT ERRORS
 import gameweekSummary
 import playerData
 import genericMethods
 import detailedStats
 import Teams
+# -------------------------------
 import mysql.connector
 import sqlite3 
 import pandas
@@ -12,7 +14,19 @@ import requests
 #jackbegley
 #thenoise360
 
-def connect(user, password):
+# TODO: DELETE ONCE CURRENT IMPORT ERROR IS SORTED (SEE LINE 1)
+def generateCurrentGameweek():
+    JSON = requests.get("https://fantasy.premierleague.com/api/entry/1/")
+    Data = JSON.json()
+    DumpsPre = json.dumps(Data)
+    dumps = json.loads(DumpsPre)
+    for keys in dumps:
+        if keys == 'current_event':
+            return dumps[keys]
+# =================================================
+
+
+def connectToSQL(user, password):
     mydb = mysql.connector.connect(
         host="localhost",
         user=user,
@@ -23,8 +37,20 @@ def connect(user, password):
 
     return mydb
 
+def connectToDB(user, password, database):
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user=user,
+        password=password,
+        database=database
+    )
+    
+    print(f"Connected: {mydb.server_host}:{mydb.server_port}")
+
+    return mydb
+
 def checkDatabases(user, password):
-    mydb = connect(user, password)
+    mydb = connectToSQL(user, password)
 
     mycursor = mydb.cursor()
 
@@ -34,7 +60,7 @@ def checkDatabases(user, password):
       print(x)
 
 def create(user, password, databaseName):
-    mydb = connect(user, password)
+    mydb = connectToSQL(user, password)
 
     mycursor = mydb.cursor()
     try:
@@ -46,12 +72,7 @@ def create(user, password, databaseName):
 
   
 def createTable(user, password, tableName, database, columnSpec):
-    mydb = mysql.connector.connect(
-        host="localhost",
-        user=user,
-        password=password,
-        database=database
-    )
+    mydb = connectToDB(user, password, database)
 
     mycursor = mydb.cursor()
 
@@ -64,6 +85,24 @@ def createTable(user, password, tableName, database, columnSpec):
 
     except:
         print("ERROR: table already exists")
+
+    mycursor.execute("SHOW TABLES")
+
+    for x in mycursor:
+      print(x)
+
+def deleteTable(user, password, tableName, database):
+    mydb = connectToDB(user, password, database)
+    
+    mycursor = mydb.cursor()
+
+    try:
+        ready = str(f"DROP TABLE {tableName}")
+        mycursor.execute(ready)
+        print(f"Table \"{tableName}\" deleted.")
+
+    except:
+        print("ERROR: table doesn't exists")
 
 def read(db, databaseName):
     print("")
@@ -83,8 +122,7 @@ def delete(user, password, databaseName):
 conversions = {
     'int': 'INT',
     'bool': 'TINYINT',
-    'str': 'VARCHAR(255)'
-    'NoneType'
+    'str': 'VARCHAR(255)',
     }
 
 #user = input("Username: ")
@@ -95,69 +133,76 @@ db = "GameweekSummary"
 
 checkDatabases(user, password)
 
-create(user, password, "GameweekSummary")
-
-checkDatabases(user, password)
-
 JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
 Data = JSON.json()
 
 specification = dict()
 
 # === TODO: Get working for all of bootstrap static ====================================================================================================
+def createAllSuitableTables(user, password):
+    for section in Data:
+        tableName = section
+        if isinstance(Data[section], dict) == True or isinstance(Data[section], list) == True:
+            for element in Data[section]:
+                if isinstance(element, dict) == True:
+                    for item in element:
+                        if isinstance(item, dict) == False:
+                            # MAKE THIS PART WORK WITHOUT EXCEPTIONS
+                            valueType = str(type(item)).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                            if valueType == "NoneType":
+                                valueTypeConversion = "CHAR"
+                            else:
+                                valueTypeConversion = conversions[valueType]
+                            specification[item] = valueTypeConversion
+                else:
+                    # MAKE THIS PART WORK WITHOUT EXCEPTIONS
+                    valueType = str(type(element)).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                    if valueType == "NoneType":
+                        valueTypeConversion = "CHAR"
+                    else:
+                        valueTypeConversion = conversions[valueType]
+                    specification[element] = valueTypeConversion
+            convertedColumns = ','.join("'"+str(x).replace('/','_') + " " + str(specification[x]) + "'" for x in specification.keys())
+            createTable(user, password, tableName, 'gameweeksummary', convertedColumns)
 
-#for section in Data:
-#    tableName = section
-#    for element in Data[section]:
-#        if isinstance(element, dict) == True:
-#            for values in element:
-#                # MAKE THIS PART WORK WITHOUT EXCEPTIONS
-#                if isinstance(element[values], list) == False and isinstance(element[values], dict) == False:
-#                    valueType = str(type(element[values])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-#                    valueTypeConversion = conversions[valueType]
-#                    specification[values] = valueTypeConversion
-#            convertedColumns = ','.join("'"+str(x).replace('/','_') + " " + str(specification[x]) + "'" for x in specification.keys())
-#            createTable(user, password, tableName, 'gameweeksummary', convertedColumns)
-#            break
 
 # ========================================================================================================================================================
 
 # ============= FOR TESTING, MAKE FORMAL ===================================
-for element in Data['events']:
-    columns = ','.join("'"+str(x).replace('/','_')+"'" for x in element.keys())
-    # TODO: FOR NOW NEED TO REMOVE LIST OR DICT, AND CONVER BOOL to 1/0
-    values = ','.join("'"+str(x).replace('/','_')+"'" for x in element.values())
-    sql = "INSERT INTO %s (%s) VALUES (%s);" % ('events', columns, values)
-    mydb = mysql.connector.connect(
-        host="localhost",
-        user=user,
-        password=password,
-        database='gameweeksummary'
-    )
+def updateEventsTable(user, password, database):
+    deleteTable(user, password, 'events', database)
+    createAllSuitableTables(user, password)
+    currentGameweek = generateCurrentGameweek()
+    for element in Data['events']:
+        elementsKept = dict()
+        for item in element:
+            if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                if valueType == "NoneType":
+                    value = "-"
+                elif valueType == "bool":
+                    if element[item] == True:
+                        value = 1
+                    if element[item] == False:
+                        value = 0
+                else:
+                    value = element[item]
+                elementsKept[item] = value
+        # TODO: Only drop and create a table for Events
+        columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+        values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+        sql = "INSERT INTO `%s` (%s) VALUES (%s);" % ('events', columns, values)
 
-    mycursor = mydb.cursor()
-    mycursor.execute(sql)
+        if int(element['name'].replace("Gameweek ","")) < (currentGameweek + 1):
+            dbConnect = connectToDB(user, password, database)
+            cursor = dbConnect.cursor()
+            cursor.execute(sql)
+            dbConnect.commit()
+            print(cursor.rowcount, "Record inserted successfully into events table")
+            cursor.close()
 
+        else:
+            break
+
+updateEventsTable(user, password, db)
 #=================================================================================
-
-# REMOVE ===============================================
-result = json.loads(Dumps["elements"])
-
-df = pandas.DataFrame(result)
-
-delete(user, password, "GameweekSummary")
-
-checkDatabases(user, password)
-
-print("")
-# ===============================================
-
-
-#Now we need to create a connection to our sql database. We will be using sqlite for that.
-
-#import sqlite3conn = sqlite3.connect("data.db")c = conn.cursor()
-
-#We can now convert our JSON data from dataframe to sqlite format such as db or sqlite.
-
-#df.to_sql("tablename",conn)
-#Note: The first argument is the table name you will be storing your data in.
