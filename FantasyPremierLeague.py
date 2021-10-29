@@ -509,7 +509,7 @@ def playerRoutine():
             gameweekListHeaders.append('*AVG*')
 
 
-            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks, RouteToTake)
+            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks - 1, RouteToTake)
             playerICTList = dict()
             playerComparativeList = dict()
             maxLen = len(playerICTHistory)
