@@ -12,6 +12,8 @@ import json
 import requests
 import os
 import sys
+from datetime import datetime
+import pytz
 
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
@@ -193,6 +195,8 @@ bootstrapStaticData = JSON.json()
 
 def createAllSuitableTables(user, password, database, table, datafeed):
         specification = dict()
+        if table == 'history_past':
+            specification['id'] = 'INT'
         for element in datafeed[table]:
             if isinstance(element, dict) == True:
                 for item in element:
@@ -511,53 +515,126 @@ def updateTeamsTable(user, password, database):
 def updateFixturesTable(user, password, database, datafeed):
     table = 'fixtures'
     currentGameweek = generateCurrentGameweek()
+    # TODO - create a create table method, maybe under a "start of season update" thing, then update this method to run without dropping the table
+    currentDateTime = datetime.now(pytz.utc)
+    # 2021-11-27T12:30:00Z
+    for element in currentElement[table]:
+        fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
+        if currentDateTime < fixtureTime:
+            elementsKept = dict()
+            id = element['id']
+            sqlCompare = f"SELECT id from {table} where id = {id}"
+
+            mydb = mysql.connector.connect(
+              host="localhost",
+              user=user,
+              password=password,
+              database=database
+            )
+
+            mycursor = mydb.cursor()
+            mycursor.execute(sqlCompare)
+            myresult = mycursor.fetchall()
+
+            if not myresult:
+                for item in element:
+                    if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                        valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                        if valueType == "NoneType":
+                            value = 0
+                        elif valueType == "bool":
+                            if element[item] == True:
+                                value = 1
+                            if element[item] == False:
+                                value = 0
+                        else:
+                            value = element[item]
+                            if isinstance(value, str) == True:
+                                valueClean = str(unicodeReplace(str(value))).replace("'","")
+                                value = valueClean
+                        elementsKept[item] = value
+
+                columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+                values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+
+                sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+
+                dbConnect = connectToDB(user, password, database)
+                cursor = dbConnect.cursor()
+                cursor.execute(sql)
+                dbConnect.commit()
+                print(cursor.rowcount, f"Record inserted successfully into {table} table")
+                cursor.close()
+
+def updateHistoryTable(user, password, database, datafeed):
+    table = 'history'
+    currentGameweek = generateCurrentGameweek()
     for element in currentElement[table]:
         elementsKept = dict()
-        id = element['id']
-        sqlCompare = f"SELECT id from {table} where id = {id}"
-
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user=user,
-          password=password,
-          database=database
-        )
-
-        mycursor = mydb.cursor()
-        mycursor.execute(sqlCompare)
-        myresult = mycursor.fetchall()
-
-        if not myresult:
-            for item in element:
-                if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
-                    valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                    if valueType == "NoneType":
+        for item in element:
+            if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                if valueType == "NoneType":
+                    value = 0
+                elif valueType == "bool":
+                    if element[item] == True:
+                        value = 1
+                    if element[item] == False:
                         value = 0
-                    elif valueType == "bool":
-                        if element[item] == True:
-                            value = 1
-                        if element[item] == False:
-                            value = 0
-                    else:
-                        value = element[item]
-                        if isinstance(value, str) == True:
-                            valueClean = str(unicodeReplace(str(value))).replace("'","")
-                            value = valueClean
-                    elementsKept[item] = value
+                else:
+                    value = element[item]
+                    if isinstance(value, str) == True:
+                        valueClean = str(unicodeReplace(str(value))).replace("'","")
+                        value = valueClean
+                elementsKept[item] = value
 
-            columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
-            values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+        columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+        values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
 
-            sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+        sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-            dbConnect = connectToDB(user, password, database)
-            cursor = dbConnect.cursor()
-            cursor.execute(sql)
-            dbConnect.commit()
-            print(cursor.rowcount, f"Record inserted successfully into {table} table")
-            cursor.close()
+        dbConnect = connectToDB(user, password, database)
+        cursor = dbConnect.cursor()
+        cursor.execute(sql)
+        dbConnect.commit()
+        print(cursor.rowcount, f"Record inserted successfully into {table} table")
+        cursor.close()
 
-# =====================================================================================================================================================
+def updateHistoryPastTable(user, password, database, datafeed, playerId):
+    table = 'history_past'
+    currentGameweek = generateCurrentGameweek()
+    for element in currentElement[table]:
+        elementsKept = dict()
+        elementsKept['id'] = n
+        for item in element:
+            if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                if valueType == "NoneType":
+                    value = 0
+                elif valueType == "bool":
+                    if element[item] == True:
+                        value = 1
+                    if element[item] == False:
+                        value = 0
+                else:
+                    value = element[item]
+                    if isinstance(value, str) == True:
+                        valueClean = str(unicodeReplace(str(value))).replace("'","")
+                        value = valueClean
+                elementsKept[item] = value
+
+        columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+        values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+
+        sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+
+        dbConnect = connectToDB(user, password, database)
+        cursor = dbConnect.cursor()
+        cursor.execute(sql)
+        dbConnect.commit()
+        print(cursor.rowcount, f"Record inserted successfully into {table} table")
+        cursor.close()
+
 
 bootstrapTrue = input("Do you want to update 2021_2022_BootstrapStatic (Y/N)> ")
 if bootstrapTrue == "Y" or bootstrapTrue == "y":
@@ -594,11 +671,13 @@ if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
 
     n = minimum
 
+    updateHistoryPast = input("Do you want to update 'history_past' (Only needs updated once a season) (Y/N)> ")
     
     JSON = requests.get(f"https://fantasy.premierleague.com/api/element-summary/1/")
     currentElement = JSON.json()
     for element in currentElement:
-        deleteTable(user, password, element, db)
+        if updateHistoryPast == "y" or updateHistoryPast == 'Y' or element != "history_past":
+            deleteTable(user, password, element, db)
         createAllSuitableTables(user, password, db, element, currentElement)
 
 
@@ -608,6 +687,20 @@ if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
         currentElement = JSON.json()
         runPercentage(maximum, n, f"Running player {n} of {maximum}", "All databases updated                         ")
         updateFixturesTable(user, password, db, currentElement)
+        updateHistoryTable(user, password, db, currentElement)
+        if updateHistoryPast == "y" or updateHistoryPast == 'Y':
+            updateHistoryPastTable(user, password, db, currentElement, n)
         n += 1
 
     print("")
+
+# ==============================================================================================================
+
+# https://stackoverflow.com/questions/9336270/using-a-python-dict-for-a-sql-insert-statement
+
+detailedStatsTrue = input("Do you want to update 2021_2022_DetailedStats (Y/N)> ")
+if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
+    db = "2021_2022_DetailedStats"
+    playerList = detailedStats.getAllPlayers()
+    players = detailedStats.getPlayerStats(playerList)
+    players = detailedStats.getPlayerStatsDetailed(playerList)

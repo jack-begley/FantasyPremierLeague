@@ -4,7 +4,6 @@ import playerData
 import genericMethods
 import Teams
 import gameweekSummary
-import sqlFunction
 import json
 import re
 from selenium import webdriver
@@ -37,7 +36,8 @@ def getPlayerStatsDetailed(players):
     seasonId = getCurrentSeasonId()
     capabilities = DesiredCapabilities.CHROME
     capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-    driver = webdriver.Chrome(r'C:\Users\JackBegley\Documents\GitHub\FantasyPremierLeague\chromeDrivers\chromedriver', desired_capabilities=capabilities)
+    # chromedriver must be in this directory
+    driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     jsonList = list()
     for player in players:
         playerNumbers = dict()
@@ -67,7 +67,7 @@ def getAllPlayers():
     players = dict()
     capabilities = DesiredCapabilities.CHROME
     capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-    driver = webdriver.Chrome(r'C:\Users\JackBegley\Documents\GitHub\FantasyPremierLeague\chromeDrivers\chromedriver', desired_capabilities=capabilities)
+    driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     for team in teamIDs:
         time.sleep(random.randint(0, 100)/100)
         driver.get(f"https://www.premierleague.com/players/?se={currentSeasonID}&cl={teamIDs[team]}")
