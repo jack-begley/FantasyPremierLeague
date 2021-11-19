@@ -132,7 +132,7 @@ def introRoutine():
         if userInputInt ==  1:
             playerRoutine()
             
-        if userInputInt ==  2:
+        if userInputInt == 2:
             teamsRoutine()
 
         if userInputInt ==  3:
@@ -182,6 +182,7 @@ def playerRoutine():
     print(' [13] Pick me a player')
     print(' [14] Pick me a captain')
     print(' [15] Pick me a transfer')
+    print(' [16] Pick my team')
     print("")
     print(" Data Exports: ")
     print(" [51] All player data for all gameweeks (to excel)")
@@ -934,7 +935,6 @@ def playerRoutine():
             print("-----------------------------")
             print("")
 
-            # allData = genericMethods.allDataAllPlayersByElementId()
             startGameweek = lastGameweek - lookback
             keys = factorWeights.keys()
 
@@ -1189,12 +1189,7 @@ def playerRoutine():
             fixtureIndex = dict()
             for fixture in easiestGames:
                 fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
-            #top5FixtureTeams = list(fixtureIndex.keys())[:5]
             teamNames = Teams.teamNamesAsKeysAndIDsAsData()
-            #top5Fixtures = dict()
-            #for fixture in top5FixtureTeams:
-                #top5Fixtures[teamNames[fixture]] = easiestGames[fixture]
-
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
             playerNames = playerData.generatePlayerNameToIDMatching()
@@ -1344,6 +1339,135 @@ def playerRoutine():
             print("")
 
             endRoutine()        
+
+        elif playerUserInputInitialInt == 16:
+            firstRun = True
+            gw = genericMethods.generateCurrentGameweek() + 1
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Which Gameweek do you want to see (next gameweek = {gw})?')
+            print("-------------------------------------------------------")
+            print("")
+            gw = int(input("Gameweek >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw, 5)
+            fixtureIndex = dict()
+            for fixture in easiestGames:
+                fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
+            teamNames = Teams.teamNamesAsKeysAndIDsAsData()
+            influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
+            influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
+            playerNames = playerData.generatePlayerNameToIDMatching()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerToTeam = playerData.generateIDAsKeyTeamIdAsValue()
+            chanceOfPlaying = playerData.generateChanceOfPlaying()
+            playerDumps = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")['elements']
+
+            chanceConverter = {100:100, 75:50, 50:25, 25:0, 0:0}
+
+            playersPerformance = dict()
+            playerPerformance = dict()
+
+            length = len(playerNames) - 1
+            for player in playerNames:
+                currentIndex = list(playerNames).index(player)
+                genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
+                performance = list()
+                n = gw - 3
+                while n < gw:
+                    playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n)
+                    if len(list(playerHistory.values())) == 0 and n > 3:
+                        playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n - 3)
+                        if len(list(playerHistory.values())) > 0:
+                            totalPoints = playerHistory['total_points']
+                            performance.append(totalPoints)
+                        else:
+                            totalPoints = 0
+                    else:
+                        if 'total_points' in playerHistory: 
+                            totalPoints = playerHistory['total_points']
+                        else:
+                            totalPoints = 0
+                        expectedPlay = playerHistory
+                        performance.append(totalPoints)
+
+                    n += 1
+                playerPerformance[player] = sum(performance)
+
+                teamInfluence = influenceByTeam[playerToTeam[player]]
+                playerInfluence = influenceByPlayer[playerToTeam[player]][player]
+                if playerInfluence == 0 or teamInfluence == 0:
+                    influenceFactor = 0
+                else:
+                    influenceFactor = playerInfluence/teamInfluence
+                playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
+                expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                playersPerformance[player] = int(expectedPerformance)
+
+            
+            playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
+            playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            
+            # Sort the world players by position
+            playersByPosition = playerData.sortPlayerDataByPosition(playersPrepared)
+
+            # Gather my players and sort by position
+            def teamPicker(playersPrepared, playersByPosition):
+                teamPerformance = dict()
+                elements = list()
+                finalPlayerDict = dict()
+                myTeamSource = Teams.getMyTeam(gw)
+                myTeam = myTeamSource['picks']
+                for elementSummary in myTeam:
+                    player = elementSummary['element']
+                    elements.append(player)
+                    teamPerformance[player] = playersPrepared[player]
+                myTeamBestToWorst = genericMethods.reformattedSortedTupleAsDict(sorted(teamPerformance.items(), key=lambda x: x[1], reverse=True))
+                listToOrder = list(myTeamBestToWorst)[:11]
+                for player in listToOrder:
+                    finalPlayerDict[player] = myTeamBestToWorst[player]
+                myTeamSortedByPosition = playerData.sortPlayerDataByPosition(finalPlayerDict)
+
+                myPlayersSorted = dict()
+                for position in myTeamSortedByPosition:
+                    myPlayersSorted[position] = genericMethods.reformattedSortedTupleAsDict(sorted(myTeamSortedByPosition[position].items(), key=lambda x: x[1], reverse=True))
+            
+                positionRef = {1: "Goalkeeper", 2: "Defender", 3: "Midfielder", 4: "Forward"}
+                positionMaxMin = {1: {"max":1,"min":1}, 2: {"max":5,"min":3}, 3: {"max":5,"min":2}, 4: {"max":3,"min":1}}
+
+                # TODO - Number of required players by position, sort all players too
+                print("")
+                print("")
+                for position in myPlayersSorted:
+                    positionName = positionRef[position]
+                    print(f"====== Position: {positionName}: ======")
+                    positionMax = positionMaxMin[position]["max"]
+                    positionMin = positionMaxMin[position]["min"]
+                    n = 1
+                    for player in myPlayersSorted[position]:
+                        if n <= positionMax:
+                            playerName = playerNames[player]
+                            playerValue = myPlayersSorted[position][player]
+                            print(f"{playerName} = {playerValue}")
+                            n += 1
+                        else:
+                            break
+                    print(f"=======================================")
+                    print("")
+                print("")
+
+                print(" All players sorted:")
+                for player in myTeamBestToWorst:
+                        playerName = playerNames[player]
+                        playerValue = myTeamBestToWorst[player]
+                        print(f"{playerName} = {playerValue}")
+
+            if firstRun == True:
+                teamPicker(playersPrepared, playersByPosition)
+                firstRun = False
+            goAgain = input("Do you want to run another team? (Y/N) > ")
+            while goAgain in ["Y","y"]:
+                teamPicker(playersPrepared, playersByPosition)
+            endRoutine()        
+
 
         # All player data for all gameweeks (to excel)
         elif playerUserInputInitialInt == 51:
@@ -1617,9 +1741,9 @@ def teamsRoutine():
                         
             currentGameweek = genericMethods.generateCurrentGameweek()
             print("--------------------------------------------")
-            print(f'Top 20 players picked by best performers for GW{currentGameweek}:')
+            print(f'Top 15 players picked by best performers for GW{currentGameweek}:')
             print("")
-            genericMethods.printDataClean(finalPlayers, 20, '', '%')
+            genericMethods.printDataClean(finalPlayers, 15, '', '%')
             print("--------------------------------------------")
 
             endRoutine()
@@ -1810,7 +1934,7 @@ def teamsRoutine():
                 print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
                 print("")
                 print(f"Gameweek: {gameweekListClean}")
-                print("-------------------------------------------------------")
+                print("")
                 for player in top5PlayersPreviousGameweeks:
                     playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
                     print(f"{player}: {playerDataTop5}")
