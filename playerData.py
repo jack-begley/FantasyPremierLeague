@@ -19,8 +19,10 @@ import sys, traceback
 import re
 import io
 import math
+import mysql.connector
 from scipy.stats.stats import pearsonr 
 from scipy.stats import linregress
+
 import gameweekSummary
 import genericMethods
 import Teams
@@ -1001,14 +1003,13 @@ def playerInfluenceInAGivenTimeFrameByTeam(endGameweek, numberOfDaysToLookBack):
             playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
             playerDict = dict() 
             for player in playersInTeam:
-                playerList = list()
-                currentDumps = genericMethods.generateJSONDumpsReadable(f'{urlBase}element-summary/{player}/')
-                for record in currentDumps['history']:
-                    if record['round'] > (endGameweek - numberOfDaysToLookBack):
-                        playerList.append(float(record['influence']))
-
-                playerDict[player] = sum(playerList)
-
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+                cursor = dbConnect.cursor(dictionary=True)
+                cursor.execute(f"SELECT influence FROM `2021_2022_elementsummary`.`history` WHERE element = {player} and round > {endGameweek - numberOfDaysToLookBack};")
+                data = list()
+                for row in cursor:
+                    data.append(row["influence"])
+                playerDict[player] = sum(data)
             teamDict[team] =  playerDict
 
         return teamDict

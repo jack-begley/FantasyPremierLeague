@@ -19,8 +19,28 @@ file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
 
+conversions = {
+    'int': 'INT',
+    'bool': 'INT',
+    'str': 'TEXT',
+    'float': 'FLOAT'
+    }
+
+#user = input("Username: ")
+user = "jackbegley"
+#password = input("Password: ")
+password = "Athome19369*"
+
 #jackbegley
 #thenoise360
+
+# [ ] Events = https://fantasy.premierleague.com/api/event/{currentGameweek}/live
+# [Y] Bootstrap = https://fantasy.premierleague.com/api/bootstrap-static/
+# [Y] Element Summary = https://fantasy.premierleague.com/api/element-summary/{n}/
+# [ ] MyTeam = https://fantasy.premierleague.com/api/my-team/{teamID}
+# [ ] Other teams = https://fantasy.premierleague.com/api/entry/{teamID}/event/{gameweekNumber}/picks/
+# [ ] Fixtures = https://fantasy.premierleague.com/api/fixtures/?event={gwNow}
+
 
 # TODO: DELETE ONCE CURRENT IMPORT ERROR IS SORTED (SEE LINE 1)
 def generateCurrentGameweek():
@@ -59,6 +79,15 @@ def unicodeReplace(string):
 
 # =================================================
 
+def getDataFromDatabaseAsDict(user, password, db, sql):
+    dbConnect = connectToDB(user, password, db)
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute(sql)
+    data = list()
+    for row in cursor:
+        data.append(row)
+    return data
+
 
 def dataConvertion(value):
     try:
@@ -80,8 +109,6 @@ def connectToSQL(user, password):
         password=password
     )
     
-    print(f"Connected: {mydb.server_host}:{mydb.server_port}")
-
     return mydb
 
 def connectToDB(user, password, database):
@@ -92,8 +119,6 @@ def connectToDB(user, password, database):
         database=database
     )
     
-    print(f"Connected: {mydb.server_host}:{mydb.server_port}")
-
     return mydb
 
 def checkDatabases(user, password):
@@ -178,81 +203,72 @@ def typeConverter(value):
     if isinstance(value, int):
         return int(value)
 
-conversions = {
-    'int': 'INT',
-    'bool': 'INT',
-    'str': 'TEXT',
-    'float': 'FLOAT'
-    }
 
-#user = input("Username: ")
-user = "jackbegley"
-#password = input("Password: ")
-password = "Athome19369*"
-
-JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
-bootstrapStaticData = JSON.json()
 
 def createAllSuitableTables(user, password, database, table, datafeed):
-        specification = dict()
-        if table == 'history_past':
-            specification['id'] = 'INT'
-        for element in datafeed[table]:
-            if isinstance(element, dict) == True:
-                for item in element:
-                    if isinstance(element[item], dict) == False and isinstance(element[item], list) == False:
-                        valueFormatted = typeConverter(element[item])
-                        valueType = str(type(valueFormatted)).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                        if item == "news_added" or item == "news":
-                            valueTypeConversion = "TEXT"
-                        elif valueType == "NoneType":
-                            valueTypeConversion = "INT"
-                        else:
-                            valueTypeConversion = conversions[valueType]
-                        specification[item] = valueTypeConversion
-                    if isinstance(element[item], dict) == True or isinstance(element[item], list) == True:
-                        for data in element[item]:
-                            if isinstance(data, dict) == True or isinstance(data, list) == True:
-                                for datapoint in data:
-                                    valueFormatted = typeConverter(data[datapoint])
-                                    valueType = str(type(valueFormatted)).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                                    if valueType == "NoneType":
-                                        valueTypeConversion = "INT"
-                                    else:
-                                        valueTypeConversion = conversions[valueType]
-                                    dataList = list(data.values())
-                                    specification[f"{item}_{dataList[0]}"] = valueTypeConversion
-                            else:
-                                valueFormatted = typeConverter(data)
+    specification = dict()
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
+    if table == 'history_past':
+        specification['id'] = 'INT'
+    for element in datafeed[table]:
+        if isinstance(element, dict) == True:
+            for item in element:
+                if isinstance(element[item], dict) == False and isinstance(element[item], list) == False:
+                    valueFormatted = typeConverter(element[item])
+                    valueType = str(type(valueFormatted)).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                    if item == "news_added" or item == "news":
+                        valueTypeConversion = "TEXT"
+                    elif valueType == "NoneType":
+                        valueTypeConversion = "INT"
+                    else:
+                        valueTypeConversion = conversions[valueType]
+                    specification[item] = valueTypeConversion
+                if isinstance(element[item], dict) == True or isinstance(element[item], list) == True:
+                    for data in element[item]:
+                        if isinstance(data, dict) == True or isinstance(data, list) == True:
+                            for datapoint in data:
+                                valueFormatted = typeConverter(data[datapoint])
                                 valueType = str(type(valueFormatted)).replace("<class","").replace(">","").replace("'","").replace(" ","")
                                 if valueType == "NoneType":
                                     valueTypeConversion = "INT"
                                 else:
                                     valueTypeConversion = conversions[valueType]
-                                specification[data] = valueTypeConversion
-            else:
-                valueFormatted = typeConverter(element)
-                valueType = str(type(bootstrapStaticData[table][element])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                if valueType == "NoneType":
-                    valueTypeConversion = "INT"
-                elif isinstance(bootstrapStaticData[table][element], dict) == True or isinstance(bootstrapStaticData[table][element], list) == True:
-                        for data in bootstrapStaticData[table][element]:
-                            valueType = str(type(data)).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                                dataList = list(data.values())
+                                specification[f"{item}_{dataList[0]}"] = valueTypeConversion
+                        else:
+                            valueFormatted = typeConverter(data)
+                            valueType = str(type(valueFormatted)).replace("<class","").replace(">","").replace("'","").replace(" ","")
                             if valueType == "NoneType":
                                 valueTypeConversion = "INT"
                             else:
                                 valueTypeConversion = conversions[valueType]
-                                specification[f"{element}_{data}"] = valueTypeConversion
-                else:
-                    valueTypeConversion = conversions[valueType]
-                specification[element] = valueTypeConversion
+                            specification[data] = valueTypeConversion
+        else:
+            valueFormatted = typeConverter(element)
+            valueType = str(type(datafeed[table][element])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+            if valueType == "NoneType":
+                valueTypeConversion = "INT"
+            elif isinstance(datafeed[table][element], dict) == True or isinstance(datafeed[table][element], list) == True:
+                    for data in datafeed[table][element]:
+                        valueType = str(type(data)).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                        if valueType == "NoneType":
+                            valueTypeConversion = "INT"
+                        else:
+                            valueTypeConversion = conversions[valueType]
+                            specification[f"{element}_{data}"] = valueTypeConversion
+            else:
+                valueTypeConversion = conversions[valueType]
+            specification[element] = valueTypeConversion
 
-        convertedColumns = ','.join("'"+str(x).replace('/','_').replace("-","_").replace("+","") + " " + str(specification[x]) + "'" for x in specification.keys())
-        createTable(user, password, table, database, convertedColumns)
+    convertedColumns = ','.join("'"+str(x).replace('/','_').replace("-","_").replace("+","") + " " + str(specification[x]) + "'" for x in specification.keys())
+    createTable(user, password, table, database, convertedColumns)
 
 # === TODO: Condense to a single method ====================================================================================================
 def updateEventsTable(user, password, database):
     table = 'events'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -321,6 +337,10 @@ def updateElementsTable(user, password, database):
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in bootstrapStaticData[table]:
         elementsKept = dict()
         for item in element:
@@ -344,12 +364,11 @@ def updateElementsTable(user, password, database):
         values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
+
+    cursor.close()
 
 def updateGameSettingsTable(user, password, database):
     table = 'game_settings'
@@ -408,6 +427,10 @@ def updateElementStatsTable(user, password, database):
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in bootstrapStaticData[table]:
         elementsKept = dict()
         for item in element:
@@ -431,18 +454,21 @@ def updateElementStatsTable(user, password, database):
         values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
+
+    cursor.close()
 
 def updatePhasesTable(user, password, database):
     table = 'phases'
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+    
     for element in bootstrapStaticData[table]:
         elementsKept = dict()
         for item in element:
@@ -466,18 +492,20 @@ def updatePhasesTable(user, password, database):
         values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
+    cursor.close()
 
 def updateTeamsTable(user, password, database):
     table = 'teams'
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in bootstrapStaticData[table]:
         elementsKept = dict()
         for item in element:
@@ -500,15 +528,115 @@ def updateTeamsTable(user, password, database):
         columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
         values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
-
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
+    cursor.close()
 
 # =====================================================================================================================================================
+
+# Events table =====================================================================================================
+
+def updateEventsDatabase(user, password, database):
+    table = 'elements'
+    currentGameweek = generateCurrentGameweek()
+    n = 1
+    headerData = requests.get("https://fantasy.premierleague.com/api/event/1/live").json()
+    formattedPlayerData = dict()
+    formattedEvents = dict()
+    for player in headerData["elements"]:
+        for record in player:
+            if record not in list(formattedEvents.keys()):
+                if isinstance(player[record], dict) == False and isinstance(player[record], list) == False:
+                    formattedPlayerData[record] = player[record]
+                if isinstance(player[record], dict) == True:
+                    for item in player[record]:
+                        formattedPlayerData[item] = player[record][item]
+                if record == "explain":
+                    for item in player['explain'][0]:
+                        if isinstance(player['explain'][0][item], dict) == False and  isinstance(player['explain'][0][item], list) == False:
+                            formattedPlayerData[item] = headerData['elements'][0]['explain'][0][item]
+                        if isinstance(player['explain'][0][item], list) == True:
+                            for values in player['explain'][0][item]:
+                                for value in values:
+                                    if value != "identifier":
+                                        name = f"{values['identifier']}_{value}"
+                                        formattedPlayerData[name] = values[value]
+
+    prepared = dict()
+    prepared['elements'] = formattedPlayerData
+    deleteTable(user, password, table, database)
+    createAllSuitableTables(user, password, database, table, prepared)
+
+    x = 1
+
+    while n <= currentGameweek:
+        JSON = requests.get(f"https://fantasy.premierleague.com/api/event/{n}/live")
+        eventsData = JSON.json()
+        currentGameweek = generateCurrentGameweek()
+
+        dbConnect = connectToDB(user, password, database)
+        cursor = dbConnect.cursor()
+
+        formattedEvents = dict()
+        for player in eventsData["elements"]:
+            formattedPlayerData = dict()
+            for record in player:
+                if isinstance(player[record], dict) == False and isinstance(player[record], list) == False:
+                    formattedPlayerData[record] = player[record]
+                if isinstance(player[record], dict) == True:
+                    for item in player[record]:
+                        formattedPlayerData[item] = player[record][item]
+                if record == "explain":
+                    for item in player['explain'][0]:
+                        if isinstance(player['explain'][0][item], dict) == False and  isinstance(player['explain'][0][item], list) == False:
+                            formattedPlayerData[item] = headerData['elements'][0]['explain'][0][item]
+                        if isinstance(player['explain'][0][item], list) == True:
+                            for values in player['explain'][0][item]:
+                                for value in values:
+                                    if value != "identifier":
+                                        name = f"{values['identifier']}_{value}"
+                                        formattedPlayerData[name] = values[value]
+            formattedEvents[x] = formattedPlayerData
+            x += 1
+
+        for element in formattedEvents:
+            elementsKept = dict()
+            for item in formattedEvents[element]:
+                if isinstance(formattedEvents[element][item], list) == False and isinstance(formattedEvents[element][item], dict) == False:
+                    valueType = str(type(formattedEvents[element][item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                    if valueType == "NoneType":
+                        value = 0
+                    elif valueType == "bool":
+                        if formattedEvents[element][item] == True:
+                            value = 1
+                        if formattedEvents[element][item] == False:
+                            value = 0
+                    else:
+                        value = formattedEvents[element][item]
+                        if isinstance(value, str) == True:
+                            valueClean = str(unicodeReplace(str(value))).replace("'","")
+                            value = valueClean
+                    elementsKept[item] = value
+
+            columns = ','.join("`"+str(x).replace('/','_')+"`" for x in prepared['elements'])
+            finalEventData = dict()
+            for i in prepared['elements']:
+                if i in elementsKept.keys():
+                    finalEventData[i] = elementsKept[i]
+                else:
+                    finalEventData[i] = 0
+            values = ','.join("'"+str(x).replace('/','_')+"'" for x in finalEventData.values())
+            sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+
+            cursor.execute(sql)
+            dbConnect.commit()
+
+        print(f"Running week {n} of {currentGameweek}")
+
+        n += 1
+
+# ===================================================================================================================
 
 # === TODO: Condense to a single method ====================================================================================================
 
@@ -518,6 +646,10 @@ def updateFixturesTable(user, password, database, datafeed):
     # TODO - create a create table method, maybe under a "start of season update" thing, then update this method to run without dropping the table
     currentDateTime = datetime.now(pytz.utc)
     # 2021-11-27T12:30:00Z
+    
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in currentElement[table]:
         fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
         if currentDateTime < fixtureTime:
@@ -559,16 +691,19 @@ def updateFixturesTable(user, password, database, datafeed):
 
                 sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-                dbConnect = connectToDB(user, password, database)
-                cursor = dbConnect.cursor()
                 cursor.execute(sql)
                 dbConnect.commit()
                 print(cursor.rowcount, f"Record inserted successfully into {table} table")
-                cursor.close()
+
+    cursor.close()
 
 def updateHistoryTable(user, password, database, datafeed):
     table = 'history'
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in currentElement[table]:
         elementsKept = dict()
         for item in element:
@@ -593,16 +728,19 @@ def updateHistoryTable(user, password, database, datafeed):
 
         sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
+
+    cursor.close()
 
 def updateHistoryPastTable(user, password, database, datafeed, playerId):
     table = 'history_past'
     currentGameweek = generateCurrentGameweek()
+
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+
     for element in currentElement[table]:
         elementsKept = dict()
         elementsKept['id'] = n
@@ -628,14 +766,19 @@ def updateHistoryPastTable(user, password, database, datafeed, playerId):
 
         sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        dbConnect = connectToDB(user, password, database)
-        cursor = dbConnect.cursor()
         cursor.execute(sql)
         dbConnect.commit()
         print(cursor.rowcount, f"Record inserted successfully into {table} table")
-        cursor.close()
 
+    cursor.close()
 
+# TEST - TOP 10 transfers out ====================== TODO: REMOVE ===============
+data = getDataFromDatabaseAsDict(user, password, "2021_2022_BootstrapStatic", "SELECT id, transfers_out_event FROM `2021_2022_bootstrapstatic`.`elements` ORDER BY transfers_out_event desc LIMIT 10;")
+
+print("")
+# REMOVE TO HERE =================================================================
+
+# BOOTSTRAP STATIC =================================================================
 bootstrapTrue = input("Do you want to update 2021_2022_BootstrapStatic (Y/N)> ")
 if bootstrapTrue == "Y" or bootstrapTrue == "y":
     db = "2021_2022_BootstrapStatic"
@@ -646,7 +789,7 @@ if bootstrapTrue == "Y" or bootstrapTrue == "y":
     updatePhasesTable(user, password, db)
     updateTeamsTable(user, password, db)
 
-#=================================================================================
+#= ELEMENT SUMMARU ================================================================================
 
 elementSummaryTrue = input("Do you want to update 2021_2022_ElementSummary (Y/N)> ")
 if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
@@ -656,7 +799,7 @@ if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
       host="localhost",
       user=user,
       password=password,
-      database="2021_2022_BootstrapStatic"
+      database="2021_2022_bootstrapstatic"
     )
 
     mycursor = mydb.cursor()
@@ -694,8 +837,7 @@ if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
 
     print("")
 
-# ==============================================================================================================
-
+# DETAILED STATS ==============================================================================================================
 # https://stackoverflow.com/questions/9336270/using-a-python-dict-for-a-sql-insert-statement
 
 detailedStatsTrue = input("Do you want to update 2021_2022_DetailedStats (Y/N)> ")
@@ -704,3 +846,10 @@ if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
     playerList = detailedStats.getAllPlayers()
     players = detailedStats.getPlayerStats(playerList)
     players = detailedStats.getPlayerStatsDetailed(playerList)
+
+# EVENTS ==============================================================================================================
+
+eventsTrue = input("Do you want to update 2021_2022_Events (Y/N)> ")
+if eventsTrue == "Y" or eventsTrue == "y":
+    db = "2021_2022_Events"
+    updateEventsDatabase(user, password, db)
