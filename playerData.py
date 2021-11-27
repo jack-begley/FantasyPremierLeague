@@ -949,6 +949,7 @@ def sortPlayerDataByPosition(arrayToSort):
 
     return pointsByPosition
 
+# TODO: REMOVE AND REPLACE WITH SQL
 # Creates a list of the players and metrics related to their performance
 def generateListOfPlayersAndMetricsRelatedToPerformance(playerID, currentGameweek):
         urlBase = 'https://fantasy.premierleague.com/api/'

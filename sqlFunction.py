@@ -34,7 +34,7 @@ password = "Athome19369*"
 #jackbegley
 #thenoise360
 
-# [ ] Events = https://fantasy.premierleague.com/api/event/{currentGameweek}/live
+# [Y] Events = https://fantasy.premierleague.com/api/event/{currentGameweek}/live
 # [Y] Bootstrap = https://fantasy.premierleague.com/api/bootstrap-static/
 # [Y] Element Summary = https://fantasy.premierleague.com/api/element-summary/{n}/
 # [ ] MyTeam = https://fantasy.premierleague.com/api/my-team/{teamID}
@@ -334,6 +334,8 @@ def updateEventsTable(user, password, database):
 
 def updateElementsTable(user, password, database):
     table = 'elements'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -372,6 +374,8 @@ def updateElementsTable(user, password, database):
 
 def updateGameSettingsTable(user, password, database):
     table = 'game_settings'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -424,6 +428,8 @@ def updateGameSettingsTable(user, password, database):
 
 def updateElementStatsTable(user, password, database):
     table = 'element_stats'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -462,6 +468,8 @@ def updateElementStatsTable(user, password, database):
 
 def updatePhasesTable(user, password, database):
     table = 'phases'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -499,6 +507,8 @@ def updatePhasesTable(user, password, database):
 
 def updateTeamsTable(user, password, database):
     table = 'teams'
+    JSON = requests.get("https://fantasy.premierleague.com/api/bootstrap-static/")
+    bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
     currentGameweek = generateCurrentGameweek()
@@ -535,6 +545,111 @@ def updateTeamsTable(user, password, database):
 
 # =====================================================================================================================================================
 
+# Fixtures table =====================================================================================================
+
+def updateFixturesDatabase(user, password, database):
+    table = 'fixtures'
+    currentGameweek = generateCurrentGameweek()
+    n = 1
+    headerData = requests.get("https://fantasy.premierleague.com/api/fixtures").json()
+    formattedFixtureData = dict()
+    formattedEvents = dict()
+    for fixture in headerData:
+        for record in fixture:
+            if record not in list(formattedEvents.keys()):
+                if isinstance(fixture[record], dict) == False and isinstance(fixture[record], list) == False:
+                    formattedFixtureData[record] = fixture[record]
+                if isinstance(fixture[record], dict) == True:
+                    for item in fixture[record]:
+                        formattedFixtureData[item] = fixture[record][item]
+                if record == "stats":
+                    for item in fixture['stats']:
+                        for values in item:
+                            if values != "identifier":
+                                name = f"{item['identifier']}_{values}"
+                                if not item[values]:
+                                    formattedFixtureData[name] = "0"
+                                else:
+                                    listValues = list()
+                                    for value in item[values]:
+                                        listValues.append(str(value['element']))
+                                    finalList = "_".join(listValues)
+                                    formattedFixtureData[name] = finalList
+
+    prepared = dict()
+    prepared['fixtures'] = formattedFixtureData
+    deleteTable(user, password, table, database)
+    createAllSuitableTables(user, password, database, table, prepared)
+
+    x = 1
+
+    formattedEvents = dict()
+    for fixture in headerData:
+        formattedFixtureData = dict()
+        for record in fixture:
+            if record not in list(formattedEvents.keys()):
+                if isinstance(fixture[record], dict) == False and isinstance(fixture[record], list) == False:
+                    formattedFixtureData[record] = fixture[record]
+                if isinstance(fixture[record], dict) == True:
+                    for item in fixture[record]:
+                        formattedFixtureData[item] = fixture[record][item]
+                if record == "stats":
+                    for item in fixture['stats']:
+                        for values in item:
+                            if values != "identifier":
+                                name = f"{item['identifier']}_{values}"
+                                if not item[values]:
+                                    formattedFixtureData[name] = 0
+                                else:
+                                    listValues = list()
+                                    for value in item[values]:
+                                        listValues.append(str(value['element']))
+                                    finalList = "_".join(listValues)
+                                    formattedFixtureData[name] = finalList
+
+        formattedEvents[x] = formattedFixtureData
+        x += 1
+    
+    dbConnect = connectToDB(user, password, database)
+    cursor = dbConnect.cursor()
+    
+    for element in formattedEvents:
+        elementsKept = dict()
+        for item in formattedEvents[element]:
+            if isinstance(formattedEvents[element][item], list) == False and isinstance(formattedEvents[element][item], dict) == False:
+                valueType = str(type(formattedEvents[element][item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                if valueType == "NoneType":
+                    value = 0
+                elif valueType == "bool":
+                    if formattedEvents[element][item] == True:
+                        value = 1
+                    if formattedEvents[element][item] == False:
+                        value = 0
+                else:
+                    value = formattedEvents[element][item]
+                    if isinstance(value, str) == True:
+                        valueClean = str(unicodeReplace(str(value))).replace("'","")
+                        value = valueClean
+                        if value == "":
+                            print("")
+                elementsKept[item] = value
+
+        columns = ','.join("`"+str(x).replace('/','_')+"`" for x in prepared['fixtures'])
+        finalEventData = dict()
+        for i in prepared['fixtures']:
+            if i in elementsKept.keys():
+                finalEventData[i] = elementsKept[i]
+            else:
+                finalEventData[i] = 0
+        values = ','.join("'"+str(x).replace('/','_')+"'" for x in finalEventData.values())
+        sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+
+        cursor.execute(sql)
+        dbConnect.commit()
+
+
+    n += 1
+
 # Events table =====================================================================================================
 
 def updateEventsDatabase(user, password, database):
@@ -543,6 +658,7 @@ def updateEventsDatabase(user, password, database):
     n = 1
     headerData = requests.get("https://fantasy.premierleague.com/api/event/1/live").json()
     formattedPlayerData = dict()
+    formattedPlayerData['gameweek'] = 1 
     formattedEvents = dict()
     for player in headerData["elements"]:
         for record in player:
@@ -581,6 +697,7 @@ def updateEventsDatabase(user, password, database):
         formattedEvents = dict()
         for player in eventsData["elements"]:
             formattedPlayerData = dict()
+            formattedPlayerData["gameweek"] = n
             for record in player:
                 if isinstance(player[record], dict) == False and isinstance(player[record], list) == False:
                     formattedPlayerData[record] = player[record]
@@ -775,6 +892,8 @@ def updateHistoryPastTable(user, password, database, datafeed, playerId):
 # TEST - TOP 10 transfers out ====================== TODO: REMOVE ===============
 data = getDataFromDatabaseAsDict(user, password, "2021_2022_BootstrapStatic", "SELECT id, transfers_out_event FROM `2021_2022_bootstrapstatic`.`elements` ORDER BY transfers_out_event desc LIMIT 10;")
 
+# createDatabase(user,password,"2021_2022_Fixtures")
+
 print("")
 # REMOVE TO HERE =================================================================
 
@@ -853,3 +972,10 @@ eventsTrue = input("Do you want to update 2021_2022_Events (Y/N)> ")
 if eventsTrue == "Y" or eventsTrue == "y":
     db = "2021_2022_Events"
     updateEventsDatabase(user, password, db)
+
+# FIXTURES ==============================================================================================================
+
+fixturesTrue = input("Do you want to update 2021_2022_Fixtures (Y/N)> ")
+if fixturesTrue == "Y" or fixturesTrue == "y":
+    db = "2021_2022_Fixtures"
+    updateFixturesDatabase(user, password, db)

@@ -1207,28 +1207,17 @@ def playerRoutine():
             for player in playerNames:
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
-                performance = list()
-                n = gw - 3
-                while n < gw:
-                    playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n)
-                    if len(list(playerHistory.values())) == 0 and n > 3:
-                        playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n - 3)
-                        if len(list(playerHistory.values())) > 0:
-                            totalPoints = playerHistory['total_points']
-                            performance.append(totalPoints)
-                        else:
-                            totalPoints = 0
-                    else:
-                        if 'total_points' in playerHistory: 
-                            totalPoints = playerHistory['total_points']
-                        else:
-                            totalPoints = 0
-                        expectedPlay = playerHistory
-                        performance.append(totalPoints)
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_events")
+                totalPoints = dbConnect.cursor(dictionary=True)
+                totalPoints.execute(f"SELECT total_points FROM `2021_2022_events`.`elements` WHERE id = {player} and gameweek < {gw}")
+                totalPointList = list()
+                for row in totalPoints:
+                    totalPointList.append(row['total_points'])
+                playerPerformance[player] = sum(totalPointList)
+                totalPoints.close()
 
-                    n += 1
-                playerPerformance[player] = sum(performance)
-
+                playerPerformance[player] = sum(totalPointList)
+                                      
                 teamInfluence = influenceByTeam[playerToTeam[player]]
                 playerInfluence = influenceByPlayer[playerToTeam[player]][player]
                 if playerInfluence == 0 or teamInfluence == 0:
@@ -1239,7 +1228,6 @@ def playerRoutine():
                 expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
                 playersPerformance[player] = int(expectedPerformance)
 
-            
             playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
             playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
             
