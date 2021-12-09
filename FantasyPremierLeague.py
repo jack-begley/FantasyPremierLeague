@@ -328,7 +328,7 @@ def playerRoutine():
             playerNames = playerData.generatePlayerNameToIDMatching()
             playerIDsToNames = playerData.generatePlayerIDToSurnameMatching()
             positions = playerData.generatePositionReferenceIDAsKey()
-            teamIDandPlayerID = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            playerIDandTeamID = Teams.playerIDsAsKeysAndTeamIDsAsList()
             gameweekDifficultyByTeam = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(fromGameweek, nowGameweek)
             sumOfPlayerScores = dict()
             allGameweekData = dict()
@@ -366,9 +366,6 @@ def playerRoutine():
                 top5PlayersPreviousGameweeks = dict()
 
                 for player in finalSumPoints:
-                    for teamID in teamIDandPlayerID:
-                        if player in teamIDandPlayerID[teamID]: 
-                            playerNameTeamID[player] = teamID
                     playerName = playerNames[player].capitalize()
                     top5PlayersPreviousGameweeks[playerName] = currentPositionData[player]
 
@@ -388,7 +385,7 @@ def playerRoutine():
                         supplementLength = len(player) - 15
                         gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
                         playerName = player
-                    teamID = playerNameTeamID[playerID]
+                    teamID = playerIDandTeamID[playerID]
                     difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
                     playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
                     print(f"{playerName}: {playerDataTop5}")

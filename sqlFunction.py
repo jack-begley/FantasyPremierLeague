@@ -897,85 +897,88 @@ data = getDataFromDatabaseAsDict(user, password, "2021_2022_BootstrapStatic", "S
 print("")
 # REMOVE TO HERE =================================================================
 
-# BOOTSTRAP STATIC =================================================================
-bootstrapTrue = input("Do you want to update 2021_2022_BootstrapStatic (Y/N)> ")
-if bootstrapTrue == "Y" or bootstrapTrue == "y":
-    db = "2021_2022_BootstrapStatic"
-    updateEventsTable(user, password, db)
-    updateElementsTable(user, password, db)
-    updateElementStatsTable(user, password, db)
-    updateGameSettingsTable(user, password, db)
-    updatePhasesTable(user, password, db)
-    updateTeamsTable(user, password, db)
+updateTables= input("Do you want to update any tables? (Y/N)> ")
 
-#= ELEMENT SUMMARU ================================================================================
+if updateTables in ["y","Y","Yes","yes"]:
+    # BOOTSTRAP STATIC =================================================================
+    bootstrapTrue = input("Do you want to update 2021_2022_BootstrapStatic (Y/N)> ")
+    if bootstrapTrue == "Y" or bootstrapTrue == "y":
+        db = "2021_2022_BootstrapStatic"
+        updateEventsTable(user, password, db)
+        updateElementsTable(user, password, db)
+        updateElementStatsTable(user, password, db)
+        updateGameSettingsTable(user, password, db)
+        updatePhasesTable(user, password, db)
+        updateTeamsTable(user, password, db)
 
-elementSummaryTrue = input("Do you want to update 2021_2022_ElementSummary (Y/N)> ")
-if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
-    db = "2021_2022_ElementSummary"
+    #= ELEMENT SUMMARU ================================================================================
 
-    mydb = mysql.connector.connect(
-      host="localhost",
-      user=user,
-      password=password,
-      database="2021_2022_bootstrapstatic"
-    )
+    elementSummaryTrue = input("Do you want to update 2021_2022_ElementSummary (Y/N)> ")
+    if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
+        db = "2021_2022_ElementSummary"
 
-    mycursor = mydb.cursor()
+        mydb = mysql.connector.connect(
+          host="localhost",
+          user=user,
+          password=password,
+          database="2021_2022_bootstrapstatic"
+        )
 
-    mycursor.execute("SELECT id FROM elements")
+        mycursor = mydb.cursor()
 
-    myresult = mycursor.fetchall()
+        mycursor.execute("SELECT id FROM elements")
 
-    ids = reformattedSortedTupleAsDict(myresult)
-    minimum = min(ids)
-    maximum = max(ids)
+        myresult = mycursor.fetchall()
 
-    n = minimum
+        ids = reformattedSortedTupleAsDict(myresult)
+        minimum = min(ids)
+        maximum = max(ids)
 
-    updateHistoryPast = input("Do you want to update 'history_past' (Only needs updated once a season) (Y/N)> ")
+        n = minimum
+
+        updateHistoryPast = input("Do you want to update 'history_past' (Only needs updated once a season) (Y/N)> ")
     
-    JSON = requests.get(f"https://fantasy.premierleague.com/api/element-summary/1/")
-    currentElement = JSON.json()
-    for element in currentElement:
-        if updateHistoryPast == "y" or updateHistoryPast == 'Y' or element != "history_past":
-            deleteTable(user, password, element, db)
-        createAllSuitableTables(user, password, db, element, currentElement)
-
-
-    # while n <= maximum:
-    while n <= maximum:
-        JSON = requests.get(f"https://fantasy.premierleague.com/api/element-summary/{n}/")
+        JSON = requests.get(f"https://fantasy.premierleague.com/api/element-summary/1/")
         currentElement = JSON.json()
-        runPercentage(maximum, n, f"Running player {n} of {maximum}", "All databases updated                         ")
-        updateFixturesTable(user, password, db, currentElement)
-        updateHistoryTable(user, password, db, currentElement)
-        if updateHistoryPast == "y" or updateHistoryPast == 'Y':
-            updateHistoryPastTable(user, password, db, currentElement, n)
-        n += 1
+        for element in currentElement:
+            if updateHistoryPast == "y" or updateHistoryPast == 'Y' or element != "history_past":
+                deleteTable(user, password, element, db)
+            createAllSuitableTables(user, password, db, element, currentElement)
 
-    print("")
 
-# DETAILED STATS ==============================================================================================================
-# https://stackoverflow.com/questions/9336270/using-a-python-dict-for-a-sql-insert-statement
+        # while n <= maximum:
+        while n <= maximum:
+            JSON = requests.get(f"https://fantasy.premierleague.com/api/element-summary/{n}/")
+            currentElement = JSON.json()
+            runPercentage(maximum, n, f"Running player {n} of {maximum}", "All databases updated                         ")
+            updateFixturesTable(user, password, db, currentElement)
+            updateHistoryTable(user, password, db, currentElement)
+            if updateHistoryPast == "y" or updateHistoryPast == 'Y':
+                updateHistoryPastTable(user, password, db, currentElement, n)
+            n += 1
 
-detailedStatsTrue = input("Do you want to update 2021_2022_DetailedStats (Y/N)> ")
-if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
-    db = "2021_2022_DetailedStats"
-    playerList = detailedStats.getAllPlayers()
-    players = detailedStats.getPlayerStats(playerList)
-    players = detailedStats.getPlayerStatsDetailed(playerList)
+        print("")
 
-# EVENTS ==============================================================================================================
+    # DETAILED STATS ==============================================================================================================
+    # https://stackoverflow.com/questions/9336270/using-a-python-dict-for-a-sql-insert-statement
 
-eventsTrue = input("Do you want to update 2021_2022_Events (Y/N)> ")
-if eventsTrue == "Y" or eventsTrue == "y":
-    db = "2021_2022_Events"
-    updateEventsDatabase(user, password, db)
+    detailedStatsTrue = input("Do you want to update 2021_2022_DetailedStats (Y/N)> ")
+    if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
+        db = "2021_2022_DetailedStats"
+        playerList = detailedStats.getAllPlayers()
+        players = detailedStats.getPlayerStats(playerList)
+        players = detailedStats.getPlayerStatsDetailed(playerList)
 
-# FIXTURES ==============================================================================================================
+    # EVENTS ==============================================================================================================
 
-fixturesTrue = input("Do you want to update 2021_2022_Fixtures (Y/N)> ")
-if fixturesTrue == "Y" or fixturesTrue == "y":
-    db = "2021_2022_Fixtures"
-    updateFixturesDatabase(user, password, db)
+    eventsTrue = input("Do you want to update 2021_2022_Events (Y/N)> ")
+    if eventsTrue == "Y" or eventsTrue == "y":
+        db = "2021_2022_Events"
+        updateEventsDatabase(user, password, db)
+
+    # FIXTURES ==============================================================================================================
+
+    fixturesTrue = input("Do you want to update 2021_2022_Fixtures (Y/N)> ")
+    if fixturesTrue == "Y" or fixturesTrue == "y":
+        db = "2021_2022_Fixtures"
+        updateFixturesDatabase(user, password, db)

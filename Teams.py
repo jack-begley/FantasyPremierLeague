@@ -140,6 +140,9 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
             awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
             homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
 
+            leaderboard[homeName] = homeTeamScore
+            leaderboard[awayName] = awayTeamScore
+
             homeScores['goals'] = sum(homeGoals)
             homeScores['conceeded'] = sum(homeConceed)
             homeScores['wins'] = sum(homeWins)
@@ -155,9 +158,6 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
             awayScores['losses'] = sum(awayLosses)
             awayScores['score'] = awayTeamScore
             awayScores['id'] = away
-
-            leaderboard[homeName] = homeTeamScore
-            leaderboard[awayName] = awayTeamScore
 
             scores[homeName] = homeScores
             scores[awayName] = awayScores
@@ -282,14 +282,23 @@ def teamIDsAsKeysAndPlayerIDsAsList():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-           id = keys['id']
-           playerIDs = list()
-           for players in readable['elements']:
-               if players['team'] == id:
-                   playerIDs.append(players['id'])
-           teams[id] = playerIDs
+    for keys in readable['teams']:
+        id = keys['id']
+        playerIDs = list()
+        for players in readable['elements']:
+            if players['team'] == id:
+                playerIDs.append(players['id'])
+        teams[id] = playerIDs
+
+    return teams
+
+# Returns all team ids ask keys, with their associated players as a comma seperated list for each team
+def playerIDsAsKeysAndTeamIDsAsList():
+    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
+    readable = genericMethods.generateJSONDumpsReadable(url)
+    teams = dict()
+    for player in readable['elements']:
+        teams[player['id']] = player['team']
 
     return teams
 
