@@ -1,33 +1,14 @@
-from pprint import pprint
-import requests
 import json
-import argparse
 import csv 
-import zipfile
-import pyodbc
-import aiohttp
-import asyncio
-import unicodecsv
-import urllib.request
 import urllib.parse
 import tkinter
 import datetime
-from tkinter import filedialog
-from tkinter import Tk
-import unidecode
-import sys, traceback
-import re
-import io
 import math
-import mysql.connector
-from scipy.stats.stats import pearsonr 
-from scipy.stats import linregress
 
 import gameweekSummary
 import genericMethods
 import Teams
 import playerData
-import detailedStats
 import sqlFunction
 
 from datetime import date
@@ -43,154 +24,73 @@ def gameweeksPlayed(playerID):
 
 # Create player first & last name list (and associated dictionary)
 def generatePlayersFullNameList():
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    gameweekSummaryListFull = list()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            firstName = formattedY['first_name']
-            secondName = formattedY['second_name']
-            fullName = f'{firstName} {secondName}'
-            gameweekSummaryListFull.append(fullName)
+    gameweekSummaryListFull = list()
+        
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT CONCAT( first_name,' ', second_name ) AS fullname  FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        gameweekSummaryListFull.append(row['fullname'])
 
     return gameweekSummaryListFull
 
 # Create player id list
 def generatePlayersIdsList():
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDList = list()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            id = formattedY['id']
-            playerIDList.append(id)
+    playerIDList = list()
+
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT id  FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        playerIDList.append(row['id'])
     
     return playerIDList
 
 # Create player id list (and associated surname as the key)
 def generatePlayerIDToSurnameMatching():
-    # Initialise the arrays outside the loop so that they cannot be overriden
+    
     playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            secondName = formattedY['second_name']
-            cleanedFullName = str.lower(genericMethods.unicodeReplace(secondName))
-            id = formattedY['id']
-            playerIDMatchList[cleanedFullName] = id
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT id, second_name  FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        secondName = row['second_name']
+        cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
+        playerIDMatchList[cleanedSurname] = row['id']
 
     return playerIDMatchList
 
 # Create player id as key and associated surname as the result
 def generatePlayerIDAsKeySurnameAsResult():
-    # Initialise the arrays outside the loop so that they cannot be overriden
+    
     playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            secondName = formattedY['second_name']
-            id = formattedY['id']
-            playerIDMatchList[id] = secondName
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT id, second_name  FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        secondName = row['second_name']
+        cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
+        playerIDMatchList[row['id']] = cleanedSurname
 
     return playerIDMatchList
-
-
-
 
 
 # Create player id list (and associated surname as the key)
 def generatePlayerIDToFullNameMatching():
-    # Initialise the arrays outside the loop so that they cannot be overriden
+    
     playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            firstName = formattedY['first_name']
-            secondName = formattedY['second_name']
-            fullName = f'{firstName} {secondName}'
-            cleanedFullName = str.lower(genericMethods.unicodeReplace(fullName))
-            id = formattedY['id']
-            playerIDMatchList[cleanedFullName] = id
-
-    return playerIDMatchList
-
-# Create Full name list list (and associated player id as the key)
-def generateFullNameToPlayerIDMatching():
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
-
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            firstName = formattedY['first_name']
-            secondName = formattedY['second_name']
-            fullName = f'{firstName} {secondName}'
-            cleanedFullName = str(genericMethods.unicodeReplace(fullName)).capitalize()
-            id = formattedY['id']
-            playerIDMatchList[id] = cleanedFullName
-
-    return playerIDMatchList
-
-
-# Create player name list (and associated id as key)
-def generatePlayerNameToIDMatching():
-    # Initialise the arrays outside the loop so that they cannot be overriden
-    playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
-
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            secondName = formattedY['second_name']
-            cleanedSecondName = str.lower(genericMethods.unicodeReplace(secondName))
-            id = formattedY['id']
-            playerIDMatchList[id] = cleanedSecondName
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT CONCAT( first_name,' ', second_name ) AS fullname  FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        secondName = row['second_name']
+        cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
+        playerIDMatchList[cleanedSurname] = row['id']
 
     return playerIDMatchList
 
@@ -593,7 +493,7 @@ def rValuesPerField(correlationDictByAttribute):
         attributeRValues[attribute] = currentRValue
     return attributeRValues
 
-# Takes a number of seperate methods and creates a prediction on player performance for a specified week
+# Takes a number of seperate methods and creates a prediction on player performance for a specified week - TODO: UN-BREAK THIS
 def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
     gameweekData = gameweekSummary.generateDataForGameWeek(previousGameweek)
     gameweekCurrentData = gameweekSummary.generateDataForGameWeek(currentGameweek)
@@ -1049,7 +949,7 @@ def playerPerformanceFactor(gameweekOfInterest):
 
 def percentageTimePlayedByPlayer():
         playerDict = dict()
-        playerNames = generatePlayerNameToIDMatching()
+        playerNames = generatePlayerIDAsKeySurnameAsResult()
         currentGameweek = genericMethods.generateCurrentGameweek()
         maxTime = currentGameweek * 90
         currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
@@ -1066,7 +966,7 @@ def percentageTimePlayedByPlayer():
 
 def playerGoalInvolvement():
     playerDict = dict()
-    playerNames = generatePlayerNameToIDMatching()
+    playerNames = generatePlayerIDAsKeySurnameAsResult()
     currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
     for gameweekData in currentDumps['elements']:
         tempDict = dict()
@@ -1087,7 +987,7 @@ def playerGoalInvolvement():
 
 def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumCost):
     playerDict = dict()
-    playerNames = generatePlayerNameToIDMatching()
+    playerNames = generatePlayerIDAsKeySurnameAsResult()
     currentGameweek = genericMethods.generateCurrentGameweek()
     currentDumps = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/bootstrap-static/')   
     length = len(currentDumps['elements'])
@@ -1100,27 +1000,28 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         points = int(gameweekData['total_points'])
         history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
         numberOfGames = len(history)
-        for record in history:
-            if int(record['round']) == (currentGameweek - 1):
-                value = record['value'] / 10
-        selected = float(gameweekData['selected_by_percent'])
-        if selected < minimumPercentageSelected:
-            pointsPerPercentage = 0 
-        else:
-            pointsPerPercentage = points / selected if selected else 0 
-        tempDict["name"] = name
-        tempDict["pointsPerPercent"] = pointsPerPercentage
-        tempDict["points"] = points
-        tempDict["selected"] = selected
-        tempDict["value"] = value
-        tempDict["goals"] = int(gameweekData['goals_scored'])
-        tempDict["assists"] = int(gameweekData['assists'])
-        tempDict["bonus"] = int(gameweekData['bonus'])
-        tempDict["ict"] = float(gameweekData['ict_index'])
-        tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
-        tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
-        if minimumCost <= value <= maximumCost:
-            playerDict[playerID] = tempDict
+        if numberOfGames > 0:
+            for record in history:
+                if int(record['round']) == (currentGameweek - 1):
+                    value = record['value'] / 10
+            selected = float(gameweekData['selected_by_percent'])
+            if selected < minimumPercentageSelected:
+                pointsPerPercentage = 0 
+            else:
+                pointsPerPercentage = points / selected if selected else 0 
+            tempDict["name"] = name
+            tempDict["pointsPerPercent"] = pointsPerPercentage
+            tempDict["points"] = points
+            tempDict["selected"] = selected
+            tempDict["value"] = value
+            tempDict["goals"] = int(gameweekData['goals_scored'])
+            tempDict["assists"] = int(gameweekData['assists'])
+            tempDict["bonus"] = int(gameweekData['bonus'])
+            tempDict["ict"] = float(gameweekData['ict_index'])
+            tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
+            tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
+            if minimumCost <= value <= maximumCost:
+                playerDict[playerID] = tempDict
 
     return playerDict
 

@@ -8,10 +8,7 @@ import requests
 import json
 import genericMethods
 import playerData
-import gameweekSummary
 import Teams
-import detailedStats
-import sqlFunction
 from requests.auth import HTTPBasicAuth
 
 
@@ -59,6 +56,8 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
         gwNow = genericMethods.generateCurrentGameweek()
         endGw = gw + numOfGameweeksInFuture
         fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow}')
+        if len(fixtures) != 10:
+            fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow-1}')
         scores = dict()
         leaderboard = dict()
         length = len(fixtures)
@@ -133,9 +132,7 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
                         if hScore < aScore:
                             awayWins.append(1)
 
-
                 n += 1
-                
 
             awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
             homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
@@ -185,19 +182,11 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
                 homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
                 homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
 
-                awayRankDifference = homeRankDifference
                 awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
                 awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
                 awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
 
                 win = homeGoalsNet - awayGoalsNet
-                if win > 0:
-                    winner = homeName
-                if win == 0:
-                    winner = "None"
-                if win < 0:
-                    winner = awayName
-
 
                 homePoints = win
                 awayPoints = -win
@@ -1083,6 +1072,8 @@ def totalTeamGoals():
                     goalsList.append(int(fixture['team_h_score']))
                     gw += 1
                     break
+            if team != fixture['team_a'] and team != fixture['team_h']:
+                gw += 1
 
         goalsScored = sum(goalsList)
         teamDict[team] = goalsScored

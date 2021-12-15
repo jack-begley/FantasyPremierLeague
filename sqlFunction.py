@@ -151,7 +151,7 @@ def createTable(user, password, tableName, database, columnSpec):
     columnSpecFormatted = columnSpec.replace("'","").replace('"','')
 
     try:
-        ready = str(f"CREATE TABLE {tableName} ({columnSpec})").replace("'","")
+        ready = str(f"CREATE TABLE {tableName} ({columnSpecFormatted})").replace("'","")
         mycursor.execute(ready)
         print(f"Table \"{tableName}\" created.")
 
@@ -264,6 +264,19 @@ def createAllSuitableTables(user, password, database, table, datafeed):
     convertedColumns = ','.join("'"+str(x).replace('/','_').replace("-","_").replace("+","") + " " + str(specification[x]) + "'" for x in specification.keys())
     createTable(user, password, table, database, convertedColumns)
 
+def createDetailedStatsTable(user, password, database, table, datafeed):
+    specification = dict()
+    element = datafeed[1]
+    for item in element:
+        if item == "name":
+            specification[item] = "TEXT"
+        else:
+            specification[item] = "FLOAT"
+
+    convertedColumns = ','.join("'"+str(x).replace('/','_').replace("-","_").replace("+","") + " " + str(specification[x]) + "'" for x in specification.keys())
+    createTable(user, password, table, database, convertedColumns)
+
+
 # === TODO: Condense to a single method ====================================================================================================
 def updateEventsTable(user, password, database):
     table = 'events'
@@ -338,7 +351,6 @@ def updateElementsTable(user, password, database):
     bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
-    currentGameweek = generateCurrentGameweek()
 
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
@@ -378,7 +390,6 @@ def updateGameSettingsTable(user, password, database):
     bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
-    currentGameweek = generateCurrentGameweek()
     elementsKept = dict()
     for element in bootstrapStaticData[table]:
         if isinstance(bootstrapStaticData[table][element], list) == False and isinstance(bootstrapStaticData[table][element], dict) == False:
@@ -432,7 +443,6 @@ def updateElementStatsTable(user, password, database):
     bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
-    currentGameweek = generateCurrentGameweek()
 
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
@@ -472,7 +482,6 @@ def updatePhasesTable(user, password, database):
     bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
-    currentGameweek = generateCurrentGameweek()
 
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
@@ -511,7 +520,6 @@ def updateTeamsTable(user, password, database):
     bootstrapStaticData = JSON.json()
     deleteTable(user, password, table, database)
     createAllSuitableTables(user, password, database, table, bootstrapStaticData)
-    currentGameweek = generateCurrentGameweek()
 
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
@@ -549,7 +557,6 @@ def updateTeamsTable(user, password, database):
 
 def updateFixturesDatabase(user, password, database):
     table = 'fixtures'
-    currentGameweek = generateCurrentGameweek()
     n = 1
     headerData = requests.get("https://fantasy.premierleague.com/api/fixtures").json()
     formattedFixtureData = dict()
@@ -704,7 +711,7 @@ def updateEventsDatabase(user, password, database):
                 if isinstance(player[record], dict) == True:
                     for item in player[record]:
                         formattedPlayerData[item] = player[record][item]
-                if record == "explain":
+                if record == "explain" and player['explain']:
                     for item in player['explain'][0]:
                         if isinstance(player['explain'][0][item], dict) == False and  isinstance(player['explain'][0][item], list) == False:
                             formattedPlayerData[item] = headerData['elements'][0]['explain'][0][item]
@@ -768,7 +775,10 @@ def updateFixturesTable(user, password, database, datafeed):
     cursor = dbConnect.cursor()
 
     for element in currentElement[table]:
-        fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
+        if element['kickoff_time'] == None:
+            fixtureTime = currentDateTime
+        else:
+            fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
         if currentDateTime < fixtureTime:
             elementsKept = dict()
             id = element['id']
@@ -889,14 +899,6 @@ def updateHistoryPastTable(user, password, database, datafeed, playerId):
 
     cursor.close()
 
-# TEST - TOP 10 transfers out ====================== TODO: REMOVE ===============
-data = getDataFromDatabaseAsDict(user, password, "2021_2022_BootstrapStatic", "SELECT id, transfers_out_event FROM `2021_2022_bootstrapstatic`.`elements` ORDER BY transfers_out_event desc LIMIT 10;")
-
-# createDatabase(user,password,"2021_2022_Fixtures")
-
-print("")
-# REMOVE TO HERE =================================================================
-
 updateTables= input("Do you want to update any tables? (Y/N)> ")
 
 if updateTables in ["y","Y","Yes","yes"]:
@@ -911,7 +913,7 @@ if updateTables in ["y","Y","Yes","yes"]:
         updatePhasesTable(user, password, db)
         updateTeamsTable(user, password, db)
 
-    #= ELEMENT SUMMARU ================================================================================
+    #= ELEMENT SUMMARY ================================================================================
 
     elementSummaryTrue = input("Do you want to update 2021_2022_ElementSummary (Y/N)> ")
     if elementSummaryTrue == "Y" or elementSummaryTrue == "y":
@@ -964,10 +966,52 @@ if updateTables in ["y","Y","Yes","yes"]:
 
     detailedStatsTrue = input("Do you want to update 2021_2022_DetailedStats (Y/N)> ")
     if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
-        db = "2021_2022_DetailedStats"
+        db = "2021_2022_detailedstats"
         playerList = detailedStats.getAllPlayers()
         players = detailedStats.getPlayerStats(playerList)
-        players = detailedStats.getPlayerStatsDetailed(playerList)
+        table = 'detailedStats'
+        headers = list()
+        headers.append("name")
+        for person in players:
+            header = list(players[person].keys())
+            formattedHeader = [str(x).replace(' ','_').replace('%','') for x in header]
+            headers = headers + list(set(formattedHeader) - set(headers))
+
+        n = 1
+        finalData = dict()
+        for person in players:
+            formattedRecord = dict()
+            formattedData = dict()
+            records = players[person]
+            for record in records:
+                recordName = record.replace(' ','_').replace('%','') 
+                formattedRecord[recordName] = records[record]
+            formattedData['name'] = str(unicodeReplace(person)).replace("'",'')
+            
+            for header in headers:
+                if header in list(formattedRecord.keys()):
+                    formattedData[header] = formattedRecord[header]
+                elif header != "name":
+                    formattedData[header] = 0
+
+            finalData[n] = formattedData
+            n += 1
+
+        deleteTable(user, password, table, db)
+        createDetailedStatsTable(user, password, db, table, finalData)
+
+        dbConnect = connectToDB(user, password, db)
+        length = len(finalData) - 1
+        cursor = dbConnect.cursor() 
+        for element in finalData:
+            currentIndex = list(finalData).index(element)
+            genericMethods.runPercentage(length, currentIndex, f"Running {currentIndex} of {length}", "All player data collected from detailed stats")
+            columns = ','.join("`"+str(x).replace('/','_')+"`" for x in finalData[element].keys())
+            values = ','.join("'"+str(x).replace('/','_')+"'" for x in finalData[element].values())
+            sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+            cursor.execute(sql)
+            dbConnect.commit()
+        cursor.close()
 
     # EVENTS ==============================================================================================================
 
