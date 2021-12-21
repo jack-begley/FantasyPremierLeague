@@ -1,9 +1,6 @@
 import json
 import csv 
-import urllib.parse
 import tkinter
-import datetime
-import math
 
 import gameweekSummary
 import genericMethods
@@ -86,7 +83,7 @@ def generatePlayerIDToFullNameMatching():
 
     dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT CONCAT( first_name,' ', second_name ) AS fullname  FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT `second_name`, `id` FROM `2021_2022_bootstrapstatic`.`elements`")
     for row in cursor:
         secondName = row['second_name']
         cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
@@ -96,44 +93,29 @@ def generatePlayerIDToFullNameMatching():
 
 # Create teamId list (and associated player id as key)
 def generateIDAsKeyTeamIdAsValue():
-    # Initialise the arrays outside the loop so that they cannot be overriden
+    
     playerIDMatchList = dict()
-    gameweekSummarySub = "bootstrap-static/"
-    url = genericMethods.mergeURL(gameweekSummarySub)
-    gameweekSummaryDataReadable = genericMethods.generateJSONDumpsReadable(url)
 
-    # For all of the objects in the readable player data list under the "elements" key (the name of a list)
-    for y in gameweekSummaryDataReadable['elements']:
-        dumpsY = json.dumps(y)
-        # Only run the below part if "y" is in the format of a dictionary (a list of data)
-        if isinstance(y,dict):
-            formattedY = json.loads(dumpsY)
-            playerId = formattedY['id']
-            teamID = formattedY['team']
-            playerIDMatchList[playerId] = teamID
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT `id`, `team` FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        playerIDMatchList['id'] = row['team']
 
     return playerIDMatchList
 
 # Return the chance of a player playing for next week, with the playerId as key
 def generateChanceOfPlaying():
-    players = genericMethods.generateJSONDumpsReadable('https://fantasy.premierleague.com/api/bootstrap-static/')
-    chanceDict = dict()
-    for player in players['elements']:
-        if player['chance_of_playing_next_round'] == 'null':
-            chance = 100
+    
+    playerIDMatchList = dict()
 
-        if player['chance_of_playing_next_round'] == None:
-            chance = 100
-        else:
-            chance = player['chance_of_playing_next_round']
-        chanceDict[player['id']] = chance
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT `id`, `chance_of_playing_next_round` FROM `2021_2022_bootstrapstatic`.`elements`")
+    for row in cursor:
+        playerIDMatchList['id'] = row['chance_of_playing_next_round']
 
-    return chanceDict
-
-# Match User input to an array and return the result
-def matchUserInputToList(userInput, listToMatchInputTo):
-    result = listToMatchInputTo[userInput]
-    return result
+    return playerIDMatchList
 
 # Create a filtered list where the arguments are passed in as a dictionary
 def filterBootstrapStaticResults(filterField, filterValue, dictToFilter, operator):
@@ -158,64 +140,63 @@ def filterBootstrapStaticResults(filterField, filterValue, dictToFilter, operato
 
 # Create player first & last name list (and associated dictionary)
 def gatherHistoricalPlayerData():
-    playerIDs = gameweekSummary.generatePlayerIDs()
-    # create url's for the current player and extract data from the "History" file where the game week is the current game week
-    currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7)
-    length = len(playerIDs) - 1
-    elementsList = dict()
-    tempList = list()
-    # Gather the player data
-    for playerID in playerIDs:
-        currentIndex = list(playerIDs).index(playerID)
-        genericMethods.runPercentage(length, currentIndex, "Gather data for regression", "Data for regression gathered")
 
-        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM `2021_2022_bootstrapstatic`.`elements`")
+    dataHeader = [i[0] for i in cursor.description]
+    dataForCorrel = dict()
+    maxLen = len(dataHeader)
+    for header in dataHeader:
+        currentIndex = dataHeader.index(header)
+        genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
+        currentList = list()
+        sql = f"SELECT `{header}` FROM `2021_2022_bootstrapstatic`.`elements`"
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+        pointer = dbConnect.cursor(dictionary=True)
+        pointer.execute(sql)    
+        for row in pointer:
+            currentList.append(row[header])
+        dataForCorrel[header] = currentList 
 
-        currentPlayerList = dict()
+    return dataForCorrel
 
-        for data in allPlayerDataReadable['history']:        
-            dumpsData = json.dumps(data)
-            formattedData = json.loads(dumpsData)
-            gameweek = formattedData['round']
-            id = formattedData['element']
-            # Create data list for current player assigning to each key
-            for record in formattedData:
-                currentRound = formattedData['round']
-                currentPlayerList[record] = formattedData[record]
-            for element in currentPlayerList:
-                if element not in elementsList:
-                    elementsList[element] = (currentPlayerList[element])
-                else:
-                    elementsList[element] = str(elementsList[element]) + ',' + str(currentPlayerList[element])
-            currentPlayerList = dict()
+def gatherGameweekDataByPlayerForCorrel():
 
-    return elementsList
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM `2021_2022_elementsummary`.`history`")
+    dataHeader = [i[0] for i in cursor.description]
+    dataForCorrel = dict()
+    maxLen = len(dataHeader)
+    for header in dataHeader:
+        currentIndex = dataHeader.index(header)
+        genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
+        currentList = list()
+        sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history`"
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+        pointer = dbConnect.cursor(dictionary=True)
+        pointer.execute(sql)    
+        for row in pointer:
+            currentList.append(row[header])
+        dataForCorrel[header] = currentList 
 
+    return dataForCorrel
+
+# TODO: Get this working
 # Gather gameweek data specified
 def gatherGameweekDataByPlayer(gameweekOfInterest):
-    playerNames = playerData.generatePlayerIDToFullNameMatching()
-    if gameweekOfInterest == None:
-        currentGameWeek = math.floor((datetime.datetime.now() - datetime.datetime(2019, 8, 5)).days/7) - 1
-    else:
-        currentGameWeek = gameweekOfInterest
-    length = len(playerNames) - 1
-    playerDataFinal = dict()
-    # Gather the player data
-    for playerName in playerNames:
-        playerID = playerNames[playerName]
-        currentPlayerData = dict()
-        currentIndex = list(playerNames).index(playerName)
-        genericMethods.runPercentage(length, currentIndex, "Calculating player index", "Player index calculation completed")
-        
-        allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
 
-        currentPlayerList = dict()
+    gameweekData = dict()
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute(f"SELECT 2021_2022_elementsummary.history.*, 2021_2022_bootstrapstatic.elements.`second_name` FROM 2021_2022_elementsummary.history INNER JOIN 2021_2022_bootstrapstatic.elements ON 2021_2022_bootstrapstatic.elements.`id`=  2021_2022_elementsummary.history.`element` where round = {gameweekOfInterest};")
+    allData = cursor.fetchall()
+    
+    for row in allData:
+        gameweekData[row['second_name']] = row
+    return gameweekData
 
-        for data in allPlayerDataReadable['history']:    
-            if data['round'] == currentGameWeek:
-                playerDataFinal[playerName] = data
-
-    return playerDataFinal
 
 # Calculate the Max number of a dictionary array
 def calculateMaxNumberInArray(arrayToCalculateMaxFrom):
@@ -260,10 +241,9 @@ def createPlayerIndexing(dataToMatchToCorrelList, correlListWithMatchingKeys):
     finalPlayerIndex = dict()
     for player in dataToMatchToCorrelList:
         previousIndex = float()
-        currentPlayerList = list()
         for key in dataToMatchToCorrelList[player]:
             currentIndex = float()
-            if key != 'kickoff_time':
+            if key != 'kickoff_time' and key != 'second_name':
                 currentPlayerData = dataToMatchToCorrelList[player]
                 correlConstant = correlListWithMatchingKeys[key]
                 currentData = float(currentPlayerData[key])
@@ -280,8 +260,11 @@ def convertStringDictToInt(inputList):
     currentDict = dict()
     tempList = list()
     for element in inputList:
+        currentList = inputList[element]
         try:
-            outputList[element] = list(map(float, inputList[element].split(',')))
+            outputList[element] = [0 for i in currentList if isinstance(i, int) == False and isinstance(i, float) == False]
+            if not outputList[element]:
+                outputList[element] = currentList
         except BaseException:
             if element != "kickoff_time":
                 currentDict[element] = list(map(str, inputList[element].split(',')))
@@ -516,7 +499,7 @@ def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
 
 # Takes the correlations for the factors used to predict good performance and applies them to known top performers
 def playerPerformanceForLastWeek(gameweekNumber):
-    elementsList = playerData.gatherHistoricalPlayerData()
+    elementsList = playerData.gatherGameweekDataByPlayerForCorrel()
     allData = playerData.convertStringDictToInt(elementsList)
     # Correl needs to be updated to previous week vs current total points - method for generating that?
     correl = genericMethods.correlcoeffGeneration(allData,'total_points')

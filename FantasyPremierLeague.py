@@ -1138,7 +1138,6 @@ def playerRoutine():
                                 performance.append(totalPoints)
                             else:
                                 totalPoints = playerHistory['total_points']
-                                expectedPlay = playerHistory
                                 performance.append(totalPoints)
                             n += 1
 
@@ -1154,7 +1153,10 @@ def playerRoutine():
                     playerInfluence = influenceByPlayer[playerToTeam[playerID]][playerID ]
                     influenceFactor = playerInfluence/teamInfluence
                     playerChanceOfPlaying = chanceConverter[chanceOfPlaying[playerID]]/100
-                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
+                    if teams[playerToTeam[playerID]] in list(fixtureIndex.keys()):
+                        expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
+                    else:
+                        expectedPerformance = 0.0
                     expectedCaptains[player.capitalize()] = int(expectedPerformance)
                     captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                     captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
@@ -1222,7 +1224,10 @@ def playerRoutine():
                 else:
                     influenceFactor = playerInfluence/teamInfluence
                 playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
-                expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                if teams[playerToTeam[player]] in list(fixtureIndex.keys()):
+                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                else:
+                    expectedPerformance = 0.0
                 playersPerformance[player] = int(expectedPerformance)
 
             playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
@@ -1375,7 +1380,10 @@ def playerRoutine():
                 else:
                     influenceFactor = playerInfluence/teamInfluence
                 playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
-                expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                if teams[playerToTeam[player]] in list(fixtureIndex.keys()):
+                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                else:
+                    expectedPerformance = 0.0
                 playersPerformance[player] = int(expectedPerformance)
 
             
@@ -1463,8 +1471,8 @@ def playerRoutine():
         elif playerUserInputInitialInt == 99:
             gameweekNumber = genericMethods.generateCurrentGameweek()
             previousWeek = gameweekNumber - 1
-            # TODO: Fix this method
             playerPerformance = playerData.playerPerformanceForLastWeek(previousWeek)
+            # TODO: Print this data, remove exports
             print("")
             print("-----------------------------------")
             print("Would you like to export the data?:")

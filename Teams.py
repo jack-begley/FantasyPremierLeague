@@ -176,32 +176,34 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
                 homeName = teamNames[home]
                 away = fixture['team_a']
                 awayName = teamNames[away]
+                try:
+                    homeRankDifference = -(list(rankings.keys()).index(teamNames[home]) - list(rankings.keys()).index(teamNames[away]))
+                    homeGoalsScoredDifference = scores[teamNames[home]]['goals'] + scores[teamNames[away]]['conceeded']
+                    homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
+                    homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
 
-                homeRankDifference = -(list(rankings.keys()).index(teamNames[home]) - list(rankings.keys()).index(teamNames[away]))
-                homeGoalsScoredDifference = scores[teamNames[home]]['goals'] + scores[teamNames[away]]['conceeded']
-                homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
-                homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
+                    awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
+                    awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
+                    awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
 
-                awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
-                awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
-                awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
+                    win = homeGoalsNet - awayGoalsNet
 
-                win = homeGoalsNet - awayGoalsNet
+                    homePoints = win
+                    awayPoints = -win
 
-                homePoints = win
-                awayPoints = -win
+                    if homeName in winRankings:
+                        existingRanking = winRankings[homeName]
+                        winRankings[homeName] = existingRanking + homePoints
+                    else:
+                        winRankings[homeName] = homePoints
 
-                if homeName in winRankings:
-                    existingRanking = winRankings[homeName]
-                    winRankings[homeName] = existingRanking + homePoints
-                else:
-                    winRankings[homeName] = homePoints
-
-                if awayName in winRankings:
-                    existingRanking = winRankings[awayName]
-                    winRankings[awayName] = existingRanking + awayPoints
-                else:
-                    winRankings[awayName] = awayPoints
+                    if awayName in winRankings:
+                        existingRanking = winRankings[awayName]
+                        winRankings[awayName] = existingRanking + awayPoints
+                    else:
+                        winRankings[awayName] = awayPoints
+                except:
+                    None
 
                 current += 1
             gw += 1
