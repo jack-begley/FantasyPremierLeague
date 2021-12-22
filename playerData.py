@@ -161,6 +161,32 @@ def gatherHistoricalPlayerData():
 
     return dataForCorrel
 
+
+def gatherGameweekDataByPlayerForCorrelByGameweek():
+    currentGameweek = genericMethods.generateCurrentGameweek()
+    n = 1
+    dataByGameweek = dict()
+    while n <= currentGameweek:
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+        cursor = dbConnect.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM `2021_2022_elementsummary`.`history`")
+        dataHeader = [i[0] for i in cursor.description]
+        dataForCorrel = dict()
+        genericMethods.runPercentage(n, currentGameweek, f"Running through gameweeks {n} to {currentGameweek}", "Data collected for all gameweeks from 1 to {currentGameweek}")
+        for header in dataHeader:
+            currentList = list()
+            sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n}"
+            dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+            pointer = dbConnect.cursor(dictionary=True)
+            pointer.execute(sql)    
+            for row in pointer:
+                currentList.append(row[header])
+            dataForCorrel[header] = currentList
+        dataByGameweek[n] = dataForCorrel
+        n += 1
+
+    return dataByGameweek
+
 def gatherGameweekDataByPlayerForCorrel():
 
     dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
@@ -500,6 +526,9 @@ def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
 # Takes the correlations for the factors used to predict good performance and applies them to known top performers
 def playerPerformanceForLastWeek(gameweekNumber):
     elementsList = playerData.gatherGameweekDataByPlayerForCorrel()
+    elementsByGameweek = gatherGameweekDataByPlayerForCorrelByGameweek()
+    # TODO: Run each week individually, combine the results.
+
     allData = playerData.convertStringDictToInt(elementsList)
     # Correl needs to be updated to previous week vs current total points - method for generating that?
     correl = genericMethods.correlcoeffGeneration(allData,'total_points')

@@ -354,10 +354,6 @@ def playerRoutine():
                 genericMethods.runPercentage(length, currentIndex, 'Gathering player scores', 'Player score data gathered')                           
                             
             sortedByPosition = playerData.sortPlayerDataByPosition(allGameweekData)
-            sortedSumByPosition = playerData.sortPlayerDataByPosition(sumOfPlayerScores)
-
-
-            playerNameTeamID = dict()
 
             for position in sortedByPosition:
                 positionName = positions[position]
@@ -1469,21 +1465,26 @@ def playerRoutine():
             endRoutine()
                                    
         elif playerUserInputInitialInt == 99:
+            print("---------------------------------------------------------------")
+            print("How many players do you want to see?:")
+            print("---------------------------------------------------------------")
+            playerNumber = int(input("> "))
             gameweekNumber = genericMethods.generateCurrentGameweek()
             previousWeek = gameweekNumber - 1
+
             playerPerformance = playerData.playerPerformanceForLastWeek(previousWeek)
-            # TODO: Print this data, remove exports
+            finalSumPoints = genericMethods.reformattedSortedTupleAsDict(playerPerformance)
+
             print("")
-            print("-----------------------------------")
-            print("Would you like to export the data?:")
-            print("!! TYPE IN Y/N")
-            print("-----------------------------------")
-            userInput = str.lower(input("> "))
-            if userInput == 'y':
-                gameweekHeaders = generateCommaSeperatedGameweekNumberList()
-                genericMethods.printListToExcel(playerPerformance, gameweekHeaders)
-            else:
-                endRoutine()
+            print(f"Top {playerNumber} players for next week (Indexed to 100):")
+            print("")
+            for player in finalSumPoints:
+                if list(finalSumPoints.keys()).index(player) < playerNumber:
+                    print(f"{list(finalSumPoints.keys()).index(player) + 1}. {player}: {round(finalSumPoints[player])}")
+                else:
+                    print("")
+                    break
+            endRoutine()
 
         elif playerUserInputInitialInt == 100:
             gameweekNumber = genericMethods.generateCurrentGameweek()
@@ -1716,7 +1717,6 @@ def teamsRoutine():
             playersMostSelected = dict()
             for id in playersSelectedCount:
                 playerName = referenceList[id].capitalize()
-                currentSelectedCount = playersSelectedCount[id]
                 percentageSelected = int((playersSelectedCount[id] / teamCap) * 100)
                 playersMostSelected[playerName] = percentageSelected
 
