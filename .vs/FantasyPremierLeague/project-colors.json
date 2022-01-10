@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
+    },
+    "2660c76e-111c-49e4-8160-80668cbe96ec": {
+      "ProjectGuid": "2660c76e-111c-49e4-8160-80668cbe96ec",
+      "DisplayName": "FantasyPremierLeague",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

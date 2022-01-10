@@ -4,29 +4,16 @@ import sys
 file_dir = os.path.dirname(__file__)
 sys.path.append(file_dir)
 
-from pprint import pprint
 import requests
 import json
-import argparse
 import csv 
-import zipfile
-import pyodbc
-import aiohttp
-import asyncio
-import unicodecsv
-import urllib.request
 import urllib.parse
 import tkinter
-from tkinter import filedialog
 from tkinter import Tk
-import sys, traceback
-import re
-import io
 import playerData
 import gameweekSummary
 import genericMethods
 import Teams
-import detailedStats
 
 # URL set up and league codes
 from datetime import date

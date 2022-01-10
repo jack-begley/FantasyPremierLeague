@@ -6,20 +6,12 @@ sys.path.append(file_dir)
 
 import requests
 import json
-import math
 from scipy.stats.stats import pearsonr 
 from scipy.stats import linregress
-import datetime
-from tkinter import filedialog
 from tkinter import Tk
 import tkinter 
 import csv 
-import sys, traceback
 import gameweekSummary
-import playerData
-import Teams
-import detailedStats
-
 
 # URL set up and league codes
 from datetime import date
@@ -121,8 +113,14 @@ def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
             sys.stdout.flush()
             print("")
         if element != 'kickoff_time':
+            xLen = len(nameOfArrayToCorrelate[element])
+            yLen = len(nameOfArrayToCorrelate[keyToCorrelateAgainstName])
             currentX = nameOfArrayToCorrelate[element]
             currentY = nameOfArrayToCorrelate[keyToCorrelateAgainstName]
+            if xLen > yLen:
+                currentX = currentX[:yLen]
+            if yLen > xLen:
+                currentY = currentY[:xLen]
             currentCorrel = linregress(currentX,currentY)
             correlations[element] = currentCorrel
         else:

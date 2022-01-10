@@ -3,6 +3,7 @@ import playerData
 import genericMethods
 import detailedStats
 import Teams
+import sqlFunction
 import operator
 import requests
 import tkinter as Tk
@@ -131,7 +132,7 @@ def introRoutine():
         if userInputInt ==  1:
             playerRoutine()
             
-        if userInputInt ==  2:
+        if userInputInt == 2:
             teamsRoutine()
 
         if userInputInt ==  3:
@@ -181,6 +182,7 @@ def playerRoutine():
     print(' [13] Pick me a player')
     print(' [14] Pick me a captain')
     print(' [15] Pick me a transfer')
+    print(' [16] Pick my team')
     print("")
     print(" Data Exports: ")
     print(" [51] All player data for all gameweeks (to excel)")
@@ -261,6 +263,8 @@ def playerRoutine():
                         
             endRoutine()
 
+        #TODO: FIX THIS METHOD:
+
         # Create prediction constants for all player fields based on historical data from all seasons available
         elif playerUserInputInitialInt == 3:
             playersByPosition = playerData.generateHistoricalDataByPositionByPlayer()
@@ -323,10 +327,10 @@ def playerRoutine():
             count = fromGameweek
             currentGameweek = nowGameweek - userInput
             playerIDs = playerData.generatePlayersIdsList()
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             playerIDsToNames = playerData.generatePlayerIDToSurnameMatching()
             positions = playerData.generatePositionReferenceIDAsKey()
-            teamIDandPlayerID = Teams.teamIDsAsKeysAndPlayerIDsAsList()
+            playerIDandTeamID = Teams.playerIDsAsKeysAndTeamIDsAsList()
             gameweekDifficultyByTeam = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(fromGameweek, nowGameweek)
             sumOfPlayerScores = dict()
             allGameweekData = dict()
@@ -350,10 +354,6 @@ def playerRoutine():
                 genericMethods.runPercentage(length, currentIndex, 'Gathering player scores', 'Player score data gathered')                           
                             
             sortedByPosition = playerData.sortPlayerDataByPosition(allGameweekData)
-            sortedSumByPosition = playerData.sortPlayerDataByPosition(sumOfPlayerScores)
-
-
-            playerNameTeamID = dict()
 
             for position in sortedByPosition:
                 positionName = positions[position]
@@ -364,9 +364,6 @@ def playerRoutine():
                 top5PlayersPreviousGameweeks = dict()
 
                 for player in finalSumPoints:
-                    for teamID in teamIDandPlayerID:
-                        if player in teamIDandPlayerID[teamID]: 
-                            playerNameTeamID[player] = teamID
                     playerName = playerNames[player].capitalize()
                     top5PlayersPreviousGameweeks[playerName] = currentPositionData[player]
 
@@ -386,7 +383,7 @@ def playerRoutine():
                         supplementLength = len(player) - 15
                         gameDifficulty = "Game difficulty" + genericMethods.repeatStringToLength(" ", supplementLength) 
                         playerName = player
-                    teamID = playerNameTeamID[playerID]
+                    teamID = playerIDandTeamID[playerID]
                     difficultyList = str(gameweekDifficultyByTeam[teamID]).replace("[","").replace("]","")
                     playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
                     print(f"{playerName}: {playerDataTop5}")
@@ -400,7 +397,7 @@ def playerRoutine():
             currentGameweek = genericMethods.generateCurrentGameweek()
             print("Gathering player influence scores...")
             playersByInfluence = playerData.playerInfluence(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
 
             print("-----------------------------------------------------------------------------------------------------------")
             print(f'Top ranked players for points for GW{currentGameweek}:')
@@ -422,7 +419,7 @@ def playerRoutine():
             playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
             factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
             factorByTeam = Teams.teamFactor(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             playerDict = dict()
             for team in teams:
@@ -459,7 +456,7 @@ def playerRoutine():
             playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
             factorByPlayer = playerData.playerPerformanceFactor(currentGameweek)
             factorByTeam = Teams.teamFactor(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             playerDict = dict()
             for team in teams:
@@ -495,7 +492,7 @@ def playerRoutine():
             RouteToTake = int(input("What would you like to compare against? > "))
             currentGameweek = genericMethods.generateCurrentGameweek()
             count = currentGameweek + 1 - numberOfGameweeks
-            playerList = playerData.generatePlayerNameToIDMatching() 
+            playerList = playerData.generatePlayerIDAsKeySurnameAsResult() 
             gameweekList = list()
 
             while count <= currentGameweek:
@@ -508,7 +505,7 @@ def playerRoutine():
             gameweekListHeaders.append('*AVG*')
 
 
-            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks, RouteToTake)
+            playerICTHistory = playerData.generateHistoryOfICTForNGameweeks(numberOfGameweeks - 1, RouteToTake)
             playerICTList = dict()
             playerComparativeList = dict()
             maxLen = len(playerICTHistory)
@@ -933,7 +930,6 @@ def playerRoutine():
             print("-----------------------------")
             print("")
 
-            # allData = genericMethods.allDataAllPlayersByElementId()
             startGameweek = lastGameweek - lookback
             keys = factorWeights.keys()
 
@@ -999,7 +995,6 @@ def playerRoutine():
 
             gameweekDifficultyByTeam = Teams.teamIDsAsKeysAndGameweekDifficultyAsList(startGameweek, lastGameweek)
             playerGameweekDifficulty = dict()
-            playerStats = dict()
 
             for player in playersReady:
                 currentPlayer = dict()
@@ -1027,7 +1022,6 @@ def playerRoutine():
                 playerGameweeksPlayed = playerData.gameweeksPlayed(player)
                 weeksWeCareAbout = list()
                 n = startGameweek
-                maxReached = False
                 while n <= lastGameweek:
                     weeksWeCareAbout.append(n)
                     n += 1
@@ -1111,7 +1105,7 @@ def playerRoutine():
                 n = 0
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, n)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, n)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             playerNamesToId = playerData.generatePlayerIDToSurnameMatching()  
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             playerToTeam = playerData.generateIDAsKeyTeamIdAsValue()
@@ -1140,7 +1134,6 @@ def playerRoutine():
                                 performance.append(totalPoints)
                             else:
                                 totalPoints = playerHistory['total_points']
-                                expectedPlay = playerHistory
                                 performance.append(totalPoints)
                             n += 1
 
@@ -1156,7 +1149,10 @@ def playerRoutine():
                     playerInfluence = influenceByPlayer[playerToTeam[playerID]][playerID ]
                     influenceFactor = playerInfluence/teamInfluence
                     playerChanceOfPlaying = chanceConverter[chanceOfPlaying[playerID]]/100
-                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
+                    if teams[playerToTeam[playerID]] in list(fixtureIndex.keys()):
+                        expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
+                    else:
+                        expectedPerformance = 0.0
                     expectedCaptains[player.capitalize()] = int(expectedPerformance)
                     captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                     captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
@@ -1188,15 +1184,11 @@ def playerRoutine():
             fixtureIndex = dict()
             for fixture in easiestGames:
                 fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
-            #top5FixtureTeams = list(fixtureIndex.keys())[:5]
             teamNames = Teams.teamNamesAsKeysAndIDsAsData()
-            #top5Fixtures = dict()
-            #for fixture in top5FixtureTeams:
-                #top5Fixtures[teamNames[fixture]] = easiestGames[fixture]
-
+            gameweeksPlayed = playerData.numberOfGameweeksPlayed(gw, gw + 4)
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             playerToTeam = playerData.generateIDAsKeyTeamIdAsValue()
             chanceOfPlaying = playerData.generateChanceOfPlaying()
@@ -1211,28 +1203,17 @@ def playerRoutine():
             for player in playerNames:
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
-                performance = list()
-                n = gw - 3
-                while n < gw:
-                    playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n)
-                    if len(list(playerHistory.values())) == 0 and n > 3:
-                        playerHistory = playerData.generateListOfPlayersAndMetricsRelatedToPerformance(player, n - 3)
-                        if len(list(playerHistory.values())) > 0:
-                            totalPoints = playerHistory['total_points']
-                            performance.append(totalPoints)
-                        else:
-                            totalPoints = 0
-                    else:
-                        if 'total_points' in playerHistory: 
-                            totalPoints = playerHistory['total_points']
-                        else:
-                            totalPoints = 0
-                        expectedPlay = playerHistory
-                        performance.append(totalPoints)
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_events")
+                totalPoints = dbConnect.cursor(dictionary=True)
+                totalPoints.execute(f"SELECT total_points FROM `2021_2022_events`.`elements` WHERE id = {player} and gameweek < {gw}")
+                totalPointList = list()
+                for row in totalPoints:
+                    totalPointList.append(row['total_points'])
+                playerPerformance[player] = sum(totalPointList)
+                totalPoints.close()
 
-                    n += 1
-                playerPerformance[player] = sum(performance)
-
+                playerPerformance[player] = sum(totalPointList)
+                                      
                 teamInfluence = influenceByTeam[playerToTeam[player]]
                 playerInfluence = influenceByPlayer[playerToTeam[player]][player]
                 if playerInfluence == 0 or teamInfluence == 0:
@@ -1240,10 +1221,13 @@ def playerRoutine():
                 else:
                     influenceFactor = playerInfluence/teamInfluence
                 playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
-                expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                if teams[playerToTeam[player]] in list(fixtureIndex.keys()):
+                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                else:
+                    expectedPerformance = 0.0
+                expectedPerformance = expectedPerformance * gameweeksPlayed[player]
                 playersPerformance[player] = int(expectedPerformance)
 
-            
             playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
             playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
             
@@ -1278,7 +1262,6 @@ def playerRoutine():
             # Work out which of the same price I should transfer in
 
             playerPrices = playerData.generateListOfPlayersByPositionByCost()
-            filteredPriceByPosition = dict()
 
             try:
                 bank = myTeamSource['transfers']['bank']
@@ -1293,10 +1276,11 @@ def playerRoutine():
             playerDifference = dict()
             for position in playerPrices:
                 for player in playerPrices[position]:
-                    availableMoney = worst[position]['value'] + bank
-                    if playerPrices[position][player] <= availableMoney and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
-                        playerDifference[player] = {"id": player, "difference": playersPrepared[player] - worst[position]['score'], "position": position}
-                        playerReference[player] = playersPrepared[player] - worst[position]['score']
+                    if player in playersPrepared:
+                        availableMoney = worst[position]['value'] + bank
+                        if playerPrices[position][player] <= availableMoney and playersPrepared[player] - worst[position]['score'] > 0 and player not in elements :
+                            playerDifference[player] = {"id": player, "difference": playersPrepared[player] - worst[position]['score'], "position": position}
+                            playerReference[player] = playersPrepared[player] - worst[position]['score']
 
             playersSorted = sorted(playerReference.items(), key=lambda x: x[1], reverse=True)
             playersReady = genericMethods.reformattedSortedTupleAsDict(playersSorted)
@@ -1344,6 +1328,128 @@ def playerRoutine():
 
             endRoutine()        
 
+        elif playerUserInputInitialInt == 16:
+            firstRun = True
+            gw = genericMethods.generateCurrentGameweek() + 1
+            print("-----------------------------------------------------------------------------------------------------------")
+            print(f'Which Gameweek do you want to see (next gameweek = {gw})?')
+            print("-------------------------------------------------------")
+            print("")
+            gw = int(input("Gameweek >> "))
+            easiestGames = Teams.gameweekDifficultyRankedForTeams(gw, 5)
+            fixtureIndex = dict()
+            for fixture in easiestGames:
+                fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
+            teamNames = Teams.teamNamesAsKeysAndIDsAsData()
+            influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
+            influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
+            teams = Teams.teamIDsAsKeysAndNamesAsData()
+            playerToTeam = playerData.generateIDAsKeyTeamIdAsValue()
+            chanceOfPlaying = playerData.generateChanceOfPlaying()
+            playerDumps = genericMethods.generateJSONDumpsReadable("https://fantasy.premierleague.com/api/bootstrap-static/")['elements']
+
+            chanceConverter = {100:100, 75:50, 50:25, 25:0, 0:0}
+
+            playersPerformance = dict()
+            playerPerformance = dict()
+
+            length = len(playerNames) - 1
+            for player in playerNames:
+                
+                currentIndex = list(playerNames).index(player)
+                genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_events")
+                totalPoints = dbConnect.cursor(dictionary=True)
+                totalPoints.execute(f"SELECT total_points FROM `2021_2022_events`.`elements` WHERE id = {player} and gameweek in ({gw - 4},{gw - 3},{gw - 2},{gw - 1},{gw})")
+                totalPointList = list()
+                for row in totalPoints:
+                    totalPointList.append(row['total_points'])
+                playerPerformance[player] = sum(totalPointList)
+                totalPoints.close()
+
+                playerPerformance[player] = sum(totalPointList)
+
+                teamInfluence = influenceByTeam[playerToTeam[player]]
+                playerInfluence = influenceByPlayer[playerToTeam[player]][player]
+                if playerInfluence == 0 or teamInfluence == 0:
+                    influenceFactor = 0
+                else:
+                    influenceFactor = playerInfluence/teamInfluence
+                playerChanceOfPlaying = chanceConverter[chanceOfPlaying[player]]/100
+                if teams[playerToTeam[player]] in list(fixtureIndex.keys()):
+                    expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
+                else:
+                    expectedPerformance = 0.0
+                playersPerformance[player] = int(expectedPerformance)
+
+            
+            playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
+            playersPrepared = genericMethods.reformattedSortedTupleAsDict(playersSorted)
+            
+            # Sort the world players by position
+            playersByPosition = playerData.sortPlayerDataByPosition(playersPrepared)
+
+            # Gather my players and sort by position
+            def teamPicker(playersPrepared, playersByPosition):
+                teamPerformance = dict()
+                elements = list()
+                finalPlayerDict = dict()
+                myTeamSource = Teams.getMyTeam(gw)
+                myTeam = myTeamSource['picks']
+                for elementSummary in myTeam:
+                    player = elementSummary['element']
+                    elements.append(player)
+                    teamPerformance[player] = playersPrepared[player]
+                myTeamBestToWorst = genericMethods.reformattedSortedTupleAsDict(sorted(teamPerformance.items(), key=lambda x: x[1], reverse=True))
+                listToOrder = list(myTeamBestToWorst)[:11]
+                for player in listToOrder:
+                    finalPlayerDict[player] = myTeamBestToWorst[player]
+                myTeamSortedByPosition = playerData.sortPlayerDataByPosition(finalPlayerDict)
+
+                myPlayersSorted = dict()
+                for position in myTeamSortedByPosition:
+                    myPlayersSorted[position] = genericMethods.reformattedSortedTupleAsDict(sorted(myTeamSortedByPosition[position].items(), key=lambda x: x[1], reverse=True))
+            
+                positionRef = {1: "Goalkeeper", 2: "Defender", 3: "Midfielder", 4: "Forward"}
+                positionMaxMin = {1: {"max":1,"min":1}, 2: {"max":5,"min":3}, 3: {"max":5,"min":2}, 4: {"max":3,"min":1}}
+
+                # TODO - Number of required players by position, sort all players too
+                print("")
+                print("")
+                for position in myPlayersSorted:
+                    positionName = positionRef[position]
+                    print(f"====== Position: {positionName}: ======")
+                    positionMax = positionMaxMin[position]["max"]
+                    positionMin = positionMaxMin[position]["min"]
+                    n = 1
+                    for player in myPlayersSorted[position]:
+                        if n <= positionMax:
+                            playerName = playerNames[player]
+                            playerValue = myPlayersSorted[position][player]
+                            print(f"{playerName} = {playerValue}")
+                            n += 1
+                        else:
+                            break
+                    print(f"=======================================")
+                    print("")
+                print("")
+
+                print(" All players sorted:")
+                for player in myTeamBestToWorst:
+                        playerName = playerNames[player]
+                        playerValue = myTeamBestToWorst[player]
+                        print(f"{playerName} = {playerValue}")
+
+            if firstRun == True:
+                teamPicker(playersPrepared, playersByPosition)
+                firstRun = False
+            goAgain = input("Do you want to run another team? (Y/N) > ")
+            while goAgain in ["Y","y"]:
+                teamPicker(playersPrepared, playersByPosition)
+            endRoutine()        
+
+
         # All player data for all gameweeks (to excel)
         elif playerUserInputInitialInt == 51:
             playerIDs = gameweekSummary.generatePlayerIDs()
@@ -1360,21 +1466,26 @@ def playerRoutine():
             endRoutine()
                                    
         elif playerUserInputInitialInt == 99:
+            print("---------------------------------------------------------------")
+            print("How many players do you want to see?:")
+            print("---------------------------------------------------------------")
+            playerNumber = int(input("> "))
             gameweekNumber = genericMethods.generateCurrentGameweek()
             previousWeek = gameweekNumber - 1
-            # TODO: Fix this method
+
             playerPerformance = playerData.playerPerformanceForLastWeek(previousWeek)
+            finalSumPoints = genericMethods.reformattedSortedTupleAsDict(playerPerformance)
+
             print("")
-            print("-----------------------------------")
-            print("Would you like to export the data?:")
-            print("!! TYPE IN Y/N")
-            print("-----------------------------------")
-            userInput = str.lower(input("> "))
-            if userInput == 'y':
-                gameweekHeaders = generateCommaSeperatedGameweekNumberList()
-                genericMethods.printListToExcel(playerPerformance, gameweekHeaders)
-            else:
-                endRoutine()
+            print(f"Top {playerNumber} players for next week (Indexed to 100):")
+            print("")
+            for player in finalSumPoints:
+                if list(finalSumPoints.keys()).index(player) < playerNumber:
+                    print(f"{list(finalSumPoints.keys()).index(player) + 1}. {player}: {round(finalSumPoints[player])}")
+                else:
+                    print("")
+                    break
+            endRoutine()
 
         elif playerUserInputInitialInt == 100:
             gameweekNumber = genericMethods.generateCurrentGameweek()
@@ -1477,7 +1588,7 @@ def teamsRoutine():
             playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
             influenceByPlayer = playerData.playerInfluence(currentGameweek)
             influenceByTeam = Teams.teamInfluence(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             playerDict = dict()
             for team in teams:
@@ -1510,7 +1621,7 @@ def teamsRoutine():
             playersByTeam = Teams.teamIDsAsKeysAndPlayerIDsAsList()
             influenceByPlayer = playerData.playerInfluence(currentGameweek)
             influenceByTeam = Teams.teamInfluence(currentGameweek)
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
             teamDict = dict()
             for team in teams:
@@ -1603,11 +1714,10 @@ def teamsRoutine():
                         playersSelectedCount[data['element']] += 1
                     else:
                         playersSelectedCount[data['element']] = 1
-            referenceList = playerData.generatePlayerNameToIDMatching()
+            referenceList = playerData.generatePlayerIDAsKeySurnameAsResult()
             playersMostSelected = dict()
             for id in playersSelectedCount:
                 playerName = referenceList[id].capitalize()
-                currentSelectedCount = playersSelectedCount[id]
                 percentageSelected = int((playersSelectedCount[id] / teamCap) * 100)
                 playersMostSelected[playerName] = percentageSelected
 
@@ -1616,9 +1726,9 @@ def teamsRoutine():
                         
             currentGameweek = genericMethods.generateCurrentGameweek()
             print("--------------------------------------------")
-            print(f'Top 20 players picked by best performers for GW{currentGameweek}:')
+            print(f'Top 15 players picked by best performers for GW{currentGameweek}:')
             print("")
-            genericMethods.printDataClean(finalPlayers, 20, '', '%')
+            genericMethods.printDataClean(finalPlayers, 15, '', '%')
             print("--------------------------------------------")
 
             endRoutine()
@@ -1712,7 +1822,7 @@ def teamsRoutine():
             positions = playerData.generatePositionReference()
             teamNames = Teams.teamNamesAsKeysAndIDsAsData()
             playerIDs = playerData.generatePlayersIdsList()
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             pricePerPoint = playerData.generateListOfPointsPerPoundPerPlayerPerPosition()
             for positionName in positions:
                 position = positions[positionName]
@@ -1762,7 +1872,7 @@ def teamsRoutine():
             count = fromGameweek
             currentGameweek = nowGameweek - userInput
             playerIDs = playerData.generatePlayersIdsList()
-            playerNames = playerData.generatePlayerNameToIDMatching()
+            playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             positions = playerData.generatePositionReferenceIDAsKey()
             sumOfPlayerScores = dict()
             allGameweekData = dict()
@@ -1809,7 +1919,7 @@ def teamsRoutine():
                 print(f'Top ranked {positionName}s for points over the last {numberOfGames} games (GW {fromGameweek} to {nowGameweek}):')
                 print("")
                 print(f"Gameweek: {gameweekListClean}")
-                print("-------------------------------------------------------")
+                print("")
                 for player in top5PlayersPreviousGameweeks:
                     playerDataTop5 = str(top5PlayersPreviousGameweeks[player]).replace("[","").replace("]","")
                     print(f"{player}: {playerDataTop5}")

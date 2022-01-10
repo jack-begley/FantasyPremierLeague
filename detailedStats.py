@@ -15,20 +15,33 @@ import random
 def getPlayerStats(players):
     allStats = dict()
     seasonId = getCurrentSeasonId()
+    length = len(players) - 1
+    capabilities = DesiredCapabilities.CHROME
+    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+    driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     for player in players:
+        currentIndex = list(players).index(player)
+        genericMethods.runPercentage(length, currentIndex, f"Running {currentIndex} of {length}", "All player data collected from detailed stats")
         playerNumbers = dict()
         playerId = players[player]
+        time.sleep(random.randint(0, 100)/100)
         urlSafePlayer = str(player).replace(" ",'-')
         url = f"https://www.premierleague.com/players/{playerId}/{urlSafePlayer}/stats?co=1&se={seasonId}"
-        playerRequest = requests.get(url)
-        soup = BeautifulSoup(playerRequest.content, 'html.parser')
+        driver.get(url)
+        time.sleep(5)
+        pageContent = driver.page_source
+        soup = BeautifulSoup(pageContent, 'lxml')
         playerStats = soup.find_all(class_="normalStat")
+
         for data in playerStats:
             if data != 'source':
                 stats = float(str(data.contents[1].contents[1].contents[0]).replace(" ","").replace("\n", "").replace("%", "").replace(",", ""))
                 label = str(data.contents[1].next.extract()).replace('"b',"").replace('"','').rstrip()
                 playerNumbers[label] = stats
+
         allStats[player] = playerNumbers
+
+    driver.quit()
     return allStats
 
 def getPlayerStatsDetailed(players):
@@ -36,7 +49,8 @@ def getPlayerStatsDetailed(players):
     seasonId = getCurrentSeasonId()
     capabilities = DesiredCapabilities.CHROME
     capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-    driver = webdriver.Chrome(r'C:\Users\JackBegley\Documents\GitHub\FantasyPremierLeague\chromeDrivers\chromedriver', desired_capabilities=capabilities)
+    # chromedriver must be in this directory
+    driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     jsonList = list()
     for player in players:
         playerNumbers = dict()
@@ -66,10 +80,11 @@ def getAllPlayers():
     players = dict()
     capabilities = DesiredCapabilities.CHROME
     capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-    driver = webdriver.Chrome(r'C:\Users\JackBegley\Documents\GitHub\FantasyPremierLeague\chromeDrivers\chromedriver', desired_capabilities=capabilities)
+    driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     for team in teamIDs:
         time.sleep(random.randint(0, 100)/100)
         driver.get(f"https://www.premierleague.com/players/?se={currentSeasonID}&cl={teamIDs[team]}")
+        time.sleep(10)
         pageContent = driver.page_source
         soup = BeautifulSoup(pageContent, 'lxml')
         playerURLs = soup.find_all(class_="playerName")

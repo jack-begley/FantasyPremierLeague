@@ -8,9 +8,7 @@ import requests
 import json
 import genericMethods
 import playerData
-import gameweekSummary
 import Teams
-import detailedStats
 from requests.auth import HTTPBasicAuth
 
 
@@ -58,6 +56,8 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
         gwNow = genericMethods.generateCurrentGameweek()
         endGw = gw + numOfGameweeksInFuture
         fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow}')
+        if len(fixtures) < 10:
+            fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow-1}')
         scores = dict()
         leaderboard = dict()
         length = len(fixtures)
@@ -132,12 +132,13 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
                         if hScore < aScore:
                             awayWins.append(1)
 
-
                 n += 1
-                
 
             awayTeamScore = (sum(awayWins) * 3) + (sum(awayDraws))
             homeTeamScore = (sum(homeWins) * 3) + (sum(homeDraws))
+
+            leaderboard[homeName] = homeTeamScore
+            leaderboard[awayName] = awayTeamScore
 
             homeScores['goals'] = sum(homeGoals)
             homeScores['conceeded'] = sum(homeConceed)
@@ -154,9 +155,6 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
             awayScores['losses'] = sum(awayLosses)
             awayScores['score'] = awayTeamScore
             awayScores['id'] = away
-
-            leaderboard[homeName] = homeTeamScore
-            leaderboard[awayName] = awayTeamScore
 
             scores[homeName] = homeScores
             scores[awayName] = awayScores
@@ -178,40 +176,34 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
                 homeName = teamNames[home]
                 away = fixture['team_a']
                 awayName = teamNames[away]
+                try:
+                    homeRankDifference = -(list(rankings.keys()).index(teamNames[home]) - list(rankings.keys()).index(teamNames[away]))
+                    homeGoalsScoredDifference = scores[teamNames[home]]['goals'] + scores[teamNames[away]]['conceeded']
+                    homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
+                    homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
 
-                homeRankDifference = -(list(rankings.keys()).index(teamNames[home]) - list(rankings.keys()).index(teamNames[away]))
-                homeGoalsScoredDifference = scores[teamNames[home]]['goals'] + scores[teamNames[away]]['conceeded']
-                homeGoalsConceededDifference = scores[teamNames[home]]['conceeded'] + scores[teamNames[away]]['goals']
-                homeGoalsNet = homeGoalsScoredDifference - homeGoalsConceededDifference
+                    awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
+                    awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
+                    awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
 
-                awayRankDifference = homeRankDifference
-                awayGoalsScoredDifference = scores[teamNames[away]]['goals'] + scores[teamNames[home]]['conceeded']
-                awayGoalsConceededDifference = scores[teamNames[away]]['conceeded'] + scores[teamNames[home]]['goals']
-                awayGoalsNet = awayGoalsScoredDifference - awayGoalsConceededDifference
+                    win = homeGoalsNet - awayGoalsNet
 
-                win = homeGoalsNet - awayGoalsNet
-                if win > 0:
-                    winner = homeName
-                if win == 0:
-                    winner = "None"
-                if win < 0:
-                    winner = awayName
+                    homePoints = win
+                    awayPoints = -win
 
+                    if homeName in winRankings:
+                        existingRanking = winRankings[homeName]
+                        winRankings[homeName] = existingRanking + homePoints
+                    else:
+                        winRankings[homeName] = homePoints
 
-                homePoints = win
-                awayPoints = -win
-
-                if homeName in winRankings:
-                    existingRanking = winRankings[homeName]
-                    winRankings[homeName] = existingRanking + homePoints
-                else:
-                    winRankings[homeName] = homePoints
-
-                if awayName in winRankings:
-                    existingRanking = winRankings[awayName]
-                    winRankings[awayName] = existingRanking + awayPoints
-                else:
-                    winRankings[awayName] = awayPoints
+                    if awayName in winRankings:
+                        existingRanking = winRankings[awayName]
+                        winRankings[awayName] = existingRanking + awayPoints
+                    else:
+                        winRankings[awayName] = awayPoints
+                except:
+                    None
 
                 current += 1
             gw += 1
@@ -281,14 +273,23 @@ def teamIDsAsKeysAndPlayerIDsAsList():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-           id = keys['id']
-           playerIDs = list()
-           for players in readable['elements']:
-               if players['team'] == id:
-                   playerIDs.append(players['id'])
-           teams[id] = playerIDs
+    for keys in readable['teams']:
+        id = keys['id']
+        playerIDs = list()
+        for players in readable['elements']:
+            if players['team'] == id:
+                playerIDs.append(players['id'])
+        teams[id] = playerIDs
+
+    return teams
+
+# Returns all team ids ask keys, with their associated players as a comma seperated list for each team
+def playerIDsAsKeysAndTeamIDsAsList():
+    url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
+    readable = genericMethods.generateJSONDumpsReadable(url)
+    teams = dict()
+    for player in readable['elements']:
+        teams[player['id']] = player['team']
 
     return teams
 
@@ -1073,6 +1074,8 @@ def totalTeamGoals():
                     goalsList.append(int(fixture['team_h_score']))
                     gw += 1
                     break
+            if team != fixture['team_a'] and team != fixture['team_h']:
+                gw += 1
 
         goalsScored = sum(goalsList)
         teamDict[team] = goalsScored
