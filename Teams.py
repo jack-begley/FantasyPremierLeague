@@ -56,7 +56,7 @@ def gameweekDifficultyRankedForTeams(gw, numOfGameweeksInFuture):
         gwNow = genericMethods.generateCurrentGameweek()
         endGw = gw + numOfGameweeksInFuture
         fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow}')
-        if len(fixtures) != 10:
+        if len(fixtures) < 10:
             fixtures = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gwNow-1}')
         scores = dict()
         leaderboard = dict()

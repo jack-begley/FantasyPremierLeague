@@ -100,9 +100,29 @@ def generateIDAsKeyTeamIdAsValue():
     cursor = dbConnect.cursor(dictionary=True)
     cursor.execute("SELECT `id`, `team` FROM `2021_2022_bootstrapstatic`.`elements`")
     for row in cursor:
-        playerIDMatchList['id'] = row['team']
+        playerIDMatchList[row['id']] = row['team']
 
     return playerIDMatchList
+
+def numberOfGameweeksPlayed(gwMin, gwMax):
+    numberGameweeksByPlayer = dict()
+    playerIDs = generatePlayersIdsList()
+    players = list()
+    
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_fixtures")
+    cursor = dbConnect.cursor(dictionary=True)
+    cursor.execute(f"SELECT 2021_2022_bootstrapstatic.elements.`id` FROM 2021_2022_fixtures.fixtures INNER JOIN 2021_2022_bootstrapstatic.elements ON 2021_2022_bootstrapstatic.elements.`team`=  2021_2022_fixtures.fixtures.`team_h` or 2021_2022_bootstrapstatic.elements.`team`=  2021_2022_fixtures.fixtures.`team_a` where event between {gwMin} and {gwMax};")
+    for row in cursor:
+        players.append(row['id'])
+
+    maxLen = len(playerIDs)
+    for player in playerIDs:
+        currentIndex = playerIDs.index(player)
+        genericMethods.runPercentage(maxLen, currentIndex, f"Running through all players {currentIndex} of {maxLen}", "Player fixture data collected for all players")
+        numberOfGameweeks = players.count(player)
+        numberGameweeksByPlayer[player] = numberOfGameweeks
+
+    return numberGameweeksByPlayer
 
 # Return the chance of a player playing for next week, with the playerId as key
 def generateChanceOfPlaying():
@@ -113,7 +133,7 @@ def generateChanceOfPlaying():
     cursor = dbConnect.cursor(dictionary=True)
     cursor.execute("SELECT `id`, `chance_of_playing_next_round` FROM `2021_2022_bootstrapstatic`.`elements`")
     for row in cursor:
-        playerIDMatchList['id'] = row['chance_of_playing_next_round']
+        playerIDMatchList[row['id']] = row['chance_of_playing_next_round']
 
     return playerIDMatchList
 
@@ -162,20 +182,22 @@ def gatherHistoricalPlayerData():
     return dataForCorrel
 
 
-def gatherGameweekDataByPlayerForCorrelByGameweek():
-    currentGameweek = genericMethods.generateCurrentGameweek()
+def gatherGameweekDataByPlayerForCorrelByGameweek(gameweek):
     n = 1
     dataByGameweek = dict()
-    while n <= currentGameweek:
+    while n < gameweek:
         dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
         cursor = dbConnect.cursor(dictionary=True)
         cursor.execute("SELECT * FROM `2021_2022_elementsummary`.`history`")
         dataHeader = [i[0] for i in cursor.description]
         dataForCorrel = dict()
-        genericMethods.runPercentage(n, currentGameweek, f"Running through gameweeks {n} to {currentGameweek}", "Data collected for all gameweeks from 1 to {currentGameweek}")
+        genericMethods.runPercentage(gameweek, n, f"Running through gameweeks {n} to {gameweek}", "Data collected for all gameweeks from 1 to {gameweek}")
         for header in dataHeader:
             currentList = list()
-            sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n}"
+            if header == "total_points":
+                sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n + 1}"
+            else:
+                sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n}"
             dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
             pointer = dbConnect.cursor(dictionary=True)
             pointer.execute(sql)    
@@ -526,20 +548,34 @@ def predictPlayerPerformanceByGameweek(currentGameweek, previousGameweek):
 # Takes the correlations for the factors used to predict good performance and applies them to known top performers
 def playerPerformanceForLastWeek(gameweekNumber):
     elementsList = playerData.gatherGameweekDataByPlayerForCorrel()
-    elementsByGameweek = gatherGameweekDataByPlayerForCorrelByGameweek()
-    # TODO: Run each week individually, combine the results.
+    x = 1
+    elementsByGameweek = gatherGameweekDataByPlayerForCorrelByGameweek(gameweekNumber)
+    coefficients = dict()
+    for week in elementsByGameweek:
+        correl = genericMethods.correlcoeffGeneration(elementsByGameweek[week],'total_points')
+        currentRList = playerData.rValuesPerField(correl)
+        coefficients[week] = currentRList
 
+    finalCoefficients = dict()
+    for element in coefficients[1]:
+        elementList = list()
+        x = 1
+        while x < gameweekNumber:
+            elementList.append(coefficients[x][element])
+            x += 1
+        average = genericMethods.listAverage(elementList)
+        finalCoefficients[element] = average
+
+    # TODO: Run each week individually, combine the results.
     allData = playerData.convertStringDictToInt(elementsList)
     # Correl needs to be updated to previous week vs current total points - method for generating that?
-    correl = genericMethods.correlcoeffGeneration(allData,'total_points')
-    currentRList = playerData.rValuesPerField(correl)
     minList = playerData.calculateMinNumberInArray(allData)
     maxList = playerData.calculateMaxNumberInArray(allData)
     # Data by player by week current and previous indexed
     gameweekNumber += 1
     dataByPlayerForWeek = playerData.gatherGameweekDataByPlayer(gameweekNumber)
     indexedData = genericMethods.indexDataInADictionary(dataByPlayerForWeek, maxList, minList)
-    finalIndexedPlayerDataWithCorrel = playerData.createPlayerIndexing(indexedData, currentRList)
+    finalIndexedPlayerDataWithCorrel = playerData.createPlayerIndexing(indexedData, finalCoefficients)
     # Combine correlation scores between previous data and current total points scored
     maxNumberPlayers = playerData.calculateMaxNumberInArray(finalIndexedPlayerDataWithCorrel)
     minNumberPlayers = playerData.calculateMinNumberInArray(finalIndexedPlayerDataWithCorrel)

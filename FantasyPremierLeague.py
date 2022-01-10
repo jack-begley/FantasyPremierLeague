@@ -1185,6 +1185,7 @@ def playerRoutine():
             for fixture in easiestGames:
                 fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
             teamNames = Teams.teamNamesAsKeysAndIDsAsData()
+            gameweeksPlayed = playerData.numberOfGameweeksPlayed(gw, gw + 4)
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
             playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
@@ -1224,6 +1225,7 @@ def playerRoutine():
                     expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
                 else:
                     expectedPerformance = 0.0
+                expectedPerformance = expectedPerformance * gameweeksPlayed[player]
                 playersPerformance[player] = int(expectedPerformance)
 
             playersSorted = sorted(playersPerformance.items(), key=lambda x: x[1], reverse=True)
@@ -1260,7 +1262,6 @@ def playerRoutine():
             # Work out which of the same price I should transfer in
 
             playerPrices = playerData.generateListOfPlayersByPositionByCost()
-            filteredPriceByPosition = dict()
 
             try:
                 bank = myTeamSource['transfers']['bank']

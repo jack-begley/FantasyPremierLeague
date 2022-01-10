@@ -113,8 +113,14 @@ def correlcoeffGeneration(nameOfArrayToCorrelate, keyToCorrelateAgainstName):
             sys.stdout.flush()
             print("")
         if element != 'kickoff_time':
+            xLen = len(nameOfArrayToCorrelate[element])
+            yLen = len(nameOfArrayToCorrelate[keyToCorrelateAgainstName])
             currentX = nameOfArrayToCorrelate[element]
             currentY = nameOfArrayToCorrelate[keyToCorrelateAgainstName]
+            if xLen > yLen:
+                currentX = currentX[:yLen]
+            if yLen > xLen:
+                currentY = currentY[:xLen]
             currentCorrel = linregress(currentX,currentY)
             correlations[element] = currentCorrel
         else:
