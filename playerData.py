@@ -11,6 +11,9 @@ import sqlFunction
 from datetime import date
 today = date.today()
 
+season = "2022_2023"
+
+
 def gameweeksPlayed(playerID):
     allPlayerDataReadable = genericMethods.generateJSONDumpsReadable(genericMethods.mergeURL('element-summary/')+str(playerID)+'/')
     gameweeksPlayed = list()
@@ -24,9 +27,9 @@ def generatePlayersFullNameList():
 
     gameweekSummaryListFull = list()
         
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT CONCAT( first_name,' ', second_name ) AS fullname  FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT CONCAT( first_name,' ', second_name ) AS fullname  FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         gameweekSummaryListFull.append(row['fullname'])
 
@@ -37,9 +40,9 @@ def generatePlayersIdsList():
 
     playerIDList = list()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT id  FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT id  FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         playerIDList.append(row['id'])
     
@@ -50,9 +53,9 @@ def generatePlayerIDToSurnameMatching():
     
     playerIDMatchList = dict()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT id, second_name  FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT id, second_name  FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         secondName = row['second_name']
         cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
@@ -65,9 +68,9 @@ def generatePlayerIDAsKeySurnameAsResult():
     
     playerIDMatchList = dict()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT id, second_name  FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT id, second_name  FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         secondName = row['second_name']
         cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
@@ -81,9 +84,9 @@ def generatePlayerIDToFullNameMatching():
     
     playerIDMatchList = dict()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT `second_name`, `id` FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT `second_name`, `id` FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         secondName = row['second_name']
         cleanedSurname = str.lower(genericMethods.unicodeReplace(secondName))
@@ -96,9 +99,9 @@ def generateIDAsKeyTeamIdAsValue():
     
     playerIDMatchList = dict()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT `id`, `team` FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT `id`, `team` FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         playerIDMatchList[row['id']] = row['team']
 
@@ -109,9 +112,9 @@ def numberOfGameweeksPlayed(gwMin, gwMax):
     playerIDs = generatePlayersIdsList()
     players = list()
     
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_fixtures")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_fixtures")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute(f"SELECT 2021_2022_bootstrapstatic.elements.`id` FROM 2021_2022_fixtures.fixtures INNER JOIN 2021_2022_bootstrapstatic.elements ON 2021_2022_bootstrapstatic.elements.`team`=  2021_2022_fixtures.fixtures.`team_h` or 2021_2022_bootstrapstatic.elements.`team`=  2021_2022_fixtures.fixtures.`team_a` where event between {gwMin} and {gwMax};")
+    cursor.execute(f"SELECT " + season + "_bootstrapstatic.elements.`id` FROM " + season + "_fixtures.fixtures INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`team`=  " + season + "_fixtures.fixtures.`team_h` or " + season + "_bootstrapstatic.elements.`team`=  " + season + "_fixtures.fixtures.`team_a` where event between {gwMin} and {gwMax};")
     for row in cursor:
         players.append(row['id'])
 
@@ -129,9 +132,9 @@ def generateChanceOfPlaying():
     
     playerIDMatchList = dict()
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT `id`, `chance_of_playing_next_round` FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT `id`, `chance_of_playing_next_round` FROM `" + season + "_bootstrapstatic`.`elements`")
     for row in cursor:
         playerIDMatchList[row['id']] = row['chance_of_playing_next_round']
 
@@ -161,9 +164,9 @@ def filterBootstrapStaticResults(filterField, filterValue, dictToFilter, operato
 # Create player first & last name list (and associated dictionary)
 def gatherHistoricalPlayerData():
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM `2021_2022_bootstrapstatic`.`elements`")
+    cursor.execute("SELECT * FROM `" + season + "_bootstrapstatic`.`elements`")
     dataHeader = [i[0] for i in cursor.description]
     dataForCorrel = dict()
     maxLen = len(dataHeader)
@@ -171,8 +174,8 @@ def gatherHistoricalPlayerData():
         currentIndex = dataHeader.index(header)
         genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
         currentList = list()
-        sql = f"SELECT `{header}` FROM `2021_2022_bootstrapstatic`.`elements`"
-        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_bootstrapstatic")
+        sql = f"SELECT `{header}` FROM `" + season + "_bootstrapstatic`.`elements`"
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_bootstrapstatic")
         pointer = dbConnect.cursor(dictionary=True)
         pointer.execute(sql)    
         for row in pointer:
@@ -186,19 +189,19 @@ def gatherGameweekDataByPlayerForCorrelByGameweek(gameweek):
     n = 1
     dataByGameweek = dict()
     while n < gameweek:
-        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
         cursor = dbConnect.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM `2021_2022_elementsummary`.`history`")
+        cursor.execute("SELECT * FROM `" + season + "_elementsummary`.`history`")
         dataHeader = [i[0] for i in cursor.description]
         dataForCorrel = dict()
         genericMethods.runPercentage(gameweek, n, f"Running through gameweeks {n} to {gameweek}", "Data collected for all gameweeks from 1 to {gameweek}")
         for header in dataHeader:
             currentList = list()
             if header == "total_points":
-                sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n + 1}"
+                sql = f"SELECT `{header}` FROM `" + season + "_elementsummary`.`history` where  `round` = {n + 1}"
             else:
-                sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history` where  `round` = {n}"
-            dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+                sql = f"SELECT `{header}` FROM `" + season + "_elementsummary`.`history` where  `round` = {n}"
+            dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
             pointer = dbConnect.cursor(dictionary=True)
             pointer.execute(sql)    
             for row in pointer:
@@ -211,9 +214,9 @@ def gatherGameweekDataByPlayerForCorrelByGameweek(gameweek):
 
 def gatherGameweekDataByPlayerForCorrel():
 
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM `2021_2022_elementsummary`.`history`")
+    cursor.execute("SELECT * FROM `" + season + "_elementsummary`.`history`")
     dataHeader = [i[0] for i in cursor.description]
     dataForCorrel = dict()
     maxLen = len(dataHeader)
@@ -221,8 +224,8 @@ def gatherGameweekDataByPlayerForCorrel():
         currentIndex = dataHeader.index(header)
         genericMethods.runPercentage(maxLen, currentIndex, "Running through all players", "Player ICT data collected for all players")
         currentList = list()
-        sql = f"SELECT `{header}` FROM `2021_2022_elementsummary`.`history`"
-        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+        sql = f"SELECT `{header}` FROM `" + season + "_elementsummary`.`history`"
+        dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
         pointer = dbConnect.cursor(dictionary=True)
         pointer.execute(sql)    
         for row in pointer:
@@ -236,9 +239,9 @@ def gatherGameweekDataByPlayerForCorrel():
 def gatherGameweekDataByPlayer(gameweekOfInterest):
 
     gameweekData = dict()
-    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+    dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute(f"SELECT 2021_2022_elementsummary.history.*, 2021_2022_bootstrapstatic.elements.`second_name` FROM 2021_2022_elementsummary.history INNER JOIN 2021_2022_bootstrapstatic.elements ON 2021_2022_bootstrapstatic.elements.`id`=  2021_2022_elementsummary.history.`element` where round = {gameweekOfInterest};")
+    cursor.execute(f"SELECT " + season + "_elementsummary.history.*, " + season + "_bootstrapstatic.elements.`second_name` FROM " + season + "_elementsummary.history INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`id`=  " + season + "_elementsummary.history.`element` where round = {gameweekOfInterest};")
     allData = cursor.fetchall()
     
     for row in allData:
@@ -952,9 +955,9 @@ def playerInfluenceInAGivenTimeFrameByTeam(endGameweek, numberOfDaysToLookBack):
             playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
             playerDict = dict() 
             for player in playersInTeam:
-                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_elementsummary")
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
                 cursor = dbConnect.cursor(dictionary=True)
-                cursor.execute(f"SELECT influence FROM `2021_2022_elementsummary`.`history` WHERE element = {player} and round > {endGameweek - numberOfDaysToLookBack};")
+                cursor.execute(f"SELECT influence FROM `" + season + "_elementsummary`.`history` WHERE element = {player} and round > {endGameweek - numberOfDaysToLookBack};")
                 data = list()
                 for row in cursor:
                     data.append(row["influence"])

@@ -19,6 +19,9 @@ import Teams
 from datetime import date
 today = date.today()
 
+season = "2022_2023"
+
+
 # Export current data set into excel
 def exportToExcelPlayers():
     # Open a window allowing the user to specify the file save path using a File Explorer

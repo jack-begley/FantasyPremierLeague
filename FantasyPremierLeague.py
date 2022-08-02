@@ -13,6 +13,9 @@ import operator
 import prettytable
 from prettytable import PrettyTable
 
+season = "2022_2023"
+
+
 """
 The FPL module.
 
@@ -1105,6 +1108,7 @@ def playerRoutine():
                 n = 0
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, n)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, n)
+            gameweeksPlayed = playerData.numberOfGameweeksPlayed(gw, gw + 4)
             playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             playerNamesToId = playerData.generatePlayerIDToSurnameMatching()  
             teams = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1153,6 +1157,7 @@ def playerRoutine():
                         expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[playerID]]]) * influenceFactor) * playerChanceOfPlaying
                     else:
                         expectedPerformance = 0.0
+                    expectedPerformance = expectedPerformance * gameweeksPlayed[playerID]
                     expectedCaptains[player.capitalize()] = int(expectedPerformance)
                     captainsSorted = sorted(expectedCaptains.items(), key=lambda x: x[1], reverse=True)
                     captainsPrepared = genericMethods.reformattedSortedTupleAsDict(captainsSorted)
@@ -1203,9 +1208,9 @@ def playerRoutine():
             for player in playerNames:
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
-                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_events")
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
                 totalPoints = dbConnect.cursor(dictionary=True)
-                totalPoints.execute(f"SELECT total_points FROM `2021_2022_events`.`elements` WHERE id = {player} and gameweek < {gw}")
+                totalPoints.execute(f"SELECT total_points FROM `" + season + "_events`.`elements` WHERE id = {player} and gameweek < {gw}")
                 totalPointList = list()
                 for row in totalPoints:
                     totalPointList.append(row['total_points'])
@@ -1342,6 +1347,7 @@ def playerRoutine():
                 fixtureIndex[fixture] = int(round(genericMethods.indexValue(easiestGames[fixture],max(list(easiestGames.values())),min(list(easiestGames.values())),"n"), 0))
             teamNames = Teams.teamNamesAsKeysAndIDsAsData()
             influenceByPlayer = playerData.playerInfluenceInAGivenTimeFrameByTeam(gw-1, 5)
+            gameweeksPlayed = playerData.numberOfGameweeksPlayed(gw, gw + 4)
             influenceByTeam = Teams.teamInfluenceInAGivenTimeFrame(gw-1, 5)
             playerNames = playerData.generatePlayerIDAsKeySurnameAsResult()
             teams = Teams.teamIDsAsKeysAndNamesAsData()
@@ -1359,9 +1365,9 @@ def playerRoutine():
                 
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
-                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "2021_2022_events")
+                dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
                 totalPoints = dbConnect.cursor(dictionary=True)
-                totalPoints.execute(f"SELECT total_points FROM `2021_2022_events`.`elements` WHERE id = {player} and gameweek in ({gw - 4},{gw - 3},{gw - 2},{gw - 1},{gw})")
+                totalPoints.execute(f"SELECT total_points FROM `" + season + "_events`.`elements` WHERE id = {player} and gameweek in ({gw - 4},{gw - 3},{gw - 2},{gw - 1},{gw})")
                 totalPointList = list()
                 for row in totalPoints:
                     totalPointList.append(row['total_points'])
@@ -1381,6 +1387,7 @@ def playerRoutine():
                     expectedPerformance = ((playerPerformance[player] * fixtureIndex[teams[playerToTeam[player]]]) * influenceFactor) * playerChanceOfPlaying
                 else:
                     expectedPerformance = 0.0
+                expectedPerformance = expectedPerformance * gameweeksPlayed[player]
                 playersPerformance[player] = int(expectedPerformance)
 
             
