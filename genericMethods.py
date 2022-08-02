@@ -13,6 +13,9 @@ import tkinter
 import csv 
 import gameweekSummary
 
+season = "2022_2023"
+
+
 # URL set up and league codes
 from datetime import date
 today = date.today()
