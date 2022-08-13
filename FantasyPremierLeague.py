@@ -13,7 +13,6 @@ import operator
 import prettytable
 from prettytable import PrettyTable
 
-season = "2022_2023"
 
 
 """
@@ -1208,9 +1207,10 @@ def playerRoutine():
             for player in playerNames:
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
+                season = "2022_2023"
                 dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
                 totalPoints = dbConnect.cursor(dictionary=True)
-                totalPoints.execute(f"SELECT total_points FROM `" + season + "_events`.`elements` WHERE id = {player} and gameweek < {gw}")
+                totalPoints.execute("SELECT total_points FROM `" + season + f"_events`.`elements` WHERE id = {player} and gameweek < {gw}")
                 totalPointList = list()
                 for row in totalPoints:
                     totalPointList.append(row['total_points'])
@@ -1362,12 +1362,12 @@ def playerRoutine():
 
             length = len(playerNames) - 1
             for player in playerNames:
-                
+                season = "2022_2023"
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
                 dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
                 totalPoints = dbConnect.cursor(dictionary=True)
-                totalPoints.execute(f"SELECT total_points FROM `" + season + "_events`.`elements` WHERE id = {player} and gameweek in ({gw - 4},{gw - 3},{gw - 2},{gw - 1},{gw})")
+                totalPoints.execute(f"SELECT total_points FROM `" + season + f"_events`.`elements` WHERE id = {player} and gameweek in ({gw - 4},{gw - 3},{gw - 2},{gw - 1},{gw})")
                 totalPointList = list()
                 for row in totalPoints:
                     totalPointList.append(row['total_points'])
@@ -2962,5 +2962,7 @@ print("==============================")
 print("")
 print("Welcome to the FPL console app for data extraction.")
 print("")
+
+season = "2022_2023"
 
 introRoutine()

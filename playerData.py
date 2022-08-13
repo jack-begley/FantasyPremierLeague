@@ -114,7 +114,7 @@ def numberOfGameweeksPlayed(gwMin, gwMax):
     
     dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_fixtures")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute(f"SELECT " + season + "_bootstrapstatic.elements.`id` FROM " + season + "_fixtures.fixtures INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`team`=  " + season + "_fixtures.fixtures.`team_h` or " + season + "_bootstrapstatic.elements.`team`=  " + season + "_fixtures.fixtures.`team_a` where event between {gwMin} and {gwMax};")
+    cursor.execute("SELECT " + season + "_bootstrapstatic.elements.`id` FROM " + season + "_fixtures.fixtures INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`team`=  " + season + "_fixtures.fixtures.`team_h` or " + season + "_bootstrapstatic.elements.`team`=  " + season + f"_fixtures.fixtures.`team_a` where event between {gwMin} and {gwMax};")
     for row in cursor:
         players.append(row['id'])
 
@@ -198,9 +198,9 @@ def gatherGameweekDataByPlayerForCorrelByGameweek(gameweek):
         for header in dataHeader:
             currentList = list()
             if header == "total_points":
-                sql = f"SELECT `{header}` FROM `" + season + "_elementsummary`.`history` where  `round` = {n + 1}"
+                sql = "SELECT `{header}` FROM `" + season + f"_elementsummary`.`history` where  `round` = {n + 1}"
             else:
-                sql = f"SELECT `{header}` FROM `" + season + "_elementsummary`.`history` where  `round` = {n}"
+                sql = "SELECT `{header}` FROM `" + season + f"_elementsummary`.`history` where  `round` = {n}"
             dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
             pointer = dbConnect.cursor(dictionary=True)
             pointer.execute(sql)    
@@ -241,7 +241,7 @@ def gatherGameweekDataByPlayer(gameweekOfInterest):
     gameweekData = dict()
     dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
     cursor = dbConnect.cursor(dictionary=True)
-    cursor.execute(f"SELECT " + season + "_elementsummary.history.*, " + season + "_bootstrapstatic.elements.`second_name` FROM " + season + "_elementsummary.history INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`id`=  " + season + "_elementsummary.history.`element` where round = {gameweekOfInterest};")
+    cursor.execute("SELECT " + season + "_elementsummary.history.*, " + season + "_bootstrapstatic.elements.`second_name` FROM " + season + "_elementsummary.history INNER JOIN " + season + "_bootstrapstatic.elements ON " + season + "_bootstrapstatic.elements.`id`=  " + season + f"_elementsummary.history.`element` where round = {gameweekOfInterest};")
     allData = cursor.fetchall()
     
     for row in allData:
@@ -957,7 +957,7 @@ def playerInfluenceInAGivenTimeFrameByTeam(endGameweek, numberOfDaysToLookBack):
             for player in playersInTeam:
                 dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_elementsummary")
                 cursor = dbConnect.cursor(dictionary=True)
-                cursor.execute(f"SELECT influence FROM `" + season + "_elementsummary`.`history` WHERE element = {player} and round > {endGameweek - numberOfDaysToLookBack};")
+                cursor.execute("SELECT influence FROM `" + season + f"_elementsummary`.`history` WHERE element = {player} and round > {endGameweek - numberOfDaysToLookBack};")
                 data = list()
                 for row in cursor:
                     data.append(row["influence"])
