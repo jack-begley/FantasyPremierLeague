@@ -230,8 +230,6 @@ def createAllSuitableTables(user, password, database, table, datafeed):
     specification = dict()
     if 'elementsummary' in database and table == 'fixtures':
         iteration = datafeed['fixtures'][0]
-    if 'fixtures' in database and table == 'fixtures':
-        iteration = datafeed
     else:
         iteration = datafeed[table]
     if table == 'history_past':
@@ -300,6 +298,8 @@ def createAllSuitableTables(user, password, database, table, datafeed):
                                 specification[f"{element}_{data}"] = valueTypeConversion
                 else:
                     valueTypeConversion = conversions[valueType]
+                specification[element] = valueTypeConversion
+
             else:
                 valueType = str(type(datafeed[table][element])).replace("<class","").replace(">","").replace("'","").replace(" ","")
                 if valueType == "NoneType":
@@ -417,7 +417,9 @@ def updateElementsTable(user, password, database):
         for item in element:
             if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
                 valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                if valueType == "NoneType":
+                if valueType == "NoneType" and (item == 'chance_of_playing_next_round' or item == 'chance_of_playing_this_round'):
+                    value = 100
+                elif valueType == "NoneType":
                     value = 0
                 elif valueType == "bool":
                     if element[item] == True:
@@ -881,7 +883,7 @@ def updateFixturesTable(user, password, database, datafeed):
 
     cursor.close()
 
-def updateHistoryTable(user, password, database):
+def updateHistoryTable(user, password, database,currentElement):
     table = 'history'
 
     dbConnect = connectToDB(user, password, database)
