@@ -233,11 +233,10 @@ def teamNamesAsKeysAndIDsAsData():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-           id = keys['id']
-           name = str.lower(keys['name'])
-           teams[name] = id
+    for keys in readable['teams']:
+        id = keys['id']
+        name = str.lower(keys['name'])
+        teams[name] = id
     return teams
 
 # Returns all team ids ask keys, with their associated team names
@@ -245,11 +244,10 @@ def teamIDsAsKeysAndNamesAsData():
     url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
     readable = genericMethods.generateJSONDumpsReadable(url)
     teams = dict()
-    for elements in readable:
-        for keys in readable['teams']:
-           id = str.lower(keys['name'])
-           name = keys['id']
-           teams[name] = id
+    for keys in readable['teams']:
+        id = str.lower(keys['name'])
+        name = keys['id']
+        teams[name] = id
     return teams
 
 # Returns all team ids ask keys, with their historic gameweek difficulty as a comma seperated list for each team
@@ -1080,17 +1078,22 @@ def totalTeamGoals():
         goalsList = list()
         while gw <= currentGameweek:
             gameweekData = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/fixtures/?event={gw}')
-            for fixture in gameweekData:
-                if team == fixture['team_a']:
-                    goalsList.append(int(fixture['team_a_score']))
+            if len(gameweekData) != 0:
+                for fixture in gameweekData:
+                    if team == fixture['team_a']:
+                        goalsList.append(int(fixture['team_a_score']))
+                        gw += 1
+                        break
+                    if team == fixture['team_h']:
+                        goalsList.append(int(fixture['team_h_score']))
+                        gw += 1
+                        break
+                if team != fixture['team_a'] and team != fixture['team_h']:
                     gw += 1
-                    break
-                if team == fixture['team_h']:
-                    goalsList.append(int(fixture['team_h_score']))
-                    gw += 1
-                    break
-            if team != fixture['team_a'] and team != fixture['team_h']:
+            else:
+                goalsList.append(0)
                 gw += 1
+
 
         goalsScored = sum(goalsList)
         teamDict[team] = goalsScored

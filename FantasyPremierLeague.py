@@ -600,7 +600,6 @@ def playerRoutine():
             playerInfo = dict()
             playerDict = dict()
             for team in teams:
-                teamName = teams[team]
                 currentTeamGoals = teamGoals[team]
                 playersInTeam = Teams.generateListOfPlayerIDsAsKeysForTeam(team)
                 for player in playersInTeam:
