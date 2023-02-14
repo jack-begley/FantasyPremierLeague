@@ -56,13 +56,9 @@ databases = {
         'fixtures': 'https://fantasy.premierleague.com/api/fixtures'
     }
 }
-#user = input("Username: ")
-user = "jackbegley"
-#password = input("Password: ")
-password = "Athome19369*"
+user = input("Username: ")
+password = input("Password: ")
 
-#jackbegley
-#thenoise360
 
 # [Y] Events = https://fantasy.premierleague.com/api/event/{currentGameweek}/live
 # [Y] Bootstrap = https://fantasy.premierleague.com/api/bootstrap-static/
