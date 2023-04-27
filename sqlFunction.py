@@ -56,9 +56,10 @@ databases = {
         'fixtures': 'https://fantasy.premierleague.com/api/fixtures'
     }
 }
-user = input("Username: ")
-password = input("Password: ")
-
+#user = input("Username: ")
+#password = input("Password: ")
+user = "jackbegley"
+password = "Athome19369*"
 
 # [Y] Events = https://fantasy.premierleague.com/api/event/{currentGameweek}/live
 # [Y] Bootstrap = https://fantasy.premierleague.com/api/bootstrap-static/
@@ -1063,8 +1064,11 @@ if updateTables in ["y","Y","Yes","yes"]:
             finalData[n] = formattedData
             n += 1
 
-        deleteTable(user, password, table, db)
-        createDetailedStatsTable(user, password, db, table, finalData)
+        try:
+            deleteTable(user, password, table, db)
+            createDetailedStatsTable(user, password, db, table, finalData)
+        except:
+            createDetailedStatsTable(user, password, db, table, finalData)
 
         dbConnect = connectToDB(user, password, db)
         length = len(finalData) - 1
