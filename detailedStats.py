@@ -8,6 +8,7 @@ import json
 import re
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.by import By
 import time
 import lxml
 import random
@@ -31,7 +32,7 @@ def getPlayerStats(players):
         urlSafePlayer = str(player).replace(" ",'-')
         url = f"https://www.premierleague.com/players/{playerId}/{urlSafePlayer}/stats?co=1&se={seasonId}"
         driver.get(url)
-        time.sleep(5)
+        time.sleep(2)
         pageContent = driver.page_source
         soup = BeautifulSoup(pageContent, 'lxml')
         playerStats = soup.find_all(class_="normalStat")
@@ -86,8 +87,28 @@ def getAllPlayers():
     driver = webdriver.Chrome(r"C:\Users\JackBegley\source\repos\FantasyPremierLeague\chromeDrivers\chromedriver.exe", desired_capabilities=capabilities)
     for team in teamIDs:
         time.sleep(random.randint(0, 100)/100)
-        driver.get(f"https://www.premierleague.com/players/?se={currentSeasonID}&cl={teamIDs[team]}")
-        time.sleep(10)
+        driver.get(f"https://www.premierleague.com/players/")
+        pageContent = driver.page_source
+        soup = BeautifulSoup(pageContent, 'lxml')
+        time.sleep(3)
+        try:
+            driver.find_element(By.XPATH, f"//button[@id='onetrust-accept-btn-handler']").click()
+            driver.find_element(By.XPATH, f"//a[@id='advertClose']").click()
+        except:
+            try:
+                driver.find_element(By.XPATH, f"//a[@id='advertClose']").click()
+            except:
+                print("")
+        
+        driver.find_element(By.CSS_SELECTOR,'.pageFilter__filter-btn').click()
+        time.sleep(1)
+        driver.find_element(By.XPATH, f"//div[@data-dropdown-block='clubs']").click()
+        time.sleep(1)
+        driver.find_element(By.XPATH, f"//li[@data-option-name='{team}']").click()
+        time.sleep(1)
+        driver.find_element(By.CSS_SELECTOR,'.btn-highlight.apply').click()
+        
+        time.sleep(1)
         pageContent = driver.page_source
         soup = BeautifulSoup(pageContent, 'lxml')
         playerURLs = soup.find_all(class_="playerName")
@@ -111,7 +132,7 @@ def getTeamIDsWithNamesAsKeys():
         teamResult = re.search('/clubs/(.+?)/', teamURL.attrs['href'])
         teamID = int(teamResult.group(1))
         teamNameResult = re.search(f'/{teamID}/(.+?)/overview', teamURL.attrs['href'])
-        teamName = teamNameResult.group(1).replace("-"," ")
+        teamName = teamNameResult.group(1).replace("-"," ").replace(" and "," & ")
         teamDict[teamName] = teamID
 
     return teamDict
