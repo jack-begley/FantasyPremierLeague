@@ -1064,11 +1064,8 @@ if updateTables in ["y","Y","Yes","yes"]:
             finalData[n] = formattedData
             n += 1
 
-        try:
-            deleteTable(user, password, table, db)
-            createDetailedStatsTable(user, password, db, table, finalData)
-        except:
-            createDetailedStatsTable(user, password, db, table, finalData)
+        deleteTable(user, password, table, db)
+        createDetailedStatsTable(user, password, db, table, finalData)
 
         dbConnect = connectToDB(user, password, db)
         length = len(finalData) - 1

@@ -32,7 +32,7 @@ def getPlayerStats(players):
         urlSafePlayer = str(player).replace(" ",'-')
         url = f"https://www.premierleague.com/players/{playerId}/{urlSafePlayer}/stats?co=1&se={seasonId}"
         driver.get(url)
-        time.sleep(5)
+        time.sleep(2)
         pageContent = driver.page_source
         soup = BeautifulSoup(pageContent, 'lxml')
         playerStats = soup.find_all(class_="normalStat")
