@@ -130,61 +130,20 @@ To create a pull request once you have done all the changes you need for that br
 
 # Getting Flask and ReactJS installed
 
-## Step 1. Set Up Virtual Environment
-
-1. Navigate to the root directory of your Python application.
-2. Run the following command to create a new virtual environment named `venv`:
-
-    ```
-    python -m venv venv
-    ```
-
-3. Activate the virtual environment:
-
-    * On Windows:
-
-        ```
-        .\venv\Scripts\activate
-        ```
-
-    * On Unix or MacOS:
-
-        ```
-        source venv/bin/activate
-        ```
-
-4. Your shell's prompt should now start with `(venv)`.
-
-## Step 2. Install Flask
+## Step 1. Install Flask
 
 Run the following command to install Flask:
 
 pip install Flask
 
-## Step 3. Create a Flask App
-
-1. Create a new Python file (let's call it `app.py`).
-2. Add the following boilerplate code to `app.py`:
-
-    ```python
-    from flask import Flask, jsonify
-    app = Flask(__name__)
-
-    @app.route('/')
-    def hello_world():
-        return jsonify(message="Hello, World!")
-
-    if __name__ == '__main__':
-        app.run(debug=True)
-    ```
-
-3. Run your Flask app with:
+## Step 2. Run Flask
+1. Run your Flask app with:
 
     ```
     python app.py
     ```
 
-4. Open your web browser and navigate to `http://localhost:5000`. You should see `{"message": "Hello, World!"}`.
+2. Open your web browser and navigate to `http://localhost:5000`.
 
 ## Troubleshooting Flask Setup
 
@@ -199,47 +158,27 @@ pip install Flask
 
 1. Download and install Node.js from the [official website](https://nodejs.org/). This will also install npm.
 
-## Step 2. Create a New React App
+## Step 2. Run react app
 
-1. Navigate to your project's root directory.
-2. Run the following command to create a new React app in a directory named `client`:
-
-    ```
-    npx create-react-app client
-    ```
-
-3. Navigate into the `client` directory:
+1. Navigate into the `client` directory:
 
     ```
     cd client
     ```
 
-4. Start the React development server:
+2. Start the React development server:
 
     ```
     npm start
     ```
 
-5. Open your web browser and navigate to `http://localhost:3000`. You should see your new React app.
+3. Open your web browser and navigate to `http://localhost:3000`. You should see your new React app.
 
 ## Troubleshooting React Setup
 
 1. If you see a `SyntaxError: Unexpected token .` or similar error:
 
     * Make sure you have a recent version of Node.js and npm installed.
-
-# Connect Flask and React
-
-1. Navigate to the `client` directory of your React app.
-2. Open the `package.json` file.
-3. Add a proxy setting as follows:
-
-    ```json
-    "proxy": "http://localhost:5000",
-    ```
-
-4. Save the `package.json` file and restart your React server.
-5. Your React app can now make requests to your Flask app at the `/api` route.
 
 ## Troubleshooting Connection Between Flask and React
 
