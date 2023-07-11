@@ -1,6 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\client",
+    "\\client\\public",
+    "\\client\\src"
   ],
+  "SelectedNode": "\\client\\public\\robots.txt",
   "PreviewInSolutionExplorer": false
 }
