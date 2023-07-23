@@ -3,8 +3,14 @@
     "",
     "\\client",
     "\\client\\public",
-    "\\client\\src"
+    "\\client\\src",
+    "\\client\\src\\components",
+    "\\venv",
+    "\\venv\\Include",
+    "\\venv\\Lib",
+    "\\venv\\Lib\\site-packages",
+    "\\venv\\Scripts"
   ],
-  "SelectedNode": "\\client\\public\\robots.txt",
+  "SelectedNode": "\\venv\\Include",
   "PreviewInSolutionExplorer": false
 }
