@@ -5,28 +5,28 @@ import Players from './components/Players.js';
 import Team from './components/Team.js';
 import Compare from './components/Compare.js';
 
-//const MobileMenu = ({ menuItems }) => {
-//    const [isMenuOpen, setIsMenuOpen] = useState(false);
+const MobileMenu = ({ menuItems }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-//    const handleMenuToggle = () => {
-//        setIsMenuOpen(!isMenuOpen);
-//    };
+    const handleMenuToggle = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
 
-//    return (
-//        <div className="mobile-menu">
-//            <div className={`burger-icon ${isMenuOpen ? 'open' : ''}`} onClick={handleMenuToggle}>
-//                <div className="bar1"></div>
-//                <div className="bar2"></div>
-//                <div className="bar3"></div>
-//            </div>
-//            <div className={`menu-items ${isMenuOpen ? 'open' : ''}`}>
-//                {menuItems.map((item) => (
-//                    <MenuListItem key={item.label} icon={item.icon} label={item.label} path={item.path} />
-//                ))}
-//            </div>
-//        </div>
-//    );
-//};
+    return (
+        <div className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}>
+            <div className={`menu-items ${isMenuOpen ? 'open' : ''}`}>
+                <MenuListItem icon="person" label="Players" path="/players" />
+                <MenuListItem icon="groups" label="Teams" path="/teams" />
+                <MenuListItem icon="compare_arrows" label="Compare" path="/compare" />
+            </div>
+            <div className={`burger-icon ${isMenuOpen ? 'open' : ''}`} onClick={handleMenuToggle}>
+                <div className="bar1"></div>
+                <div className="bar2"></div>
+                <div className="bar3"></div>
+            </div>
+        </div>
+    );
+};
 
 const toSentenceCase = (str) => {
     return str.replace(/\b\w/g, (char) => char.toUpperCase());
@@ -85,12 +85,15 @@ function App() {
             <div className="App">
                 <header className="App-header headerContainer">
                     <img src="/logo.png" alt="Logo" className="logo" />
-                    <nav>
+                    <nav className="desktop-menu">
                         <div className="list">
                             <MenuListItem icon="person" label="Players" path="/players" />
                             <MenuListItem icon="groups" label="Teams" path="/teams" />
                             <MenuListItem icon="compare_arrows" label="Compare" path="/compare" />
                         </div>
+                    </nav>
+                    <nav className="mobile-menu">
+                        <MobileMenu />
                     </nav>
                 </header>
                 <Breadcrumb></Breadcrumb>
@@ -106,3 +109,6 @@ function App() {
 }
 
 export default App;
+
+
+
