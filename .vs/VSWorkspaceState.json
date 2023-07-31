@@ -4,12 +4,10 @@
     "\\client",
     "\\client\\public",
     "\\client\\src",
-    "\\client\\src\\components",
     "\\venv",
     "\\venv\\Include",
-    "\\venv\\Lib",
-    "\\venv\\Lib\\site-packages",
     "\\venv\\Scripts"
   ],
+  "SelectedNode": "\\client\\package.json",
   "PreviewInSolutionExplorer": false
 }
