@@ -396,7 +396,6 @@ def updateEventsTable(user, password, database):
             cursor = dbConnect.cursor()
             cursor.execute(sql)
             dbConnect.commit()
-            print(cursor.rowcount, f"Record inserted successfully into {table} table")
             cursor.close()
 
         else:
@@ -439,7 +438,6 @@ def updateElementsTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
@@ -493,7 +491,6 @@ def updateGameSettingsTable(user, password, database):
     cursor = dbConnect.cursor()
     cursor.execute(sql)
     dbConnect.commit()
-    print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 def updateElementStatsTable(user, password, database):
@@ -531,7 +528,6 @@ def updateElementStatsTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
@@ -570,7 +566,6 @@ def updatePhasesTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 def updateTeamsTable(user, password, database):
@@ -607,7 +602,6 @@ def updateTeamsTable(user, password, database):
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 # =====================================================================================================================================================
@@ -882,7 +876,6 @@ def updateFixturesTable(user, password, database, currentElement):
 
                     cursor.execute(sql)
                     dbConnect.commit()
-                    print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
         cursor.close()
 
@@ -921,7 +914,6 @@ def updateHistoryTable(user, password, database,currentElement):
 
             cursor.execute(sql)
             dbConnect.commit()
-            print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
@@ -958,7 +950,6 @@ def updateHistoryPastTable(user, password, database,currentElement, n):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
