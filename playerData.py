@@ -11,7 +11,7 @@ import sqlFunction
 from datetime import date
 today = date.today()
 
-season = "2022_2023"
+season = "2023_2024"
 
 
 def gameweeksPlayed(playerID):
@@ -1047,32 +1047,36 @@ def pointsPerSelectedPercentage(minimumPercentageSelected, maximumCost, minimumC
         genericMethods.runPercentage(length, currentIndex, "Generating points per percentage selected dictionary", f"Dictionary created for all players up to £{maximumCost}M values and selected by {minimumPercentageSelected}%")
         tempDict = dict()
         playerID = gameweekData['id']
-        name = playerNames[playerID].capitalize()
-        points = int(gameweekData['total_points'])
-        history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
-        numberOfGames = len(history)
-        if numberOfGames > 0:
-            for record in history:
-                if int(record['round']) == (currentGameweek - 1):
-                    value = record['value'] / 10
-            selected = float(gameweekData['selected_by_percent'])
-            if selected < minimumPercentageSelected:
-                pointsPerPercentage = 0 
-            else:
-                pointsPerPercentage = points / selected if selected else 0 
-            tempDict["name"] = name
-            tempDict["pointsPerPercent"] = pointsPerPercentage
-            tempDict["points"] = points
-            tempDict["selected"] = selected
-            tempDict["value"] = value
-            tempDict["goals"] = int(gameweekData['goals_scored'])
-            tempDict["assists"] = int(gameweekData['assists'])
-            tempDict["bonus"] = int(gameweekData['bonus'])
-            tempDict["ict"] = float(gameweekData['ict_index'])
-            tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
-            tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
-            if minimumCost <= value <= maximumCost:
-                playerDict[playerID] = tempDict
+        #TODO: Use SQL to pull this data.
+        try:
+            name = playerNames[playerID].capitalize()
+            points = int(gameweekData['total_points'])
+            history = genericMethods.generateJSONDumpsReadable(f'https://fantasy.premierleague.com/api/element-summary/{playerID}/')['history']
+            numberOfGames = len(history)
+            if numberOfGames > 0:
+                for record in history:
+                    if int(record['round']) == (currentGameweek - 1):
+                        value = record['value'] / 10
+                selected = float(gameweekData['selected_by_percent'])
+                if selected < minimumPercentageSelected:
+                    pointsPerPercentage = 0 
+                else:
+                    pointsPerPercentage = points / selected if selected else 0 
+                tempDict["name"] = name
+                tempDict["pointsPerPercent"] = pointsPerPercentage
+                tempDict["points"] = points
+                tempDict["selected"] = selected
+                tempDict["value"] = value
+                tempDict["goals"] = int(gameweekData['goals_scored'])
+                tempDict["assists"] = int(gameweekData['assists'])
+                tempDict["bonus"] = int(gameweekData['bonus'])
+                tempDict["ict"] = float(gameweekData['ict_index'])
+                tempDict["minutesPercentage"] = float((int(gameweekData['minutes']) / numberOfGames) / 90) * 100
+                tempDict["pointsPerGame"] = float(gameweekData['points_per_game'])
+                if minimumCost <= value <= maximumCost:
+                    playerDict[playerID] = tempDict
+        except:
+            None
 
     return playerDict
 

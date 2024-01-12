@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import './App.css';
 import Players from './components/Players.js';
 import Team from './components/Team.js';

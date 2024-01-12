@@ -1,13 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\client",
-    "\\client\\public",
-    "\\client\\src",
-    "\\venv",
-    "\\venv\\Include",
-    "\\venv\\Scripts"
+    ""
   ],
-  "SelectedNode": "\\client\\package.json",
+  "SelectedNode": "\\__pycache__",
   "PreviewInSolutionExplorer": false
 }

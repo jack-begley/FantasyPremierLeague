@@ -13,7 +13,7 @@ import time
 import lxml
 import random
 
-season = "2022_2023"
+season = "2023_2024"
 
 
 def getPlayerStats(players):

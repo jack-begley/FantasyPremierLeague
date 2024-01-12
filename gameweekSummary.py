@@ -19,7 +19,7 @@ import Teams
 from datetime import date
 today = date.today()
 
-season = "2022_2023"
+season = "2023_2024"
 
 
 # Export current data set into excel
@@ -121,6 +121,51 @@ def printAllData(urlAddOn, fileName):
         print("")
 
     endRoutine()
+
+# Getting the information of a player based on their surname in JSON formatting
+def playerInfoBySurnameJSON(playerSurname):
+
+    gameweekSummarySub = "bootstrap-static/"
+
+    # In order to either read in the index of the item, or the item name we either need the loaded version, or the dumped version respectively
+    url = genericMethods.mergeURL(gameweekSummarySub)
+    gameweekSummaryJSON = requests.get(url)
+    gameweekSummaryData = gameweekSummaryJSON.json()
+    gameweekSummaryDataDumps = json.dumps(gameweekSummaryData)
+    gameweekSummaryDataReadable = json.loads(gameweekSummaryDataDumps)
+
+    gameweekNumber = genericMethods.generateCurrentGameweek()
+
+    playerData = dict()
+
+    for y in gameweekSummaryDataReadable['elements']:
+        dumpsY = json.dumps(y)
+        playerInApi = False
+        if isinstance(y,dict):
+            formattedY = json.loads(dumpsY)
+            firstName = formattedY["first_name"]    
+            secondName = formattedY['second_name']
+
+            #Generate a list for the headers
+            if str.lower(formattedY["second_name"]) == playerSurname:
+                
+                # Create format for printing the title
+                playerData['firstName'] = formattedY["first_name"]
+                playerData['secondName'] = formattedY["second_name"]
+                playerData['gameweekSummaryTitle'] = f"/ Player profile: {firstName} {secondName}"
+                playerData['selectedPerc'] = str(formattedY["selected_by_percent"]) + "%"
+                playerData['Form'] =str(formattedY["form"])
+                playerData['avgMins'] = str(round((formattedY["minutes"] / gameweekNumber), 0))
+                playerData['influence'] = str(formattedY["influence"])
+                playerData['totalPoints'] = str(formattedY["total_points"])
+                playerData['goals'] = str(formattedY["goals_scored"])
+                playerData['assists'] = str(formattedY["assists"])
+                playerData['reds'] = str(formattedY["red_cards"])
+                playerData['yellows'] = str(formattedY["yellow_cards"])
+                playerData['bonus'] = str(formattedY["bonus"])
+                playerData['pointsPerGame'] =  str(formattedY["points_per_game"])
+        
+    return playerData
 
 # Getting the information of a player based on their surname
 def playerInfoBySurname(playerSurname):
@@ -383,7 +428,8 @@ def mostNetTransfersOut(numberToDisplayUpTo):
 # Creates all data for a given gameweek: 
 def generateDataForGameWeek(gameweekNumber):
     playerIDs = gameweekSummary.generatePlayerIDs()
-    # create url's for the current player and extract data from the "History" file where the game week is the current game week
+    # create url's for the current player and extract data from the "History
+    # " file where the game week is the current game week
     length = len(playerIDs) - 1
     elementsList = dict()
     tempList = list()

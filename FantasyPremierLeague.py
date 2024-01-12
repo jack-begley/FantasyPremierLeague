@@ -194,6 +194,7 @@ def playerRoutine():
     print(" [99] Test: Rank player performance")
     print(" [100] Test: How previous performance affects future performance")
     print(" [101] Test: Get players details from detailed site")
+    print(" [102] Test: Player surname to JSON")
     print("------------------------------------------------------------------------")
     print("")
     print("What would you like to see?:")
@@ -1206,7 +1207,7 @@ def playerRoutine():
             for player in playerNames:
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
-                season = "2022_2023"
+                season = "2023_2024"
                 dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
                 totalPoints = dbConnect.cursor(dictionary=True)
                 totalPoints.execute("SELECT total_points FROM `" + season + f"_events`.`elements` WHERE id = {player} and gameweek < {gw}")
@@ -1361,7 +1362,7 @@ def playerRoutine():
 
             length = len(playerNames) - 1
             for player in playerNames:
-                season = "2022_2023"
+                season = "2023_2024"
                 currentIndex = list(playerNames).index(player)
                 genericMethods.runPercentage(length,currentIndex,f"Running player {currentIndex} of {length}", "All player data has been collected")
                 dbConnect = sqlFunction.connectToDB("jackbegley","Athome19369*", "" + season + "_events")
@@ -1524,6 +1525,11 @@ def playerRoutine():
             playerList = detailedStats.getAllPlayers()
             players = detailedStats.getPlayerStats(playerList)
             players = detailedStats.getPlayerStatsDetailed(playerList)
+            print()
+
+        elif playerUserInputInitialInt == 102:
+            surname = input("Player Surname:")
+            x = gameweekSummary.playerInfoBySurnameJSON(surname)
             print()
 
 
@@ -2962,6 +2968,6 @@ print("")
 print("Welcome to the FPL console app for data extraction.")
 print("")
 
-season = "2022_2023"
+season = "2023_2024"
 
 introRoutine()

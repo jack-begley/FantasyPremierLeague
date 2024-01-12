@@ -13,7 +13,7 @@ import tkinter
 import csv 
 import gameweekSummary
 
-season = "2022_2023"
+season = "2023_2024"
 
 
 # URL set up and league codes

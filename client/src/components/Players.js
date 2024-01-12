@@ -7,11 +7,29 @@ const Players = () => {
     useEffect(() => {
         // replace 'surname' with the player's surname you're interested in
         const playerSurname = 'salah';
-        axios.get(`http://localhost:5000/playerinfo?surname=${playerSurname}`)
+        // Issue is here: Some issue with the request - could be related to the response in my method in gameweekSummary.py but hard to tell.
+        axios.get(`http://localhost:3000/playerinfo?surname=${playerSurname}`)
             .then(response => {
                 setPlayerData(response.data);
+                console.log('Response Headers:', JSON.stringify(response.headers, null, 2)); // Log response headers here
             })
-            .catch(error => console.error(`Error: ${error}`));
+            .catch(error => {
+                if (error.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    console.log("Data", error.response.data);
+                    console.log("Status", error.response.status);
+                    console.log("Headers", error.response.headers);
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                    // http.ClientRequest in Node.js
+                    console.log("Request", error.request);
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    console.log('Error', error.message);
+                }
+            });
     }, []);
 
     return (
