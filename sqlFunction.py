@@ -20,7 +20,7 @@ sys.path.append(file_dir)
 
 # UPDATE EACH SEASON:
 
-season = "2022_2023"
+season = "2023_2024"
 
 conversions = {
     'int': 'INT',
@@ -223,10 +223,13 @@ def typeConverter(value):
                 return str(value)
     if isinstance(value, int):
         return int(value)
+
 def createAllSuitableTables(user, password, database, table, datafeed):
     specification = dict()
     if 'elementsummary' in database and table == 'fixtures':
         iteration = datafeed['fixtures'][0]
+    elif 'fixtures' in database and table == 'fixtures':
+        iteration = datafeed[0]
     else:
         iteration = datafeed[table]
     if table == 'history_past':
@@ -281,12 +284,12 @@ def createAllSuitableTables(user, password, database, table, datafeed):
                 else:
                     valueTypeConversion = conversions[valueType]
                 specification[element] = valueTypeConversion
-            elif table == 'fixtures' and 'Fixtures' in database:
-                valueType = str(type(datafeed[table][element])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+            elif table == 'fixtures' and 'fixtures' in database:
+                valueType = str(type(element)).replace("<class","").replace(">","").replace("'","").replace(" ","")
                 if valueType == "NoneType":
                     valueTypeConversion = "INT"
-                elif isinstance(datafeed[table][element], dict) == True or isinstance(datafeed[table][element], list) == True:
-                        for data in datafeed[table][element]:
+                elif isinstance(iteration[element], dict) == True or isinstance(iteration[element], list) == True:
+                        for data in iteration[element]:
                             valueType = str(type(data)).replace("<class","").replace(">","").replace("'","").replace(" ","")
                             if valueType == "NoneType":
                                 valueTypeConversion = "INT"
@@ -393,7 +396,6 @@ def updateEventsTable(user, password, database):
             cursor = dbConnect.cursor()
             cursor.execute(sql)
             dbConnect.commit()
-            print(cursor.rowcount, f"Record inserted successfully into {table} table")
             cursor.close()
 
         else:
@@ -436,7 +438,6 @@ def updateElementsTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
@@ -490,7 +491,6 @@ def updateGameSettingsTable(user, password, database):
     cursor = dbConnect.cursor()
     cursor.execute(sql)
     dbConnect.commit()
-    print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 def updateElementStatsTable(user, password, database):
@@ -528,7 +528,6 @@ def updateElementStatsTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
@@ -567,7 +566,6 @@ def updatePhasesTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 def updateTeamsTable(user, password, database):
@@ -604,7 +602,6 @@ def updateTeamsTable(user, password, database):
         sql = "INSERT INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
     cursor.close()
 
 # =====================================================================================================================================================
@@ -821,7 +818,7 @@ def updateEventsDatabase(user, password, database):
 
 # === TODO: Condense to a single method ====================================================================================================
 
-def updateFixturesTable(user, password, database, datafeed):
+def updateFixturesTable(user, password, database, currentElement):
     table = 'fixtures'
     # TODO - create a create table method, maybe under a "start of season update" thing, then update this method to run without dropping the table
     currentDateTime = datetime.now(pytz.utc)
@@ -830,93 +827,97 @@ def updateFixturesTable(user, password, database, datafeed):
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
 
-    for element in currentElement[table]:
-        if element['kickoff_time'] == None:
-            fixtureTime = currentDateTime
-        else:
-            fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
-        if currentDateTime < fixtureTime:
-            elementsKept = dict()
-            id = element['id']
-            sqlCompare = f"SELECT id from {table} where id = {id}"
+    if 'detail' in currentElement:
+        return
+    else:
+        for element in currentElement[table]:
+            if element['kickoff_time'] == None:
+                fixtureTime = currentDateTime
+            else:
+                fixtureTime = datetime.strptime(element['kickoff_time'], "%Y-%m-%dT%H:%M:%S%z")
+            if currentDateTime < fixtureTime:
+                elementsKept = dict()
+                id = element['id']
+                sqlCompare = f"SELECT id from {table} where id = {id}"
 
-            mydb = mysql.connector.connect(
-              host="localhost",
-              user=user,
-              password=password,
-              database=database
-            )
+                mydb = mysql.connector.connect(
+                  host="localhost",
+                  user=user,
+                  password=password,
+                  database=database
+                )
 
-            mycursor = mydb.cursor()
-            mycursor.execute(sqlCompare)
-            myresult = mycursor.fetchall()
+                mycursor = mydb.cursor()
+                mycursor.execute(sqlCompare)
+                myresult = mycursor.fetchall()
 
-            if not myresult:
-                for item in element:
-                    if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
-                        valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                        if valueType == "NoneType":
-                            value = 0
-                        elif valueType == "bool":
-                            if element[item] == True:
-                                value = 1
-                            if element[item] == False:
+                if not myresult:
+                    for item in element:
+                        if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                            valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                            if valueType == "NoneType":
                                 value = 0
-                        else:
-                            value = element[item]
-                            if isinstance(value, str) == True:
-                                valueClean = str(unicodeReplace(str(value))).replace("'","")
-                                value = valueClean
-                        elementsKept[item] = value
+                            elif valueType == "bool":
+                                if element[item] == True:
+                                    value = 1
+                                if element[item] == False:
+                                    value = 0
+                            else:
+                                value = element[item]
+                                if isinstance(value, str) == True:
+                                    valueClean = str(unicodeReplace(str(value))).replace("'","")
+                                    value = valueClean
+                            elementsKept[item] = value
 
-                columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
-                values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+                    columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+                    values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
 
-                sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+                    sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-                cursor.execute(sql)
-                dbConnect.commit()
-                print(cursor.rowcount, f"Record inserted successfully into {table} table")
+                    cursor.execute(sql)
+                    dbConnect.commit()
 
-    cursor.close()
+        cursor.close()
 
 def updateHistoryTable(user, password, database,currentElement):
     table = 'history'
 
     dbConnect = connectToDB(user, password, database)
     cursor = dbConnect.cursor()
-
-    for element in currentElement[table]:
-        elementsKept = dict()
-        for item in element:
-            if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
-                valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
-                if valueType == "NoneType":
-                    value = 0
-                elif valueType == "bool":
-                    if element[item] == True:
-                        value = 1
-                    if element[item] == False:
+    
+    if 'detail' in currentElement:
+        return
+    else:
+        for element in currentElement[table]:
+            elementsKept = dict()
+            for item in element:
+                if isinstance(element[item], list) == False and isinstance(element[item], dict) == False:
+                    valueType = str(type(element[item])).replace("<class","").replace(">","").replace("'","").replace(" ","")
+                    if valueType == "NoneType":
                         value = 0
-                else:
-                    value = element[item]
-                    if isinstance(value, str) == True:
-                        valueClean = str(unicodeReplace(str(value))).replace("'","")
-                        value = valueClean
-                elementsKept[item] = value
+                    elif valueType == "bool":
+                        if element[item] == True:
+                            value = 1
+                        if element[item] == False:
+                            value = 0
+                    else:
+                        value = element[item]
+                        if isinstance(value, str) == True:
+                            valueClean = str(unicodeReplace(str(value))).replace("'","")
+                            value = valueClean
+                    elementsKept[item] = value
 
-        columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
-        values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
+            columns = ','.join("`"+str(x).replace('/','_')+"`" for x in elementsKept.keys())
+            values = ','.join("'"+str(x).replace('/','_')+"'" for x in elementsKept.values())
 
-        sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
+            sql = "INSERT IGNORE INTO `%s` (%s) VALUES (%s);" % (table, columns, values)
 
-        cursor.execute(sql)
-        dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
+            cursor.execute(sql)
+            dbConnect.commit()
 
     cursor.close()
 
-def updateHistoryPastTable(user, password, database):
+def updateHistoryPastTable(user, password, database,currentElement, n):
     table = 'history_past'
 
     dbConnect = connectToDB(user, password, database)
@@ -949,21 +950,19 @@ def updateHistoryPastTable(user, password, database):
 
         cursor.execute(sql)
         dbConnect.commit()
-        print(cursor.rowcount, f"Record inserted successfully into {table} table")
 
     cursor.close()
 
-if generateCurrentGameweek() == None:
-    createTables = input("Do you want to create any tables? (Y/N) - ONLY NEEDED AT THE START OF THE SEASON > ")
-    if createTables in ["y","Y","Yes","yes"]:
-        for database in databases:
-            createDatabase(user,password, database)
-            rootDatabase = database
-            database = season + "_" + database
-            for table in databases[rootDatabase]:
-                datafeed = requests.get(databases[rootDatabase][table]).json()
-                createAllSuitableTables(user,password,database,table,datafeed)
-                break
+createTables = input("Do you want to create any tables? (Y/N) - ONLY NEEDED AT THE START OF THE SEASON > ")
+if createTables in ["y","Y","Yes","yes"]:
+    for database in databases:
+        createDatabase(user,password, database)
+        rootDatabase = database
+        database = season + "_" + database
+        for table in databases[rootDatabase]:
+            datafeed = requests.get(databases[rootDatabase][table]).json()
+            createAllSuitableTables(user,password,database,table,datafeed)
+            break
 
 updateTables= input("Do you want to update any tables? (Y/N)> ")
 
@@ -1029,7 +1028,6 @@ if updateTables in ["y","Y","Yes","yes"]:
         print("")
 
     # DETAILED STATS ==============================================================================================================
-    # https://stackoverflow.com/questions/9336270/using-a-python-dict-for-a-sql-insert-statement
 
     detailedStatsTrue = input("Do you want to update " + season + "_DetailedStats (Y/N)> ")
     if detailedStatsTrue == "Y" or detailedStatsTrue == "y":
